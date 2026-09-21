@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "title": "Sidang Pleno Evaluasi Akreditasi Program Studi Jurusan Teknik Sipil & Elektro",
+    "type": "Sidang Pleno",
+    "date": "2026-09-24",
+    "time": "09:00 - 12:30 WIB",
+    "room": "Ruang Sidang Utama Lantai 2 Gedung Direktorat Polines",
+    "status": "Sedang Berlangsung",
+    "session_code": "PLN-892",
+    "qr_token": "token-polines-pln-892-live",
+    "total_invited": 34,
+    "present_count": 28
+  },
+  {
+    "id": 2,
+    "title": "Rapat Koordinasi Komisi I: Penyelarasan Kurikulum MBKM Vokasi 2026/2027",
+    "type": "Rapat Komisi I",
+    "date": "2026-09-28",
+    "time": "13:30 - 16:00 WIB",
+    "room": "Ruang Rapat Senat Gedung Kerjasama",
+    "status": "Terjadwal",
+    "session_code": "KMS-104",
+    "qr_token": "token-polines-kms-104-sched",
+    "total_invited": 8,
+    "present_count": 0
+  },
+  {
+    "id": 3,
+    "title": "Rapat Musyawarah Komisi V: Verifikasi Berkas Etika Dosen dan Etika Kemahasiswaan",
+    "type": "Rapat Komisi V",
+    "date": "2026-10-02",
+    "time": "10:00 - 12:00 WIB",
+    "room": "Ruang Konsultasi Senat Polines",
+    "status": "Terjadwal",
+    "session_code": "KMS-502",
+    "qr_token": "token-polines-kms-502-sched",
+    "total_invited": 5,
+    "present_count": 0
+  }
+]

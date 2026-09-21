@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "code": "KOM-I",
+    "name": "Komisi I — Bidang Pendidikan & Pengajaran",
+    "lead": "Prof. Dr. Ir. Budi Rahardjo, M.T.",
+    "tupoksi": "Merumuskan norma kebijakan kurikulum vokasi, evaluasi pelaksanaan proses belajar mengajar, serta pengawasan mutu akademik antarjurusan.",
+    "members_count": 8
+  },
+  {
+    "id": 2,
+    "code": "KOM-II",
+    "name": "Komisi II — Bidang Penelitian & Pengabdian Masyarakat",
+    "lead": "Dr. Eng. Tri Handayani, S.T., M.Kom.",
+    "tupoksi": "Memberikan pertimbangan arah riset hilirisasi vokasi, paten teknologi terapan, dan pengabdian masyarakat berbasis kemitraan industri.",
+    "members_count": 7
+  },
+  {
+    "id": 3,
+    "code": "KOM-III",
+    "name": "Komisi III — Bidang Kelembagaan & Sumber Daya",
+    "lead": "Drs. Joko Prasetyo, M.M., Ak.",
+    "tupoksi": "Pengawasan kelayakan pembukaan program studi sarjana terapan baru, efisiensi pemanfaatan fasilitas lab, dan formasi pendidik.",
+    "members_count": 6
+  },
+  {
+    "id": 4,
+    "code": "KOM-IV",
+    "name": "Komisi IV — Bidang Kemahasiswaan & Alumni",
+    "lead": "Ir. Hendro Wijaya, M.Sc.",
+    "tupoksi": "Penelaahan regulasi pembinaan minat bakat, etika organisasi kemahasiswaan, dan penguatan jejaring kerja sama ikatan alumni Polines.",
+    "members_count": 8
+  },
+  {
+    "id": 5,
+    "code": "KOM-V",
+    "name": "Komisi V — Bidang Penegakan Etika & Tata Tertib",
+    "lead": "Dr. Siti Aminah, S.H., M.Hum.",
+    "tupoksi": "Menegakkan kepatuhan kode etik civitas akademika, memeriksa dugaan pelanggaran integritas, dan memberi rekomendasi sanksi senat.",
+    "members_count": 5
+  }
+]

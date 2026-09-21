@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "ticket_code": "ASP-POLINES-2026-0042",
+    "sender_category": "Mahasiswa",
+    "jurusan": "Teknik Elektro (D4 TRK)",
+    "committee_target": "Komisi I — Bidang Pendidikan & Pengajaran",
+    "subject": "Usulan Penambahan Jam Praktikum Mandiri di Laboratorium Jaringan Komputer & IoT",
+    "description": "Sehubungan dengan tingginya beban proyek akhir berbasis sistem tertanam dan routing mikrotik, kami memohon alokasi akses lab di luar jam reguler perkuliahan.",
+    "status": "Ditindaklanjuti Komisi",
+    "submitted_at": "2026-09-14 10:15",
+    "response": "Komisi I telah merekomendasikan kepada Ketua Jurusan Teknik Elektro untuk membuka sesi lab terjadwal dengan pendampingan teknisi/asisten lab."
+  },
+  {
+    "id": 2,
+    "ticket_code": "ASP-POLINES-2026-0039",
+    "sender_category": "Dosen",
+    "jurusan": "Teknik Mesin",
+    "committee_target": "Komisi II — Bidang Penelitian & Pengabdian Masyarakat",
+    "subject": "Fasilitasi Uji Laik Paten Sederhana untuk Prototipe Mesin Presisi Hasil Tugas Akhir",
+    "description": "Mohon adanya skema pendanaan hilirisasi paten internal Polines bagi hasil karya inovasi mesin perkakas mahasiswa bersama dosen pembimbing.",
+    "status": "Sedang Ditelaah",
+    "submitted_at": "2026-09-10 14:20",
+    "response": "Draf usulan masuk dalam agenda telaah Komisi II untuk diselaraskan dengan anggaran P3M Polines."
+  }
+]

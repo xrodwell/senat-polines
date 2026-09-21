@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "title": "Sidang Pleno Senat Akademik Polines Pengesahan Kurikulum Vokasi Industri Berbasis MBKM",
+    "slug": "sidang-pleno-senat-akademik-polines-pengesahan-kurikulum-vokasi-industri",
+    "category": "Sidang Pleno",
+    "date": "2026-09-18",
+    "excerpt": "Senat Akademik Politeknik Negeri Semarang menggelar Sidang Pleno Terbuka dengan agenda penetapan standarisasi kurikulum vokasi selaras industri bersama jajaran perwakilan asosiasi mitra vokasi.",
+    "thumbnail": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+    "author": "Sekretariat Senat Polines"
+  },
+  {
+    "id": 2,
+    "title": "Monitoring dan Evaluasi Capaian Pembelajaran di Jurusan Teknik Elektro dan Teknik Mesin oleh Komisi I",
+    "slug": "monev-pembelajaran-teknik-elektro-mesin-komisi-i",
+    "category": "Pengawasan Akademik",
+    "date": "2026-09-12",
+    "excerpt": "Komisi I Senat Akademik Polines melaksanakan peninjauan lapangan berkala guna mengevaluasi efektivitas laboratorium praktik dan rasio instruktur vokasi terhadap mahasiswa tingkat akhir.",
+    "thumbnail": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+    "author": "Humas Komisi I"
+  },
+  {
+    "id": 3,
+    "title": "Kunjungan Studi Banding Tata Kelola Senat Akademik Politeknik Negeri Bandung ke Senat Akademik Polines",
+    "slug": "kunjungan-benchmarking-senat-polban-ke-senat-polines",
+    "category": "Kerja Sama",
+    "date": "2026-08-28",
+    "excerpt": "Ketua Senat Akademik Polines menyambut hangat delegasi Senat Polban dalam rangka sinkronisasi regulasi peraturan internal dan sistem pengawasan tata pamong perguruan tinggi vokasi.",
+    "thumbnail": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+    "author": "Sekretariat Senat Polines"
+  },
+  {
+    "id": 4,
+    "title": "Uji Publik Rencana Peraturan Senat Mengenai Kode Etik Dosen dan Pembimbingan Riset Terapan Vokasi",
+    "slug": "uji-publik-peraturan-senat-kode-etik-riset-vokasi",
+    "category": "Regulasi",
+    "date": "2026-08-15",
+    "excerpt": "Komisi V Senat Akademik mengundang perwakilan serikat dosen dan tenaga kependidikan untuk menelaah naskah akademik regulasi penegakan integritas ilmiah dan paten terapan.",
+    "thumbnail": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
+    "author": "Komisi V Senat Polines"
+  }
+]
