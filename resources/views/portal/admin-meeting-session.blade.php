@@ -63,10 +63,7 @@
                 {{-- Bar Kontrol Operator --}}
                 <div class="bg-slate-100 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Output Layar Proyektor:</span>
-                        <span class="text-xs font-semibold text-slate-900 bg-white px-2.5 py-0.5 rounded border border-slate-200">
-                            Ruang Sidang Utama Lt. 2
-                        </span>
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Kontrol Presensi Digital</span>
                     </div>
 
                     <div class="flex items-center gap-2">
