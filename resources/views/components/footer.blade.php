@@ -88,11 +88,6 @@
                             Arsip Kegiatan &amp; LPJ
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('public.aspirations') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
-                            Kanal Aspirasi Civitas
-                        </a>
-                    </li>
                 </ul>
             </div>
 
