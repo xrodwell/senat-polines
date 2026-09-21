@@ -17,7 +17,7 @@
                         ● SISTEM AKTIF
                     </span>
                 </div>
-                <h1 class="text-lg font-bold text-white tracking-tight">Manajemen Sesi Sidang &amp; Monitor Kuorum</h1>
+                <h1 class="text-lg font-bold text-white tracking-tight">Manajemen Sesi Sidang, E-Voting &amp; Monitor Kuorum</h1>
             </div>
         </div>
 
@@ -39,7 +39,64 @@
          presentCount: 28,
          totalInvited: 34,
          qrCountdown: 28,
+         
+         // Modal Tambah Sidang
+         showAddMeetingModal: false,
+         newMeeting: {
+             title: '',
+             type: 'Sidang Pleno',
+             date: '',
+             time: '',
+             room: 'Ruang Sidang Utama Lantai 2 Gedung Direktorat Polines'
+         },
+         
+         // List Jadwal Sidang (LocalStorage Sync)
+         meetingsList: [],
+         
+         // Fitur Gelar E-Voting Sidang (Sync LocalStorage)
+         activeVote: {
+             isOpen: true,
+             id: 'VOTE-2026-001',
+             title: 'Persetujuan Pengesahan Perubahan Kurikulum MBKM Vokasi 2026/2027',
+             description: 'Apakah Sidang Pleno menyetujui draf revisi kurikulum vokasi berbasis industri untuk disahkan menjadi Peraturan Senat Akademik?',
+             options: [
+                 { id: 'setuju', label: 'Setuju / Mufakat', count: 22 },
+                 { id: 'tolak', label: 'Menolak / Keberatan', count: 2 },
+                 { id: 'abstain', label: 'Abstain / Pikir-pikir', count: 4 }
+             ]
+         },
+         
+         showNewVoteModal: false,
+         newVoteForm: {
+             title: '',
+             description: ''
+         },
+
          init() {
+             // Init Meetings
+             const storedMeetings = localStorage.getItem('polines_senat_meetings');
+             if (storedMeetings) {
+                 this.meetingsList = JSON.parse(storedMeetings);
+             } else {
+                 this.meetingsList = {{ Js::from($meetings) }};
+                 localStorage.setItem('polines_senat_meetings', JSON.stringify(this.meetingsList));
+             }
+
+             // Init Voting
+             const storedVote = localStorage.getItem('polines_senat_voting');
+             if (storedVote) {
+                 this.activeVote = JSON.parse(storedVote);
+             } else {
+                 localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+             }
+
+             // Event listener untuk perubahan storage dari browser anggota
+             window.addEventListener('storage', () => {
+                 const updatedVote = localStorage.getItem('polines_senat_voting');
+                 if (updatedVote) this.activeVote = JSON.parse(updatedVote);
+             });
+
+             // QR Countdown
              setInterval(() => {
                  if (this.qrCountdown > 1) {
                      this.qrCountdown--;
@@ -48,19 +105,150 @@
                  }
              }, 1000);
          },
+         
          toggleSession() {
              this.sessionOpen = !this.sessionOpen;
+         },
+
+         saveNewMeeting() {
+             if (!this.newMeeting.title || !this.newMeeting.date || !this.newMeeting.time) {
+                 alert('Mohon lengkapi judul, tanggal, dan jam sidang.');
+                 return;
+             }
+             const idNum = Math.floor(100 + Math.random() * 900);
+             const code = 'PLN-' + idNum;
+             const newItem = {
+                 id: Date.now(),
+                 title: this.newMeeting.title,
+                 type: this.newMeeting.type,
+                 date: this.newMeeting.date,
+                 time: this.newMeeting.time,
+                 room: this.newMeeting.room,
+                 status: 'Terjadwal',
+                 session_code: code,
+                 qr_token: 'token-' + code.toLowerCase(),
+                 total_invited: 34,
+                 present_count: 0
+             };
+             this.meetingsList.unshift(newItem);
+             localStorage.setItem('polines_senat_meetings', JSON.stringify(this.meetingsList));
+             this.showAddMeetingModal = false;
+             this.newMeeting = { title: '', type: 'Sidang Pleno', date: '', time: '', room: 'Ruang Sidang Utama Lantai 2 Gedung Direktorat Polines' };
+         },
+
+         toggleVoteStatus() {
+             this.activeVote.isOpen = !this.activeVote.isOpen;
+             localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+         },
+
+         deployNewVote() {
+             if (!this.newVoteForm.title) {
+                 alert('Ketikkan pokok putusan voting terlebih dahulu.');
+                 return;
+             }
+             const num = Math.floor(100 + Math.random() * 900);
+             this.activeVote = {
+                 isOpen: true,
+                 id: 'VOTE-2026-' + num,
+                 title: this.newVoteForm.title,
+                 description: this.newVoteForm.description || 'Musyawarah mufakat & pemungutan suara resmi sidang Senat Akademik Polines.',
+                 options: [
+                     { id: 'setuju', label: 'Setuju / Mufakat', count: 0 },
+                     { id: 'tolak', label: 'Menolak / Keberatan', count: 0 },
+                     { id: 'abstain', label: 'Abstain / Pikir-pikir', count: 0 }
+                 ]
+             };
+             localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+             localStorage.removeItem('polines_member_my_vote'); // Reset suara anggota
+             this.showNewVoteModal = false;
+             this.newVoteForm = { title: '', description: '' };
          }
      }">
     
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {{-- KOLOM KIRI: KENDALI PROYEKTOR & KUORUM SIDANG --}}
+        {{-- KOLOM KIRI: KENDALI PROYEKTOR, E-VOTING & KUORUM SIDANG --}}
         <div class="lg:col-span-8 space-y-6">
             
-            {{-- PANEL PROYEKTOR RUANG SIDANG (HIGH-END INSTITUTIONAL DISPLAY) --}}
+            {{-- ================= MODUL 1: MONITOR & KENDALI E-VOTING SIDANG ================= --}}
             <div class="rounded-xl border border-slate-300 bg-white shadow-xs overflow-hidden">
-                {{-- Bar Kontrol Operator --}}
+                <div class="bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full" :class="activeVote && activeVote.isOpen ? 'bg-amber-400 animate-pulse' : 'bg-slate-500'"></span>
+                        <span class="text-xs font-bold uppercase tracking-wider">Layar Rekapitulasi E-Voting Sidang (Proyektor)</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button @click="toggleVoteStatus" type="button" 
+                                class="rounded px-3 py-1 text-xs font-bold transition-all"
+                                :class="activeVote && activeVote.isOpen ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'">
+                            <span x-text="activeVote && activeVote.isOpen ? 'Kunci & Bekukan Voting' : 'Buka Kembali Bilik Suara'"></span>
+                        </button>
+                        <button @click="showNewVoteModal = true" type="button" class="rounded bg-polines-navy hover:bg-polines-navyDark text-white border border-slate-700 px-3 py-1 text-xs font-bold">
+                            + Gelar Voting Baru
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div class="border-b border-slate-200 pb-4 mb-5 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-[11px] font-mono font-bold text-polines-orange uppercase" x-text="'ID: ' + activeVote.id"></span>
+                            <h3 class="text-base font-extrabold text-slate-950 mt-0.5" x-text="activeVote.title"></h3>
+                            <p class="text-xs text-slate-500 mt-1" x-text="activeVote.description"></p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-mono text-slate-400">Total Suara Masuk:</span>
+                            <div class="text-2xl font-bold font-mono text-slate-900 tabular-nums">
+                                <span x-text="(activeVote.options[0].count + activeVote.options[1].count + activeVote.options[2].count)"></span>
+                                <span class="text-xs text-slate-400 font-normal">/ 34 Anggota</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Bar Hasil Suara Realtime --}}
+                    <div class="space-y-4">
+                        {{-- Setuju --}}
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span class="text-emerald-900">Setuju / Mufakat</span>
+                                <span class="font-mono text-emerald-800" x-text="activeVote.options[0].count + ' Suara'"></span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden">
+                                <div class="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                                     :style="'width: ' + ((activeVote.options[0].count / 34) * 100) + '%'"></div>
+                            </div>
+                        </div>
+
+                        {{-- Tolak --}}
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span class="text-rose-900">Menolak / Keberatan</span>
+                                <span class="font-mono text-rose-800" x-text="activeVote.options[1].count + ' Suara'"></span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden">
+                                <div class="bg-rose-600 h-full rounded-full transition-all duration-300"
+                                     :style="'width: ' + ((activeVote.options[1].count / 34) * 100) + '%'"></div>
+                            </div>
+                        </div>
+
+                        {{-- Abstain --}}
+                        <div>
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span class="text-slate-700">Abstain / Pikir-pikir</span>
+                                <span class="font-mono text-slate-700" x-text="activeVote.options[2].count + ' Suara'"></span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden">
+                                <div class="bg-slate-400 h-full rounded-full transition-all duration-300"
+                                     :style="'width: ' + ((activeVote.options[2].count / 34) * 100) + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ================= MODUL 2: PANEL PRESENSI DIGITAL & PROYEKTOR ================= --}}
+            <div class="rounded-xl border border-slate-300 bg-white shadow-xs overflow-hidden">
                 <div class="bg-slate-100 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Kontrol Presensi Digital</span>
@@ -94,9 +282,7 @@
                         <div class="md:col-span-5 flex flex-col items-center">
                             <div class="bg-white p-4 rounded-lg border border-slate-300 shadow-xs">
                                 <svg class="w-44 h-44 text-slate-950" viewBox="0 0 100 100" fill="currentColor">
-                                    {{-- Position Markers Autentik --}}
                                     <path d="M4 4h26v26H4V4zm4 4v18h18V8H8zm4 4h10v10H12V12zM70 4h26v26H70V4zm4 4v18h18V8H74zm4 4h10v10H78V12zM4 70h26v26H4V70zm4 4v18h18V74H8zm4 4h10v10H12V78z" />
-                                    {{-- Data Matrix Nodes --}}
                                     <rect x="36" y="6" width="6" height="6" />
                                     <rect x="46" y="10" width="6" height="6" />
                                     <rect x="56" y="6" width="6" height="6" />
@@ -163,7 +349,7 @@
                 </div>
             </div>
 
-            {{-- MONITOR KUORUM INSTITUSIONAL --}}
+            {{-- ================= MODUL 3: MONITOR KUORUM INSTITUSIONAL ================= --}}
             <div class="rounded-xl border border-slate-300 bg-white p-6 shadow-xs">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <div>
@@ -176,9 +362,7 @@
                     </span>
                 </div>
 
-                {{-- Indikator Batang Kuorum --}}
                 <div class="relative w-full bg-slate-200 h-4 rounded overflow-hidden mb-4">
-                    {{-- Ambang Batas 2/3 (66.6%) --}}
                     <div class="absolute top-0 bottom-0 left-[66.6%] w-0.5 bg-rose-500 z-10" title="Ambang Batas Kuorum (66.7%)"></div>
                     <div class="bg-emerald-600 h-full rounded transition-all duration-500" style="width: 82.3%;"></div>
                 </div>
@@ -188,7 +372,6 @@
                     <span>Total: 34 Anggota</span>
                 </div>
 
-                {{-- Metrik Detail Kehadiran --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
                         <div class="text-[11px] font-semibold text-slate-500 uppercase">Hadir di Ruang Sidang</div>
@@ -210,31 +393,42 @@
 
         </div>
 
-        {{-- KOLOM KANAN: KALENDER MASTER & DOKUMEN BERITA ACARA --}}
+        {{-- KOLOM KANAN: TAMBAH SIDANG & KALENDER MASTER --}}
         <div class="lg:col-span-4 space-y-6">
-            {{-- Master Jadwal --}}
+            
+            {{-- Tombol Aksi Tambah Sidang --}}
+            <button @click="showAddMeetingModal = true" type="button" class="w-full py-3 px-4 rounded-xl bg-polines-orange hover:bg-orange-600 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Jadwal Sidang Baru
+            </button>
+
+            {{-- Master Jadwal Dinamis --}}
             <div class="rounded-xl border border-slate-300 bg-white p-5 shadow-xs">
                 <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">Jadwal Kalender Sidang</h3>
-                    <span class="text-xs font-mono text-slate-500">{{ count($meetings) }} Agenda</span>
+                    <span class="text-xs font-mono text-slate-500" x-text="meetingsList.length + ' Agenda'"></span>
                 </div>
 
-                <div class="space-y-3">
-                    @foreach($meetings as $mtg)
-                        <div class="rounded-lg border p-3.5 {{ $mtg['status'] === 'Sedang Berlangsung' ? 'border-amber-300 bg-amber-50/50' : 'border-slate-200 bg-slate-50/70' }}">
+                <div class="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+                    <template x-for="mtg in meetingsList" :key="mtg.id">
+                        <div class="rounded-lg border p-3.5"
+                             :class="mtg.status === 'Sedang Berlangsung' ? 'border-amber-300 bg-amber-50/50' : 'border-slate-200 bg-slate-50/70'">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase {{ $mtg['status'] === 'Sedang Berlangsung' ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-700' }}">
-                                    {{ $mtg['status'] }}
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase"
+                                      :class="mtg.status === 'Sedang Berlangsung' ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-700'"
+                                      x-text="mtg.status">
                                 </span>
-                                <span class="font-mono text-xs font-bold text-slate-700 tabular-nums">{{ $mtg['session_code'] }}</span>
+                                <span class="font-mono text-xs font-bold text-slate-700 tabular-nums" x-text="mtg.session_code"></span>
                             </div>
-                            <h4 class="text-xs font-bold text-slate-900 leading-snug mt-1">{{ $mtg['title'] }}</h4>
+                            <h4 class="text-xs font-bold text-slate-900 leading-snug mt-1" x-text="mtg.title"></h4>
                             <div class="text-[11px] text-slate-500 mt-2 space-y-0.5 font-mono">
-                                <div>📅 {{ $mtg['date'] }} &bull; {{ $mtg['time'] }}</div>
-                                <div>📍 {{ $mtg['room'] }}</div>
+                                <div>📅 <span x-text="mtg.date"></span> &bull; <span x-text="mtg.time"></span></div>
+                                <div>📍 <span x-text="mtg.room"></span></div>
                             </div>
                         </div>
-                    @endforeach
+                    </template>
                 </div>
             </div>
 
@@ -259,5 +453,91 @@
         </div>
 
     </div>
+
+    {{-- ================= MODAL: TAMBAH JADWAL SIDANG BARU ================= --}}
+    <div x-show="showAddMeetingModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-300 shadow-2xl max-w-lg w-full p-6 space-y-4" @click.away="showAddMeetingModal = false">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-base font-extrabold text-slate-900">Jadwalkan Sidang Senat Baru</h3>
+                <button @click="showAddMeetingModal = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Judul / Agenda Sidang</label>
+                    <input type="text" x-model="newMeeting.title" placeholder="Contoh: Rapat Pleno Penetapan Standar Kurikulum Vokasi 2026" class="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:border-polines-blue">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">Jenis Sidang</label>
+                        <select x-model="newMeeting.type" class="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:border-polines-blue bg-white">
+                            <option value="Sidang Pleno">Sidang Pleno</option>
+                            <option value="Rapat Komisi I">Rapat Komisi I (Akademik)</option>
+                            <option value="Rapat Komisi II">Rapat Komisi II (Keuangan)</option>
+                            <option value="Rapat Komisi III">Rapat Komisi III (Kemahasiswaan)</option>
+                            <option value="Rapat Komisi IV">Rapat Komisi IV (SDM)</option>
+                            <option value="Rapat Komisi V">Rapat Komisi V (Etika)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">Tanggal</label>
+                        <input type="date" x-model="newMeeting.date" class="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:border-polines-blue">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Waktu / Jam Sidang</label>
+                    <input type="text" x-model="newMeeting.time" placeholder="Contoh: 09:00 - 12:00 WIB" class="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:border-polines-blue">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Ruangan / Tempat Sidang</label>
+                    <input type="text" x-model="newMeeting.room" class="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:border-polines-blue">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                <button @click="showAddMeetingModal = false" type="button" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                    Batal
+                </button>
+                <button @click="saveNewMeeting" type="button" class="px-5 py-2 rounded-lg bg-polines-navy text-white text-xs font-bold hover:bg-polines-navyDark">
+                    Simpan Agenda Sidang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================= MODAL: GELAR VOTING BARU ================= --}}
+    <div x-show="showNewVoteModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-300 shadow-2xl max-w-lg w-full p-6 space-y-4" @click.away="showNewVoteModal = false">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-base font-extrabold text-slate-900">Gelar Sesi E-Voting Sidang Baru</h3>
+                <button @click="showNewVoteModal = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Pokok Putusan / Pertanyaan Voting</label>
+                    <input type="text" x-model="newVoteForm.title" placeholder="Contoh: Pengesahan Draf Rencana Strategis (Renstra) Polines 2026-2030" class="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:border-polines-blue">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Deskripsi / Penjelasan Pasal</label>
+                    <textarea rows="3" x-model="newVoteForm.description" placeholder="Jelaskan dasar pertimbangan putusan sidang..." class="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:border-polines-blue"></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                <button @click="showNewVoteModal = false" type="button" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">
+                    Batal
+                </button>
+                <button @click="deployNewVote" type="button" class="px-5 py-2 rounded-lg bg-polines-orange text-white text-xs font-bold hover:bg-orange-600">
+                    Luncurkan ke Bilik Suara Anggota
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection

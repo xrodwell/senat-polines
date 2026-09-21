@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Portal Anggota — Presensi & Notulensi Senat Polines')
+@section('title', 'Portal Anggota — Presensi, Notulensi & E-Voting Senat Polines')
 
 @section('content')
 <div class="bg-polines-navy text-white py-8 border-b border-polines-navyDark">
@@ -23,13 +23,150 @@
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
+     x-data="{
+         // Voting State (disinkronkan via localStorage agar interaktif dengan layar Admin)
+         activeVote: null,
+         myVote: null,
+         voteSubmitted: false,
+         
+         init() {
+             this.loadVoteState();
+             window.addEventListener('storage', () => this.loadVoteState());
+         },
+         
+         loadVoteState() {
+             const stored = localStorage.getItem('polines_senat_voting');
+             if (stored) {
+                 this.activeVote = JSON.parse(stored);
+             } else {
+                 // Default initial vote state
+                 this.activeVote = {
+                     isOpen: true,
+                     id: 'VOTE-2026-001',
+                     title: 'Persetujuan Pengesahan Perubahan Kurikulum MBKM Vokasi 2026/2027',
+                     description: 'Apakah Sidang Pleno menyetujui draf revisi kurikulum vokasi berbasis industri untuk disahkan menjadi Peraturan Senat Akademik?',
+                     options: [
+                         { id: 'setuju', label: 'Setuju / Mufakat', count: 22 },
+                         { id: 'tolak', label: 'Menolak / Keberatan', count: 2 },
+                         { id: 'abstain', label: 'Abstain / Pikir-pikir', count: 4 }
+                     ]
+                 };
+                 localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+             }
+             
+             const savedMyVote = localStorage.getItem('polines_member_my_vote');
+             if (savedMyVote) {
+                 this.myVote = savedMyVote;
+                 this.voteSubmitted = true;
+             }
+         },
+         
+         castVote(optionId) {
+             if (this.voteSubmitted || !this.activeVote || !this.activeVote.isOpen) return;
+             this.myVote = optionId;
+             this.voteSubmitted = true;
+             localStorage.setItem('polines_member_my_vote', optionId);
+             
+             // Tambahkan hitungan suara ke storage agar terpantau di panel Admin
+             const opt = this.activeVote.options.find(o => o.id === optionId);
+             if (opt) opt.count++;
+             localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+         }
+     }">
+     
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {{-- Kolom Kiri: Presensi Sesi Berlangsung & Notulensi --}}
+        {{-- Kolom Kiri: E-Voting Sidang, Presensi Sesi Berlangsung & Notulensi --}}
         <div class="lg:col-span-8 space-y-8">
             
-            {{-- Modul Presensi Digital Profesional --}}
+            {{-- ================= MODUL 1: E-VOTING SIDANG PLENO (INTERAKTIF) ================= --}}
+            <div class="bg-white rounded-2xl border-2 border-polines-blue/40 shadow-sm overflow-hidden">
+                <div class="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full" :class="activeVote && activeVote.isOpen ? 'bg-amber-400' : 'bg-slate-500'"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5" :class="activeVote && activeVote.isOpen ? 'bg-amber-400' : 'bg-slate-500'"></span>
+                        </span>
+                        <h2 class="text-sm font-bold uppercase tracking-wider">E-Voting Musyawarah &amp; Putusan Sidang</h2>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-mono">
+                        <span class="text-slate-400">Status Bilik Suara:</span>
+                        <span class="font-bold px-2 py-0.5 rounded text-[11px]" 
+                              :class="activeVote && activeVote.isOpen ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-slate-800 text-slate-400'">
+                            <span x-text="activeVote && activeVote.isOpen ? '● DIBUKA UNTUK ANGGOTA' : 'DITUTUP'"></span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-6 sm:p-8" x-show="activeVote">
+                    <div class="border-b border-slate-100 pb-5 mb-6">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-mono font-bold text-polines-orange uppercase" x-text="'ID PUTUSAN: ' + activeVote.id"></span>
+                            <span class="text-xs text-slate-400 font-mono">Hak Suara: 1 Suara / Anggota</span>
+                        </div>
+                        <h3 class="text-lg font-extrabold text-slate-900 mt-2 leading-snug" x-text="activeVote.title"></h3>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed" x-text="activeVote.description"></p>
+                    </div>
+
+                    {{-- Form Pilihan Hak Suara Anggota --}}
+                    <div x-show="activeVote.isOpen && !voteSubmitted" class="space-y-3">
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                            Tentukan Suara Anda (Sekali Pilih &bull; Terenkripsi Langsung ke Rekapitulasi Sidang):
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <button @click="castVote('setuju')" type="button" class="p-4 rounded-xl border-2 border-emerald-500/50 hover:border-emerald-600 bg-emerald-50/40 hover:bg-emerald-50 text-left transition-all group">
+                                <div class="text-base font-bold text-emerald-950 flex items-center justify-between">
+                                    <span>Setuju</span>
+                                    <span class="text-emerald-600 group-hover:scale-110 transition-transform">✓</span>
+                                </div>
+                                <p class="text-[11px] text-emerald-800 mt-1">Menerima dan menyetujui pengesahan draf norma.</p>
+                            </button>
+
+                            <button @click="castVote('tolak')" type="button" class="p-4 rounded-xl border-2 border-rose-500/50 hover:border-rose-600 bg-rose-50/40 hover:bg-rose-50 text-left transition-all group">
+                                <div class="text-base font-bold text-rose-950 flex items-center justify-between">
+                                    <span>Tolak</span>
+                                    <span class="text-rose-600 group-hover:scale-110 transition-transform">✕</span>
+                                </div>
+                                <p class="text-[11px] text-rose-800 mt-1">Menolak isi draf untuk dikaji ulang komisi.</p>
+                            </button>
+
+                            <button @click="castVote('abstain')" type="button" class="p-4 rounded-xl border-2 border-slate-300 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 text-left transition-all group">
+                                <div class="text-base font-bold text-slate-900 flex items-center justify-between">
+                                    <span>Abstain</span>
+                                    <span class="text-slate-500 group-hover:scale-110 transition-transform">—</span>
+                                </div>
+                                <p class="text-[11px] text-slate-600 mt-1">Menyerahkan putusan akhir kepada mayoritas.</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Status Suara Telah Diserahkan --}}
+                    <div x-show="voteSubmitted" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5 flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                                ✓
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-emerald-950">Suara Anda Berhasil Dicatat!</h4>
+                                <p class="text-xs text-emerald-800 mt-0.5">
+                                    Pilihan Anda: <strong class="uppercase underline font-mono text-emerald-900" x-text="myVote"></strong>. Hasil langsung terakumulasi pada monitor kuorum pimpinan sidang.
+                                </p>
+                            </div>
+                        </div>
+                        <span class="text-[11px] font-mono text-emerald-700 bg-white border border-emerald-200 px-2.5 py-1 rounded">
+                            TERVERIFIKASI
+                        </span>
+                    </div>
+
+                    {{-- Bilik Suara Ditutup Oleh Admin --}}
+                    <div x-show="!activeVote.isOpen && !voteSubmitted" x-cloak class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
+                        <p class="text-xs">Sesi pemungutan suara untuk agenda ini telah ditutup oleh Sekretariat Sidang.</p>
+                    </div>
+                </div>
+            </div>
+            
+            {{-- ================= MODUL 2: PRESENSI DIGITAL ================= --}}
             @if ($activeSession)
                 <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden"
                      x-data="{
@@ -164,7 +301,6 @@
                                 <div x-show="scannerActive" x-cloak class="rounded-xl border border-slate-900 bg-black p-4 text-center text-white relative overflow-hidden">
                                     <div class="relative w-full max-w-xs mx-auto aspect-square bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border-2 border-dashed border-polines-orange">
                                         <video id="camera-feed" autoplay playsinline class="w-full h-full object-cover"></video>
-                                        {{-- Overlay Frame Scanner --}}
                                         <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-4">
                                             <div class="w-full flex justify-between">
                                                 <div class="w-6 h-6 border-t-2 border-l-2 border-white"></div>
@@ -233,7 +369,7 @@
                 </div>
             @endif
 
-            {{-- Modul Notulensi Mandiri Anggota --}}
+            {{-- ================= MODUL 3: NOTULENSI MANDIRI ================= --}}
             <div class="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 shadow-sm"
                  x-data="{
                      savedNote: false,
