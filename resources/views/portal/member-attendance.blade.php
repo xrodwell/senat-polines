@@ -3,27 +3,39 @@
 @section('title', 'Portal Anggota — Presensi, Notulensi & E-Voting Senat Polines')
 
 @section('content')
-<div class="bg-polines-navy text-white py-8 border-b border-polines-navyDark">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-2 mb-1">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span class="text-xs font-semibold text-blue-200 uppercase tracking-wider">Portal Kerja Internal Anggota</span>
+{{-- ================= IDENTITAS JABATAN ANGGOTA ================= --}}
+<div class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-wrap items-start justify-between gap-6">
+            <div class="flex items-start gap-4 min-w-0">
+                <div class="h-11 w-11 shrink-0 rounded border border-slate-200 bg-slate-50 flex items-center justify-center text-polines-navy">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <nav class="text-[11px] text-slate-500" aria-label="Breadcrumb">
+                        <span class="text-slate-700 font-medium">Portal Anggota</span>
+                        <span class="mx-1 text-slate-300">/</span>
+                        <span>Presensi, Notulensi &amp; E-Voting</span>
+                    </nav>
+                    <h1 class="text-xl font-bold text-polines-navy tracking-tight mt-1">Prof. Dr. Ir. Budi Rahardjo, M.T.</h1>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Ketua Komisi I Bidang Akademik &bull; <span class="font-mono tabular-nums">NIP. 197108151998021001</span>
+                    </p>
+                </div>
             </div>
-            <h1 class="text-2xl font-extrabold tracking-tight">Prof. Dr. Ir. Budi Rahardjo, M.T.</h1>
-            <p class="text-xs text-blue-200/80 font-mono mt-0.5">Ketua Komisi I &bull; NIP. 197108151998021001</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <span class="text-xs text-blue-200 font-semibold">Kehadiran Sidang 2026:</span>
-            <div class="bg-white/10 border border-white/15 rounded-xl px-4 py-2 flex items-center gap-3 backdrop-blur-sm">
-                <span class="text-xl font-bold font-mono text-emerald-400 tabular-nums">94%</span>
-                <span class="text-[11px] text-blue-100 leading-tight">16 dari 17 Sidang<br><span class="text-emerald-300 font-semibold">Tercatat Hadir</span></span>
+
+            <div class="shrink-0 text-right border-l-2 border-polines-orange pl-4">
+                <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Rekap Kehadiran Sidang 2026</div>
+                <div class="text-sm font-bold text-slate-900 tabular-nums mt-0.5">16 dari 17 sidang &bull; 94%</div>
+                <div class="text-[11px] text-slate-500 mt-1">Masa Bakti 2025 &ndash; 2028</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
      x-data="{
          // Voting State (disinkronkan via localStorage agar interaktif dengan layar Admin)
          activeVote: null,
@@ -35,8 +47,9 @@
              window.addEventListener('storage', () => this.loadVoteState());
          },
          
-         loadVoteState() {
-             const stored = localStorage.getItem('polines_senat_voting');
+          loadVoteState() {
+              const stored = localStorage.getItem('polines_senat_voting');
+              this.computeNumericTitle();
              if (stored) {
                  this.activeVote = JSON.parse(stored);
              } else {
@@ -71,9 +84,21 @@
              // Tambahkan hitungan suara ke storage agar terpantau di panel Admin
              const opt = this.activeVote.options.find(o => o.id === optionId);
              if (opt) opt.count++;
-             localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
-         }
-     }">
+              localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+          },
+
+          isNumericTitle: false,
+          computeNumericTitle() {
+              // Judul yang hanya berisi digit/spasi (mis. "1") dirender sebagai nomor putusan, bukan teks besar
+              const t = (this.activeVote && this.activeVote.title ? this.activeVote.title : '').trim();
+              this.isNumericTitle = t.length > 0 && t.length <= 12 && /^[\d\s\.\-\/]+$/.test(t);
+          },
+
+          voteLabel(id) {
+              const map = { setuju: 'Setuju', tolak: 'Tolak', abstain: 'Abstain' };
+              return map[id] || id;
+          }
+      }">
      
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
@@ -81,31 +106,25 @@
         <div class="lg:col-span-8 space-y-8">
             
             {{-- ================= MODUL 1: E-VOTING SIDANG PLENO (INTERAKTIF) ================= --}}
-            <div class="bg-white rounded-2xl border-2 border-polines-blue/40 shadow-sm overflow-hidden">
-                <div class="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <span class="relative flex h-2.5 w-2.5">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full" :class="activeVote && activeVote.isOpen ? 'bg-amber-400' : 'bg-slate-500'"></span>
-                            <span class="relative inline-flex rounded-full h-2.5 w-2.5" :class="activeVote && activeVote.isOpen ? 'bg-amber-400' : 'bg-slate-500'"></span>
-                        </span>
-                        <h2 class="text-sm font-bold uppercase tracking-wider">E-Voting Musyawarah &amp; Putusan Sidang</h2>
-                    </div>
-                    <div class="flex items-center gap-2 text-xs font-mono">
-                        <span class="text-slate-400">Status Bilik Suara:</span>
-                        <span class="font-bold px-2 py-0.5 rounded text-[11px]" 
-                              :class="activeVote && activeVote.isOpen ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-slate-800 text-slate-400'">
-                            <span x-text="activeVote && activeVote.isOpen ? '● DIBUKA UNTUK ANGGOTA' : 'DITUTUP'"></span>
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-800">E-Voting Musyawarah &amp; Putusan Sidang</h2>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-slate-500">Status Bilik Suara:</span>
+                        <span class="font-semibold px-2 py-0.5 rounded text-[11px] border"
+                              :class="activeVote && activeVote.isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-300'">
+                            <span x-text="activeVote && activeVote.isOpen ? 'DIBUKA UNTUK ANGGOTA' : 'DITUTUP'"></span>
                         </span>
                     </div>
                 </div>
 
                 <div class="p-6 sm:p-8" x-show="activeVote">
-                    <div class="border-b border-slate-100 pb-5 mb-6">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-mono font-bold text-polines-orange uppercase" x-text="'ID PUTUSAN: ' + activeVote.id"></span>
-                            <span class="text-xs text-slate-400 font-mono">Hak Suara: 1 Suara / Anggota</span>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-5 sm:p-6 mb-6">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-4">
+                            <span class="text-[11px] font-mono font-semibold text-slate-500 uppercase" x-text="'Pokok Putusan: ' + activeVote.id"></span>
+                            <span class="text-[11px] text-slate-500">Hak Suara: 1 Suara / Anggota</span>
                         </div>
-                        <h3 class="text-lg font-extrabold text-slate-900 mt-2 leading-snug" x-text="activeVote.title"></h3>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-snug" x-text="activeVote.title"></h3>
                         <p class="text-xs text-slate-600 mt-2 leading-relaxed" x-text="activeVote.description"></p>
                     </div>
 
@@ -142,19 +161,19 @@
                     </div>
 
                     {{-- Status Suara Telah Diserahkan --}}
-                    <div x-show="voteSubmitted" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5 flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                    <div x-show="voteSubmitted" x-cloak class="rounded-xl border border-emerald-300 bg-slate-50 p-5 flex flex-wrap items-start justify-between gap-4">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded border border-emerald-300 bg-white text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0">
                                 ✓
                             </div>
-                            <div>
-                                <h4 class="text-sm font-bold text-emerald-950">Suara Anda Berhasil Dicatat!</h4>
-                                <p class="text-xs text-emerald-800 mt-0.5">
-                                    Pilihan Anda: <strong class="uppercase underline font-mono text-emerald-900" x-text="myVote"></strong>. Hasil langsung terakumulasi pada monitor kuorum pimpinan sidang.
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-bold text-slate-900">Suara Anda Berhasil Dicatat</h4>
+                                <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                                    Pilihan tercatat: <strong class="font-mono uppercase text-slate-900" x-text="myVote"></strong>. Rekapitulasi suara dinyatakan sah dan terakumulasi pada monitor kuorum pimpinan sidang.
                                 </p>
                             </div>
                         </div>
-                        <span class="text-[11px] font-mono text-emerald-700 bg-white border border-emerald-200 px-2.5 py-1 rounded">
+                        <span class="text-[11px] font-mono text-slate-500 border border-slate-300 bg-white px-2.5 py-1 rounded shrink-0">
                             TERVERIFIKASI
                         </span>
                     </div>
@@ -219,17 +238,11 @@
                      }">
                     
                     {{-- Header Kartu Presensi --}}
-                    <div class="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <span class="relative flex h-2.5 w-2.5">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
-                            </span>
-                            <h2 class="text-sm font-bold uppercase tracking-wider">Sesi Presensi Sidang Aktif</h2>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs text-slate-300 font-mono">
+                    <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-800">Sesi Presensi Sidang Aktif</h2>
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
                             <span>Sisa Waktu Kuorum:</span>
-                            <span class="bg-slate-800 text-amber-400 font-bold px-2 py-0.5 rounded tabular-nums">24:18</span>
+                            <span class="border border-slate-300 bg-white text-slate-700 font-semibold px-2 py-0.5 rounded tabular-nums">24:18</span>
                         </div>
                     </div>
 
@@ -268,11 +281,11 @@
                             <div class="flex border-b border-slate-200 mb-6">
                                 <button @click="activeTab = 'qr'; stopCamera()" type="button" class="pb-3 px-4 text-xs font-bold uppercase tracking-wider transition-all border-b-2"
                                         :class="activeTab === 'qr' ? 'border-polines-navy text-polines-navy' : 'border-transparent text-slate-400 hover:text-slate-700'">
-                                    📷 Scan Kamera QR Code
+                                    Scan Kamera QR Code
                                 </button>
                                 <button @click="activeTab = 'code'; stopCamera()" type="button" class="pb-3 px-4 text-xs font-bold uppercase tracking-wider transition-all border-b-2"
                                         :class="activeTab === 'code' ? 'border-polines-navy text-polines-navy' : 'border-transparent text-slate-400 hover:text-slate-700'">
-                                    ⌨️ Input Kode 6-Digit
+                                    Input Kode 6-Digit
                                 </button>
                             </div>
 
@@ -298,29 +311,29 @@
                                 </div>
 
                                 {{-- Jendela Bidik Kamera Interaktif --}}
-                                <div x-show="scannerActive" x-cloak class="rounded-xl border border-slate-900 bg-black p-4 text-center text-white relative overflow-hidden">
-                                    <div class="relative w-full max-w-xs mx-auto aspect-square bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border-2 border-dashed border-polines-orange">
+                                <div x-show="scannerActive" x-cloak class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center relative overflow-hidden">
+                                    <div class="relative w-full max-w-xs mx-auto aspect-square bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center border-2 border-dashed border-slate-300">
                                         <video id="camera-feed" autoplay playsinline class="w-full h-full object-cover"></video>
                                         <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-4">
                                             <div class="w-full flex justify-between">
-                                                <div class="w-6 h-6 border-t-2 border-l-2 border-white"></div>
-                                                <div class="w-6 h-6 border-t-2 border-r-2 border-white"></div>
+                                                <div class="w-6 h-6 border-t-2 border-l-2 border-white/80"></div>
+                                                <div class="w-6 h-6 border-t-2 border-r-2 border-white/80"></div>
                                             </div>
-                                            <div class="text-[11px] font-mono bg-black/75 px-3 py-1 rounded text-amber-300">
+                                            <div class="text-[11px] font-medium bg-white/85 border border-slate-300 px-3 py-1 rounded text-slate-700">
                                                 Arahkan ke QR Code Proyektor
                                             </div>
                                             <div class="w-full flex justify-between">
-                                                <div class="w-6 h-6 border-b-2 border-l-2 border-white"></div>
-                                                <div class="w-6 h-6 border-b-2 border-r-2 border-white"></div>
+                                                <div class="w-6 h-6 border-b-2 border-l-2 border-white/80"></div>
+                                                <div class="w-6 h-6 border-b-2 border-r-2 border-white/80"></div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="mt-4 flex flex-wrap items-center justify-center gap-3">
-                                        <button @click="simulateScan()" type="button" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-colors">
-                                            Simulasikan QR Terdeteksi (Demo Instan)
+                                        <button @click="simulateScan()" type="button" class="rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 px-4 py-2 text-xs font-bold transition-colors">
+                                            Simulasikan QR Terdeteksi
                                         </button>
-                                        <button @click="stopCamera()" type="button" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 text-xs font-semibold transition-colors">
+                                        <button @click="stopCamera()" type="button" class="rounded-lg bg-polines-navy hover:bg-polines-navyDark text-white px-4 py-2 text-xs font-semibold transition-colors">
                                             Tutup Kamera
                                         </button>
                                     </div>
@@ -347,13 +360,13 @@
                         {{-- Panel Status Kehadiran Sah --}}
                         <div x-show="isCheckedIn" x-cloak class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl font-extrabold shrink-0 shadow-xs">
+                                <div class="w-12 h-12 rounded border border-emerald-300 bg-white text-emerald-700 flex items-center justify-center text-lg font-bold shrink-0 shadow-xs">
                                     ✓
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <h4 class="text-base font-extrabold text-emerald-950">Presensi Berhasil Diverifikasi</h4>
-                                        <span class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300">STATUS: SAH</span>
+                                        <span class="text-[10px] font-mono font-semibold bg-white text-slate-700 px-2 py-0.5 rounded border border-slate-300">STATUS: SAH</span>
                                     </div>
                                     <p class="text-xs text-emerald-800 mt-1">
                                         Tercatat atas nama <strong>Prof. Dr. Ir. Budi Rahardjo, M.T.</strong> pada pukul <span class="font-bold tabular-nums" x-text="checkinTime"></span>.
@@ -407,29 +420,44 @@
         {{-- Kolom Kanan: Jadwal Sidang Mendatang & Layanan Sekretariat --}}
         <div class="lg:col-span-4 space-y-6">
             <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm">
-                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900 mb-4">Agenda Sidang Berikutnya</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-900">Agenda Sidang Berikutnya</h3>
+                    <span class="text-[10px] font-mono text-slate-500 uppercase">Sekretariat Senat</span>
+                </div>
                 <div class="space-y-3">
                     @foreach($upcomingMeetings as $m)
                         <div class="rounded-xl border border-slate-200/70 bg-slate-50/50 p-4">
-                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-polines-navy uppercase mb-1.5">
-                                {{ $m['type'] }}
-                            </span>
-                            <h4 class="text-xs font-bold text-slate-900 leading-snug mb-2">{{ $m['title'] }}</h4>
-                            <div class="text-[11px] text-slate-500 space-y-0.5">
-                                <p class="tabular-nums">📅 {{ $m['date'] }} &bull; {{ $m['time'] }}</p>
-                                <p>📍 {{ $m['room'] }}</p>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-polines-navy uppercase">
+                                    {{ $m['type'] }}
+                                </span>
+                                <span class="text-[10px] font-mono text-slate-400 tabular-nums">No. {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}/SID/{{ date('Y') }}</span>
                             </div>
+                            <h4 class="text-xs font-bold text-slate-900 leading-snug mb-2">{{ $m['title'] }}</h4>
+                            <dl class="text-[11px] text-slate-500 space-y-1">
+                                <div class="flex gap-2 tabular-nums">
+                                    <dt class="shrink-0 w-14 font-semibold text-slate-600">Waktu</dt>
+                                    <dd class="min-w-0">{{ $m['date'] }} &bull; {{ $m['time'] }}</dd>
+                                </div>
+                                <div class="flex gap-2">
+                                    <dt class="shrink-0 w-14 font-semibold text-slate-600">Ruang</dt>
+                                    <dd class="min-w-0">{{ $m['room'] }}</dd>
+                                </div>
+                            </dl>
                         </div>
                     @endforeach
                 </div>
             </div>
 
             <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm">
-                <h3 class="text-sm font-extrabold text-slate-900 mb-2">Permohonan Izin Resmi</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-extrabold text-slate-900">Permohonan Izin Resmi</h3>
+                    <span class="text-[10px] font-mono text-slate-500 uppercase">Form. SNT-IZ/02</span>
+                </div>
                 <p class="text-xs text-slate-500 leading-relaxed mb-4">
-                    Bila anggota berhalangan hadir karena tugas institusi, sampaikan surat dispensasi sebelum sidang dimulai.
+                    Bila anggota berhalangan hadir karena tugas institusi, sampaikan surat dispensasi kepada Sekretariat Senat sebelum sidang dibuka pimpinan.
                 </p>
-                <a href="mailto:senat@polines.ac.id" class="inline-flex items-center justify-center w-full py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors">
+                <a href="mailto:senat@polines.ac.id" class="inline-flex items-center justify-center w-full py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors">
                     Kirim Surat Dispensasi / Izin
                 </a>
             </div>
