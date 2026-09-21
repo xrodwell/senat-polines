@@ -47,6 +47,28 @@
         @yield('content')
     </main>
 
+    {{-- Floating Demo Role Switcher untuk Pengawas / Presentasi --}}
+    <aside class="fixed bottom-4 right-4 z-50">
+        <div class="rounded-2xl border border-slate-700/80 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-md text-white flex items-center gap-2">
+            <span class="text-[11px] font-mono text-slate-400 uppercase tracking-wider px-2 font-semibold">Demo Role:</span>
+            
+            <a href="{{ route('public.home') }}" 
+               class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all {{ request()->routeIs('public.*') ? 'bg-polines-blue text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800' }}">
+                🌐 Publik
+            </a>
+
+            <a href="{{ route('portal.attendance') }}" 
+               class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all {{ request()->routeIs('portal.attendance') ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800' }}">
+                👤 Anggota Senat
+            </a>
+
+            <a href="{{ route('portal.session') }}" 
+               class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all {{ request()->routeIs('portal.session') ? 'bg-polines-orange text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800' }}">
+                ⚙️ Admin Sekretariat
+            </a>
+        </div>
+    </aside>
+
     @include('components.footer')
 
     @stack('scripts')
