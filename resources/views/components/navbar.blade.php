@@ -58,16 +58,16 @@
                 </a>
             </div>
 
-            {{-- Desktop Action --}}
+            {{-- Desktop Action: Tombol Hubungi Sekretariat --}}
             <div class="hidden md:flex items-center gap-3">
                 <a
-                    href="{{ route('portal.session') }}"
+                    href="{{ route('public.aspirations') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-polines-navy hover:bg-polines-orange transition-colors duration-150"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
-                    Portal Sidang
+                    Sampaikan Aspirasi
                 </a>
             </div>
 
@@ -135,13 +135,13 @@
 
             <div class="pt-2 border-t border-slate-100">
                 <a
-                    href="{{ route('portal.session') }}"
+                    href="{{ route('public.aspirations') }}"
                     class="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-polines-navy hover:bg-polines-orange transition-colors duration-150"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
-                    Portal Sidang
+                    Sampaikan Aspirasi
                 </a>
             </div>
         </div>

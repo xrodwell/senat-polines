@@ -89,8 +89,8 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('portal.session') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
-                            Portal Sidang
+                        <a href="{{ route('public.aspirations') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
+                            Kanal Aspirasi Civitas
                         </a>
                     </li>
                 </ul>

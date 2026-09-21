@@ -10,27 +10,15 @@
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
 
             @if ($activeSession)
-                <div class="mb-8 inline-flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 backdrop-blur-sm">
-                    <span class="relative flex h-2.5 w-2.5 mt-1.5 shrink-0">
+                <div class="mb-8 inline-flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-2.5 backdrop-blur-sm">
+                    <span class="relative flex h-2.5 w-2.5 shrink-0">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                     </span>
-                    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-                        <p class="text-sm font-semibold text-amber-100">
-                            Sidang sedang berlangsung — kode sesi
-                            <span class="font-mono font-bold tabular-nums text-white">{{ $activeSession['session_code'] }}</span>
-                            · {{ \Illuminate\Support\Str::limit($activeSession['title'], 60) }}
-                        </p>
-                        <a
-                            href="{{ route('portal.session') }}"
-                            class="inline-flex items-center gap-1.5 rounded-lg bg-polines-orange hover:bg-[#d95f14] px-3 py-1.5 text-xs font-bold text-white transition-colors duration-150"
-                        >
-                            Masuk Portal Sidang
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </a>
-                    </div>
+                    <p class="text-xs sm:text-sm font-medium text-amber-100">
+                        <span class="font-bold text-amber-300 uppercase tracking-wider text-[11px] mr-1.5">Info Sidang:</span>
+                        Sedang berlangsung <span class="font-semibold text-white">{{ $activeSession['title'] }}</span> di <span class="text-white">{{ $activeSession['room'] }}</span>
+                    </p>
                 </div>
             @endif
 
