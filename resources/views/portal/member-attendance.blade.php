@@ -36,69 +36,7 @@
 </div>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-     x-data="{
-         // Voting State (disinkronkan via localStorage agar interaktif dengan layar Admin)
-         activeVote: null,
-         myVote: null,
-         voteSubmitted: false,
-         
-         init() {
-             this.loadVoteState();
-             window.addEventListener('storage', () => this.loadVoteState());
-         },
-         
-          loadVoteState() {
-              const stored = localStorage.getItem('polines_senat_voting');
-              this.computeNumericTitle();
-             if (stored) {
-                 this.activeVote = JSON.parse(stored);
-             } else {
-                 // Default initial vote state
-                 this.activeVote = {
-                     isOpen: true,
-                     id: 'VOTE-2026-001',
-                     title: 'Persetujuan Pengesahan Perubahan Kurikulum MBKM Vokasi 2026/2027',
-                     description: 'Apakah Sidang Pleno menyetujui draf revisi kurikulum vokasi berbasis industri untuk disahkan menjadi Peraturan Senat Akademik?',
-                     options: [
-                         { id: 'setuju', label: 'Setuju / Mufakat', count: 22 },
-                         { id: 'tolak', label: 'Menolak / Keberatan', count: 2 },
-                         { id: 'abstain', label: 'Abstain / Pikir-pikir', count: 4 }
-                     ]
-                 };
-                 localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
-             }
-             
-             const savedMyVote = localStorage.getItem('polines_member_my_vote');
-             if (savedMyVote) {
-                 this.myVote = savedMyVote;
-                 this.voteSubmitted = true;
-             }
-         },
-         
-         castVote(optionId) {
-             if (this.voteSubmitted || !this.activeVote || !this.activeVote.isOpen) return;
-             this.myVote = optionId;
-             this.voteSubmitted = true;
-             localStorage.setItem('polines_member_my_vote', optionId);
-             
-             // Tambahkan hitungan suara ke storage agar terpantau di panel Admin
-             const opt = this.activeVote.options.find(o => o.id === optionId);
-             if (opt) opt.count++;
-              localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
-          },
-
-          isNumericTitle: false,
-          computeNumericTitle() {
-              // Judul yang hanya berisi digit/spasi (mis. "1") dirender sebagai nomor putusan, bukan teks besar
-              const t = (this.activeVote && this.activeVote.title ? this.activeVote.title : '').trim();
-              this.isNumericTitle = t.length > 0 && t.length <= 12 && /^[\d\s\.\-\/]+$/.test(t);
-          },
-
-          voteLabel(id) {
-              const map = { setuju: 'Setuju', tolak: 'Tolak', abstain: 'Abstain' };
-              return map[id] || id;
-          }
-      }">
+     x-data="memberAttendance">
      
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
@@ -465,4 +403,68 @@
 
     </div>
 </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('memberAttendance', () => ({
+        activeVote: null,
+        myVote: null,
+        voteSubmitted: false,
+        isNumericTitle: false,
+
+        init() {
+            this.loadVoteState();
+            window.addEventListener('storage', () => this.loadVoteState());
+        },
+
+        loadVoteState() {
+            const stored = localStorage.getItem('polines_senat_voting');
+            if (stored) {
+                this.activeVote = JSON.parse(stored);
+            } else {
+                this.activeVote = {
+                    isOpen: true,
+                    id: 'VOTE-2026-001',
+                    title: 'Persetujuan Pengesahan Perubahan Kurikulum MBKM Vokasi 2026/2027',
+                    description: 'Apakah Sidang Pleno menyetujui draf revisi kurikulum vokasi berbasis industri untuk disahkan menjadi Peraturan Senat Akademik?',
+                    options: [
+                        { id: 'setuju', label: 'Setuju / Mufakat', count: 22 },
+                        { id: 'tolak', label: 'Menolak / Keberatan', count: 2 },
+                        { id: 'abstain', label: 'Abstain / Pikir-pikir', count: 4 }
+                    ]
+                };
+                localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+            }
+            this.computeNumericTitle();
+
+            const savedMyVote = localStorage.getItem('polines_member_my_vote');
+            if (savedMyVote) {
+                this.myVote = savedMyVote;
+                this.voteSubmitted = true;
+            }
+        },
+
+        castVote(optionId) {
+            if (this.voteSubmitted || !this.activeVote || !this.activeVote.isOpen) return;
+            this.myVote = optionId;
+            this.voteSubmitted = true;
+            localStorage.setItem('polines_member_my_vote', optionId);
+
+            const opt = this.activeVote.options.find(o => o.id === optionId);
+            if (opt) opt.count++;
+            localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
+        },
+
+        computeNumericTitle() {
+            const t = (this.activeVote && this.activeVote.title ? this.activeVote.title : '').trim();
+            this.isNumericTitle = t.length > 0 && t.length <= 12 && /^[\d\s.\-\/]+$/.test(t);
+        },
+
+        voteLabel(id) {
+            const map = { setuju: 'Setuju', tolak: 'Tolak', abstain: 'Abstain' };
+            return map[id] || id;
+        }
+    }));
+});
+</script>
 @endsection
