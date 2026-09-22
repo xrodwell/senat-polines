@@ -10,15 +10,33 @@
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
 
             @if ($activeSession)
-                <div class="mb-8 inline-flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-2.5 backdrop-blur-sm">
+                <style>
+                    @keyframes senat-marquee {
+                        0%   { transform: translateX(100%); }
+                        100% { transform: translateX(-100%); }
+                    }
+                    .senat-marquee-container {
+                        -webkit-mask-image: linear-gradient(to right, black 0%, black calc(100% - 2.5rem), transparent 100%);
+                        mask-image: linear-gradient(to right, black 0%, black calc(100% - 2.5rem), transparent 100%);
+                    }
+                    .senat-marquee-text {
+                        animation: senat-marquee 22s linear infinite;
+                    }
+                    .senat-marquee-container:hover .senat-marquee-text {
+                        animation-play-state: paused;
+                    }
+                </style>
+                <div class="mb-8 flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-2.5 backdrop-blur-sm max-w-full sm:max-w-xl">
                     <span class="relative flex h-2.5 w-2.5 shrink-0">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                     </span>
-                    <p class="text-xs sm:text-sm font-medium text-amber-100">
-                        <span class="font-bold text-amber-300 uppercase tracking-wider text-[11px] mr-1.5">Info Sidang:</span>
-                        Sedang berlangsung <span class="font-semibold text-white">{{ $activeSession['title'] }}</span> di <span class="text-white">{{ $activeSession['room'] }}</span>
-                    </p>
+                    <span class="font-bold text-amber-300 uppercase tracking-wider text-[11px] shrink-0">Info Sidang:</span>
+                    <div class="senat-marquee-container flex-1 overflow-hidden whitespace-nowrap min-w-0">
+                        <p class="senat-marquee-text inline-block text-xs sm:text-sm font-medium text-amber-100">
+                            Sedang berlangsung <span class="font-semibold text-white">{{ $activeSession['title'] }}</span> di <span class="text-white">{{ $activeSession['room'] }}</span>
+                        </p>
+                    </div>
                 </div>
             @endif
 
