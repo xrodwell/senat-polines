@@ -5,9 +5,19 @@
 @section('content')
 
     {{-- ======================= HERO ======================= --}}
-    <section class="relative overflow-hidden bg-polines-navy">
-        <div class="absolute inset-0 bg-gradient-to-br from-polines-navyDark to-polines-navy"></div>
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
+    <section class="relative overflow-hidden bg-polines-navyDark">
+        {{-- Background: Politeknik Negeri Semarang Campus Environment --}}
+        <div class="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
+            <img
+                src="{{ asset('images/gedung-polines.jpg') }}"
+                alt="Gedung Polines"
+                class="w-full h-full object-cover object-center scale-105"
+                loading="eager"
+            />
+            <div class="absolute inset-0 bg-gradient-to-r from-polines-navyDark/95 via-polines-navy/90 to-polines-navyDark/80"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-polines-navyDark via-transparent to-polines-navyDark/60"></div>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
 
             @if ($activeSession)
                 <style>

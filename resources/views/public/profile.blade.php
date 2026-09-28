@@ -5,8 +5,20 @@
 @section('content')
 
     {{-- ================= PAGE HEADER ================= --}}
-    <section class="bg-polines-navy border-b border-polines-navyDark">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <section class="relative overflow-hidden bg-polines-navyDark border-b border-polines-navyDark">
+        {{-- Background: Politeknik Negeri Semarang Campus Environment --}}
+        <div class="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
+            <img
+                src="{{ asset('images/gedung-polines.jpg') }}"
+                alt="Gedung Polines"
+                class="w-full h-full object-cover object-center scale-105"
+                loading="eager"
+            />
+            <div class="absolute inset-0 bg-gradient-to-r from-polines-navyDark/95 via-polines-navy/90 to-polines-navyDark/80"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-polines-navyDark via-transparent to-polines-navyDark/60"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-300 mb-2">Tentang Kami</p>
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
                 Profil &amp; Struktur Organisasi

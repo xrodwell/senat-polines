@@ -7,13 +7,11 @@
 
             {{-- Logo & Brand --}}
             <a href="{{ route('public.home') }}" class="flex items-center gap-3 shrink-0 group">
-                <div class="w-9 h-9 rounded-lg bg-polines-navy flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14v7" />
-                    </svg>
-                </div>
+                <img
+                    src="{{ asset('images/logo-polines.png') }}"
+                    alt="Logo Politeknik Negeri Semarang"
+                    class="w-10 h-10 object-contain drop-shadow-xs"
+                />
                 <div class="leading-tight">
                     <p class="text-sm font-extrabold tracking-tight text-slate-900 group-hover:text-polines-navy transition-colors duration-150">
                         SENAT AKADEMIK
