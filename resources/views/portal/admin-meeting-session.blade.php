@@ -522,11 +522,11 @@
                         <label class="block font-semibold text-slate-600 uppercase tracking-wider mb-1">Jenis Sidang</label>
                         <select x-model="newMeeting.type" class="w-full rounded border border-slate-300 px-3 py-2.5 outline-none focus:border-polines-blue focus:ring-1 focus:ring-polines-blue bg-white">
                             <option value="Sidang Pleno">Sidang Pleno</option>
-                            <option value="Rapat Komisi I">Rapat Komisi I (Akademik)</option>
-                            <option value="Rapat Komisi II">Rapat Komisi II (Keuangan)</option>
-                            <option value="Rapat Komisi III">Rapat Komisi III (Kemahasiswaan)</option>
-                            <option value="Rapat Komisi IV">Rapat Komisi IV (SDM)</option>
-                            <option value="Rapat Komisi V">Rapat Komisi V (Etika)</option>
+                            <option value="Rapat Komisi I">Rapat Komisi I (Pendidikan dan Pengajaran)</option>
+                            <option value="Rapat Komisi II">Rapat Komisi II (Penelitian dan Pengabdian)</option>
+                            <option value="Rapat Komisi III">Rapat Komisi III (Kelembagaan dan SDM)</option>
+                            <option value="Rapat Komisi IV">Rapat Komisi IV (Pengembangan dan Kerja Sama)</option>
+                            <option value="Rapat Komisi V">Rapat Komisi V (Komisi Etik)</option>
                         </select>
                     </div>
                     <div>

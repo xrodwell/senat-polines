@@ -170,32 +170,22 @@
                 </a>
             </div>
 
-            @php
-                $komisi = [
-                    ['roman' => 'I',   'bidang' => 'Pendidikan & Pengajaran',            'ringkas' => 'Norma kurikulum vokasi, mutu pembelajaran, dan pengawasan akademik antarjurusan.'],
-                    ['roman' => 'II',  'bidang' => 'Penelitian & Pengabdian',            'ringkas' => 'Arah riset hilirisasi vokasi, paten teknologi terapan, dan kemitraan industri.'],
-                    ['roman' => 'III', 'bidang' => 'Kelembagaan & Sumber Daya',          'ringkas' => 'Kelayakan program studi baru, efisiensi fasilitas lab, dan formasi pendidik.'],
-                    ['roman' => 'IV',  'bidang' => 'Kemahasiswaan & Alumni',             'ringkas' => 'Pembinaan minat bakat, etika organisasi, dan jejaring ikatan alumni.'],
-                    ['roman' => 'V',   'bidang' => 'Penegakan Etika & Tata Tertib',      'ringkas' => 'Kepatuhan kode etik civitas, pemeriksaan pelanggaran, rekomendasi sanksi.'],
-                ];
-            @endphp
-
             <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                @foreach ($komisi as $k)
+                @foreach ($committees as $committee)
                     <a
                         href="{{ route('public.profile') }}"
                         class="group rounded-xl border border-slate-200/80 bg-white p-5 hover:border-polines-navy/40 transition-all duration-150 flex flex-col"
                     >
                         <div class="flex items-center gap-2.5 mb-3">
                             <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-polines-navy text-white text-sm font-extrabold tabular-nums">
-                                {{ $k['roman'] }}
+                                {{ str_replace('KOM-', '', $committee['code']) }}
                             </span>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Komisi {{ $k['roman'] }}</h3>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Komisi {{ str_replace('KOM-', '', $committee['code']) }}</h3>
                         </div>
                         <p class="text-sm font-bold text-slate-900 leading-snug tracking-tight group-hover:text-polines-navy transition-colors duration-150">
-                            {{ $k['bidang'] }}
+                            {{ $committee['name'] }}
                         </p>
-                        <p class="mt-2 text-xs text-slate-600 leading-relaxed flex-1">{{ $k['ringkas'] }}</p>
+                        <p class="mt-2 text-xs text-slate-600 leading-relaxed flex-1">{{ $committee['focus'] }}</p>
                         <span class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-polines-blue">
                             Selengkapnya
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
@@ -204,6 +194,63 @@
                         </span>
                     </a>
                 @endforeach
+            </div>
+        </div>
+    </section>
+
+    {{-- ================= FITUR UNGGULAN SENAT ================= --}}
+    <section class="border-t border-slate-200/80 bg-slate-50/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+            <div class="mb-8">
+                <p class="text-xs font-bold uppercase tracking-[0.15em] text-polines-orange mb-1.5">Peta Produk</p>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                    Lima Fitur Unggulan SENAT
+                </h2>
+                <p class="mt-2 max-w-3xl text-sm text-slate-600 leading-relaxed">
+                    Modul inti sistem informasi Senat: dari penjaringan aspirasi, sidang digital, hingga transparansi kinerja dan anggaran lembaga.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                @forelse ($features as $feature)
+                    <article class="rounded-xl border border-slate-200/80 bg-white p-6 flex flex-col hover:border-slate-300 transition-all duration-150">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-polines-navy text-white text-sm font-extrabold tabular-nums shrink-0">
+                                {{ $feature['code'] }}
+                            </span>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-extrabold text-slate-900 leading-snug tracking-tight">{{ $feature['title'] }}</h3>
+                                <p class="text-xs font-medium text-polines-blue mt-0.5">{{ $feature['subtitle'] }}</p>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-2.5 flex-1">
+                            @foreach ($feature['points'] as $point)
+                                <li class="text-xs text-slate-600 leading-relaxed">
+                                    <span class="font-semibold text-slate-800">{{ $point['label'] }}.</span>
+                                    {{ $point['detail'] }}
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        @if (! empty($feature['flow']))
+                            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
+                                @foreach ($feature['flow'] as $stage)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-polines-navy">{{ $stage }}</span>
+                                    @if (! $loop->last)
+                                        <svg class="w-3 h-3 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+                    </article>
+                @empty
+                    <div class="md:col-span-2 lg:col-span-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                        <p class="text-sm text-slate-500">Data fitur unggulan belum dimuat.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </section>

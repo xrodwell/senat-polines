@@ -31,27 +31,27 @@
                 <ul class="space-y-2.5">
                     <li>
                         <a href="{{ route('public.profile') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
-                            Komisi I — Pengembangan Pendidikan
+                            Komisi I — Pendidikan dan Pengajaran
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('public.profile') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
-                            Komisi II — Penelitian &amp; Pengabdian
+                            Komisi II — Penelitian dan Pengabdian kepada Masyarakat
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('public.profile') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
-                            Komisi III — Perencanaan &amp; Anggaran
+                            Komisi III — Kelembagaan dan Sumber Daya Manusia
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('public.profile') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
-                            Komisi IV — Kerja Sama &amp; Sistem Informasi
+                            Komisi IV — Pengembangan dan Kerja Sama
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('public.profile') }}" class="text-sm text-slate-600 hover:text-polines-navy transition-colors duration-150">
-                            Komisi V — Etika &amp; Keilmuan
+                            Komisi V — Komisi Etik
                         </a>
                     </li>
                 </ul>

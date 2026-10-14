@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\ArchiveRepositoryInterface;
 use App\Contracts\AspirationRepositoryInterface;
 use App\Contracts\CommitteeRepositoryInterface;
+use App\Contracts\FeatureRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
@@ -18,6 +19,7 @@ class PublicController extends Controller
         private MeetingRepositoryInterface $meetings,
         private RegulationRepositoryInterface $regulations,
         private CommitteeRepositoryInterface $committees,
+        private FeatureRepositoryInterface $features,
         private AspirationRepositoryInterface $aspirations,
         private ArchiveRepositoryInterface $archives,
     ) {}
@@ -28,6 +30,8 @@ class PublicController extends Controller
             'posts' => $this->posts->all(),
             'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
+            'committees' => $this->committees->all(),
+            'features' => $this->features->all(),
         ]);
     }
 

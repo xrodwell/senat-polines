@@ -76,11 +76,11 @@
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">Komisi Tujuan</label>
                             <select x-model="formData.committee" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:border-polines-blue focus:ring-1 focus:ring-polines-blue outline-none transition-all">
-                                <option value="Komisi I — Bidang Pendidikan & Pengajaran">Komisi I — Bidang Pendidikan & Pengajaran (Kurikulum, MBKM, Lab)</option>
-                                <option value="Komisi II — Bidang Penelitian & Pengabdian Masyarakat">Komisi II — Bidang Riset & Pengabdian (Paten, Hilirisasi)</option>
-                                <option value="Komisi III — Bidang Kelembagaan & Sumber Daya">Komisi III — Bidang Sarana & Pembukaan Prodi Baru</option>
-                                <option value="Komisi IV — Bidang Kemahasiswaan & Alumni">Komisi IV — Bidang Kegiatan Ormawa & Jejaring Karir</option>
-                                <option value="Komisi V — Bidang Penegakan Etika & Tata Tertib">Komisi V — Bidang Etika Akademik & Disiplin</option>
+                                <option value="Komisi I — Pendidikan dan Pengajaran">Komisi I — Pendidikan dan Pengajaran (Norma akademik, mutu PBM, gelar)</option>
+                                <option value="Komisi II — Penelitian dan Pengabdian kepada Masyarakat">Komisi II — Penelitian dan Pengabdian kepada Masyarakat (Riset, paten, PkM)</option>
+                                <option value="Komisi III — Kelembagaan dan Sumber Daya Manusia">Komisi III — Kelembagaan dan SDM (Organisasi, karier dosen &amp; tendik)</option>
+                                <option value="Komisi IV — Pengembangan dan Kerja Sama">Komisi IV — Pengembangan dan Kerja Sama (DUDI, MoU, sertifikasi profesi)</option>
+                                <option value="Komisi V — Komisi Etik">Komisi V — Komisi Etik (Kode etik, norma akademik, sanksi)</option>
                             </select>
                         </div>
 

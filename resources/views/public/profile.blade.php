@@ -95,27 +95,28 @@
                             <span class="w-2.5 h-2.5 rounded-full bg-polines-orange"></span>
                             <h3 class="text-sm font-bold uppercase tracking-wider">Tingkat I &bull; Pimpinan Kolektif Senat</h3>
                         </div>
-                        <span class="text-xs font-mono text-blue-200 bg-white/10 px-3 py-1 rounded-md">Periode Jabatan 2024–2028</span>
+                        <span class="text-xs font-mono text-blue-200 bg-white/10 px-3 py-1 rounded-md">Periode Jabatan 2026–2029</span>
                     </div>
 
                     <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                         <div class="pt-4 md:pt-0 md:pr-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ketua Senat</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Prof. Ir. Supriyadi, M.T.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 196803121993031002</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Dr. Sukamto, S.Kom., M.T.</h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 197101172003121001</p>
                             <p class="text-xs text-slate-600 mt-3 leading-relaxed">Penanggung jawab utama persidangan pleno dan representasi Senat ke Direktur &amp; Kemendiktisaintek.</p>
                         </div>
                         <div class="pt-4 md:pt-0 md:px-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sekretaris Senat</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Dr. Eng. Agus Subagio, S.T., M.T.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 197405191999031001</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Andi Setiawan, S.E., M.M.</h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 197607202008011011</p>
                             <p class="text-xs text-slate-600 mt-3 leading-relaxed">Pengelola persidangan, verifikasi risalah keputusan sidang pleno, dan pengelolaan arsip normatif.</p>
                         </div>
                         <div class="pt-4 md:pt-0 md:pl-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Badan Pekerja Harian (BPH)</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Sekretariat Eksekutif Senat</h4>
-                            <p class="text-xs text-slate-500 mt-0.5">Gedung Direktorat Lantai 2</p>
-                            <p class="text-xs text-slate-600 mt-3 leading-relaxed">Penyusun rancangan agenda persidangan berkala, koordinasi antar-komisi, dan penyiapan berkas sidang.</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Andi Setiawan, S.E., M.M.</h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">Ketua BPH</p>
+                            <h4 class="text-sm font-bold text-slate-800 mt-2">Vinda Setya Kartika, S.T., M.T.</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Penyusun rancangan agenda persidangan berkala, koordinasi antar-komisi, dan penyiapan berkas sidang.</p>
                         </div>
                     </div>
                 </div>
@@ -131,81 +132,24 @@
                     </div>
                 </div>
 
-                {{-- Tingkat 2: Grid 5 Komisi Tetap Fungsional --}}
+                {{-- Tingkat 2: Grid Komisi Tetap Fungsional --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    
-                    {{-- Komisi I --}}
+                    @foreach ($committees as $committee)
                     <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI I</span>
-                            <span class="text-xs text-slate-400 tabular-nums">8 Anggota</span>
+                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">{{ $committee['code'] }}</span>
+                            <span class="text-xs text-slate-400 tabular-nums">{{ $committee['members_count'] }} Anggota</span>
                         </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Pendidikan &amp; Pengajaran</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Prof. Dr. Ir. Budi Rahardjo, M.T.</p>
+                        <h4 class="text-sm font-bold text-slate-900 leading-snug">{{ $committee['name'] }}</h4>
+                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: {{ $committee['lead'] }}</p>
+                        <p class="text-xs text-slate-500 font-medium">Sekretaris: {{ $committee['secretary'] }}</p>
                         <div class="mt-3 pt-3 border-t border-slate-100">
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Kurikulum vokasi, keselarasan MBKM industri, dan evaluasi PBM antarjurusan.</p>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $committee['focus'] }}</p>
                         </div>
                     </div>
-
-                    {{-- Komisi II --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI II</span>
-                            <span class="text-xs text-slate-400 tabular-nums">7 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Penelitian &amp; Pengabdian</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Dr. Eng. Tri Handayani, S.T., M.Kom.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Hilirisasi riset terapan, perolehan paten vokasi, dan integrasi pengabdian P3M.</p>
-                        </div>
-                    </div>
-
-                    {{-- Komisi III --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI III</span>
-                            <span class="text-xs text-slate-400 tabular-nums">6 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Kelembagaan &amp; SDM</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Drs. Joko Prasetyo, M.M., Ak.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Pertimbangan pembukaan prodi baru, kelayakan lab, dan formasi pendidik.</p>
-                        </div>
-                    </div>
-
-                    {{-- Komisi IV --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI IV</span>
-                            <span class="text-xs text-slate-400 tabular-nums">8 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Kemahasiswaan &amp; Alumni</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Ir. Hendro Wijaya, M.Sc.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Pedoman ormawa, etika kemahasiswaan, dan sinergi jejaring alumni Polines.</p>
-                        </div>
-                    </div>
-
-                    {{-- Komisi V --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all md:col-span-2 lg:col-span-1">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI V</span>
-                            <span class="text-xs text-slate-400 tabular-nums">5 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Penegakan Etika &amp; Tata Tertib</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Dr. Siti Aminah, S.H., M.Hum.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Integritas akademik, penyelesaian sengketa etika, dan rekomendasi sanksi senat.</p>
-                        </div>
-                    </div>
-
+                    @endforeach
                 </div>
-
             </div>
         </div>
     </section>
@@ -232,11 +176,23 @@
                         </span>
                     </div>
 
-                    <p class="text-xs font-medium text-slate-600 mb-2">
-                        <span class="text-slate-400">Ketua Komisi:</span> {{ $committee['lead'] }}
-                    </p>
+                    <div class="flex flex-wrap gap-x-6 gap-y-1 mb-3">
+                        <p class="text-xs font-medium text-slate-600">
+                            <span class="text-slate-400">Ketua Komisi:</span> {{ $committee['lead'] }}
+                        </p>
+                        <p class="text-xs font-medium text-slate-600">
+                            <span class="text-slate-400">Sekretaris Komisi:</span> {{ $committee['secretary'] }}
+                        </p>
+                    </div>
 
                     <p class="text-sm text-slate-700 leading-relaxed">{{ $committee['tupoksi'] }}</p>
+
+                    @if (! empty($committee['members']))
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Anggota Komisi:</span>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ implode(' &middot; ', $committee['members']) }}</p>
+                        </div>
+                    @endif
                 </article>
             @empty
                 <p class="text-sm text-slate-500">Data komisi belum dimuat.</p>
