@@ -80,7 +80,7 @@
         </nav>
 
         <div class="ml-auto flex shrink-0 items-center gap-2 lg:ml-6 lg:gap-3">
-            <a href="{{ route('portal.attendance') }}"
+            <a href="{{ route('portal.login') }}"
                class="senat-tap hidden h-9 items-center gap-1.5 rounded-md border border-senat-border bg-[#f8fafc] px-4 text-[11.5px] font-semibold text-senat-primary transition-colors hover:border-senat-primary md:inline-flex">
                 <x-senat.icon name="lock" class="h-[14px] w-[14px]" />
                 Masuk Portal
@@ -106,7 +106,7 @@
                     @continue(! Route::has($item['route']))
                     <a href="{{ route($item['route']) }}">{{ $item['label'] }}</a>
                 @endforeach
-                <a href="{{ route('portal.attendance') }}">Masuk Portal</a>
+                <a href="{{ route('portal.login') }}">Masuk Portal</a>
             </nav>
         </div>
     </noscript>
@@ -165,7 +165,7 @@
                    class="senat-tap flex min-h-[48px] w-full items-center justify-center rounded-lg bg-senat-primary text-[13px] font-bold text-white">
                     Sampaikan Aspirasi
                 </a>
-                <a href="{{ route('portal.attendance') }}"
+                <a href="{{ route('portal.login') }}"
                    class="senat-tap flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border border-senat-border bg-[#f8fafc] text-[13px] font-semibold text-senat-primary">
                     <x-senat.icon name="lock" class="h-4 w-4" />
                     Masuk Portal
