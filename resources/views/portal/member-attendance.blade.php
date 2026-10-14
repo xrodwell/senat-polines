@@ -19,9 +19,9 @@
                         <span class="mx-1 text-slate-300">/</span>
                         <span>Presensi, Notulensi &amp; E-Voting</span>
                     </nav>
-                    <h1 class="text-xl font-bold text-polines-navy tracking-tight mt-1">Prof. Dr. Ir. Budi Rahardjo, M.T.</h1>
+                    <h1 class="text-xl font-bold text-polines-navy tracking-tight mt-1">Tri Yudantoro, S.Kom., M.Kom.</h1>
                     <p class="text-xs text-slate-500 mt-1">
-                        Ketua Komisi I Bidang Akademik &bull; <span class="font-mono tabular-nums">NIP. 197108151998021001</span>
+                        Ketua Komisi I — Pendidikan dan Pengajaran &bull; <span class="font-mono tabular-nums">Masa Bakti 2026–2029</span>
                     </p>
                 </div>
             </div>
@@ -307,7 +307,7 @@
                                         <span class="text-[10px] font-mono font-semibold bg-white text-slate-700 px-2 py-0.5 rounded border border-slate-300">STATUS: SAH</span>
                                     </div>
                                     <p class="text-xs text-emerald-800 mt-1">
-                                        Tercatat atas nama <strong>Prof. Dr. Ir. Budi Rahardjo, M.T.</strong> pada pukul <span class="font-bold tabular-nums" x-text="checkinTime"></span>.
+                                        Tercatat atas nama <strong>Tri Yudantoro, S.Kom., M.Kom.</strong> pada pukul <span class="font-bold tabular-nums" x-text="checkinTime"></span>.
                                     </p>
                                 </div>
                             </div>
@@ -333,7 +333,7 @@
                  }">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-lg font-extrabold text-slate-900">Catatan Risalah Musyawarah Komisi</h3>
-                    <span class="text-xs text-slate-400 font-mono">Komisi I Bidang Akademik</span>
+                    <span class="text-xs text-slate-400 font-mono">Komisi I — Pendidikan dan Pengajaran</span>
                 </div>
                 <p class="text-xs text-slate-500 mb-4">
                     Catatan poin telaah, argumentasi pasal, atau pertimbangan norma yang Anda sampaikan selama sidang berlangsung.

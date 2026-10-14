@@ -9,6 +9,7 @@ use App\Contracts\FeatureRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Support\SenatDirectory;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -24,6 +25,7 @@ class PublicController extends Controller
         private ArchiveRepositoryInterface $archives,
     ) {}
 
+    /** 01 — Beranda */
     public function home(): View
     {
         return view('public.home', [
@@ -32,16 +34,85 @@ class PublicController extends Controller
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'committees' => $this->committees->all(),
             'features' => $this->features->all(),
+            'direktori' => SenatDirectory::stats(),
         ]);
     }
 
+    /** 02A — Profil · Visi, Misi & Tujuan */
     public function profile(): View
     {
-        return view('public.profile', [
+        return view('public.profile.vision', [
             'committees' => $this->committees->all(),
+            'direktori' => SenatDirectory::stats(),
         ]);
     }
 
+    /** 02B — Profil · Tugas & Wewenang */
+    public function tasks(): View
+    {
+        return view('public.profile.tasks', [
+            'committees' => $this->committees->all(),
+            'features' => $this->features->all(),
+        ]);
+    }
+
+    /** 02C — Profil · Struktur Organisasi */
+    public function structure(): View
+    {
+        return view('public.profile.structure', [
+            'committees' => $this->committees->all(),
+            'leadership' => [
+                'chair' => SenatDirectory::chair(),
+                'secretary' => SenatDirectory::secretary(),
+                'bph' => SenatDirectory::bph(),
+            ],
+            'period' => SenatDirectory::PERIOD,
+            'direktori' => SenatDirectory::stats(),
+        ]);
+    }
+
+    /** 03 — Direktori Komisi & Anggota */
+    public function directory(): View
+    {
+        return view('public.directory', [
+            'committees' => $this->committees->all(),
+            'members' => SenatDirectory::members(),
+            'leadership' => [
+                'chair' => SenatDirectory::chair(),
+                'secretary' => SenatDirectory::secretary(),
+                'bph' => SenatDirectory::bph(),
+            ],
+            'period' => SenatDirectory::PERIOD,
+            'direktori' => SenatDirectory::stats(),
+        ]);
+    }
+
+    /** 04 — Detail Anggota */
+    public function member(string $slug): View
+    {
+        $member = SenatDirectory::findBySlug($slug);
+
+        abort_if($member === null, 404);
+
+        $committee = isset($member['committee_code'])
+            ? SenatDirectory::committeeByCode($member['committee_code'])
+            : null;
+
+        $peers = collect(SenatDirectory::members())
+            ->filter(fn ($person) => ($person['committee_code'] ?? null) === ($member['committee_code'] ?? null)
+                && $person['slug'] !== $member['slug'])
+            ->values()
+            ->all();
+
+        return view('public.member', [
+            'member' => $member,
+            'committee' => $committee,
+            'peers' => $peers,
+            'period' => SenatDirectory::PERIOD,
+        ]);
+    }
+
+    /** 05A — Produk Hukum · Peraturan Senat */
     public function regulations(): View
     {
         return view('public.regulations', [
@@ -49,13 +120,41 @@ class PublicController extends Controller
         ]);
     }
 
+    /** 05B — Produk Hukum · Keputusan Senat */
+    public function decrees(): View
+    {
+        $all = $this->regulations->all();
+        $filtered = array_values(array_filter($all, fn ($item) => str_contains($item['category'] ?? '', 'SK')
+            || str_contains($item['category'] ?? '', 'Keputusan')));
+
+        return view('public.regulations-decrees', [
+            'regulations' => $filtered ?: $all,
+        ]);
+    }
+
+    /** 05C — Produk Hukum · Standar & Pedoman Akademik */
+    public function standards(): View
+    {
+        $standards = array_values(array_filter(
+            $this->regulations->all(),
+            fn ($item) => ! str_contains($item['category'] ?? '', 'SK')
+        ));
+
+        return view('public.regulations-standards', [
+            'standards' => $standards ?: $this->regulations->all(),
+        ]);
+    }
+
+    /** 06 — Kanal Aspirasi */
     public function aspirations(): View
     {
         return view('public.aspirations', [
             'aspirations' => $this->aspirations->all(),
+            'committees' => $this->committees->all(),
         ]);
     }
 
+    /** 09 — Pelacak Status Tiket */
     public function trackAspiration(Request $request): View
     {
         $ticket = $request->input('ticket', $request->route('ticket'));
@@ -66,10 +165,50 @@ class PublicController extends Controller
         ]);
     }
 
+    /** 11A — Arsip · Risalah Sidang */
     public function archives(): View
     {
         return view('public.archives', [
             'archives' => $this->archives->all(),
+            'meetings' => $this->meetings->all(),
+        ]);
+    }
+
+    /** 11B — Arsip · Laporan Tahunan & LPJ */
+    public function archivesReports(): View
+    {
+        $archives = $this->archives->all();
+        $reports = array_values(array_filter($archives, fn ($item) => str_contains($item['category'] ?? '', 'Laporan')));
+
+        return view('public.archives-reports', [
+            'archives' => $reports ?: $archives,
+        ]);
+    }
+
+    /** 14 — Kanal Berita & Warta */
+    public function news(): View
+    {
+        return view('public.news', [
+            'posts' => $this->posts->all(),
+        ]);
+    }
+
+    /** 14B — Detail Warta */
+    public function newsShow(string $slug): View
+    {
+        $post = collect($this->posts->all())->firstWhere('slug', $slug);
+
+        abort_if($post === null, 404);
+
+        $related = collect($this->posts->all())
+            ->reject(fn ($item) => $item['slug'] === $slug)
+            ->take(3)
+            ->values()
+            ->all();
+
+        return view('public.news-show', [
+            'post' => $post,
+            'related' => $related,
         ]);
     }
 }

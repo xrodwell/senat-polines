@@ -1,140 +1,211 @@
 @extends('layouts.public')
 
-@section('title', 'Produk Hukum — Senat Akademik Politeknik Negeri Semarang')
+@section('title', 'Produk Hukum · Peraturan Senat — Senat Akademik Politeknik Negeri Semarang')
+@section('description', 'Himpunan peraturan mengikat, statuta institusi, kode etik sivitas, dan regulasi tata kelola akademik Politeknik Negeri Semarang.')
 
 @section('content')
 
-    <section class="bg-polines-navy border-b border-polines-navyDark">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-300 mb-2">Legalitas Akademik</p>
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-                Repositori Produk Hukum &amp; SK Pertimbangan
+@php
+    $categories = collect($regulations)->pluck('category')->unique()->values();
+    $years = collect($regulations)->pluck('year')->unique()->sortDesc()->values();
+    $statuses = collect($regulations)->pluck('status')->unique()->values();
+    $total = count($regulations);
+    $pageSize = 4;
+@endphp
+
+{{-- 05A — Produk Hukum · Peraturan Senat (Figma node 2019:120) --}}
+<div x-data="{
+        q: '',
+        category: '',
+        year: '',
+        status: '',
+        visible: {{ $pageSize }},
+        pageSize: {{ $pageSize }},
+        regs: @js($regulations),
+        matches(reg) {
+            if (! reg) return false;
+            if (this.category !== '' &amp;&amp; reg.category !== this.category) return false;
+            if (this.year !== '' &amp;&amp; String(reg.year) !== this.year) return false;
+            if (this.status !== '' &amp;&amp; reg.status !== this.status) return false;
+            const term = this.q.toLowerCase().trim();
+            if (term === '') return true;
+            return (reg.nomor + ' ' + reg.title + ' ' + reg.category + ' ' + reg.status + ' ' + reg.year + ' ' + reg.file_size).toLowerCase().indexOf(term) !== -1;
+        },
+        get matchedIndexes() {
+            const out = [];
+            this.regs.forEach((reg, i) => { if (this.matches(reg)) out.push(i); });
+            return out;
+        },
+        get matchedCount() { return this.matchedIndexes.length; },
+        get visibleIndexes() { return this.matchedIndexes.slice(0, this.visible); },
+        get shownCount() { return this.visibleIndexes.length; },
+        get hasMore() { return this.matchedCount > this.visible; },
+        isVisible(i) { return this.visibleIndexes.indexOf(i) !== -1; },
+        reset() {
+            this.q = '';
+            this.category = '';
+            this.year = '';
+            this.status = '';
+            this.visible = this.pageSize;
+        }
+    }">
+
+    {{-- ======================= HERO ======================= --}}
+    <section class="bg-senat-hero">
+        <div class="senat-shell pt-[62px] pb-[26px]">
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-sky">Regulasi Normatif Senat</p>
+
+            <h1 class="mt-4 text-[30px] font-bold leading-[1.1] text-white sm:text-[36px] lg:text-[41px]">
+                Peraturan Senat Akademik
             </h1>
-            <p class="mt-3 max-w-2xl text-sm sm:text-base text-blue-100/90 leading-relaxed">
-                Kumpulan peraturan senat, surat keputusan pertimbangan, dan rancangan regulasi yang
-                sedang dalam proses pembahasan — terbuka untuk diunduh civitas akademika.
+
+            <p class="mt-4 max-w-[650px] text-[14px] leading-[1.42] text-senat-skySoft">
+                Himpunan peraturan mengikat, statuta institusi, kode etik sivitas, dan regulasi tata kelola akademik Polines.
             </p>
+
+            <div class="mt-10 max-w-[750px]">
+                <label class="flex h-[46px] items-center gap-3 rounded-[9px] bg-white px-5">
+                    <span class="text-[13px] leading-none text-senat-body" aria-hidden="true">⌕</span>
+                    <span class="sr-only">Cari peraturan senat</span>
+                    <input type="search" x-model="q" @input="visible = pageSize"
+                           placeholder="Cari nomor, judul, atau kata kunci…  Enter untuk mencari"
+                           class="h-full w-full min-w-0 bg-transparent text-[12px] text-senat-ink placeholder:text-senat-body focus:outline-none">
+                </label>
+            </div>
         </div>
     </section>
 
-    <section
-        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
-        x-data="{
-            query: '',
-            copied: null,
-            matches(reg) {
-                const q = this.query.toLowerCase().trim();
-                if (!q) return true;
-                return (reg.nomor + ' ' + reg.title + ' ' + reg.category + ' ' + reg.status + ' ' + reg.year)
-                    .toLowerCase().includes(q);
-            },
-            download(reg) {
-                this.copied = reg.id;
-                setTimeout(() => this.copied = null, 2200);
-            }
-        }"
-    >
-        {{-- Toolbar --}}
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div class="relative flex-1 max-w-md">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                    x-model="query"
-                    type="search"
-                    placeholder="Cari nomor, judul, kategori, atau status..."
-                    class="w-full rounded-lg border border-slate-200/80 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-polines-blue/40 focus:border-polines-blue transition-colors duration-150"
-                >
-            </div>
-            <div class="flex items-center gap-4 text-xs font-semibold">
-                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Disahkan</span>
-                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Pembahasan</span>
-                <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Draf</span>
-            </div>
-        </div>
+    {{-- ======================= HASIL & FILTER ======================= --}}
+    <section class="senat-shell py-14">
+        <div class="grid gap-x-11 gap-y-9 lg:grid-cols-[290px_minmax(0,1fr)]">
 
-        {{-- Table --}}
-        <div class="overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th scope="col" class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Nomor Dokumen</th>
-                        <th scope="col" class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Perihal</th>
-                        <th scope="col" class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Kategori</th>
-                        <th scope="col" class="px-5 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Tahun</th>
-                        <th scope="col" class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
-                        <th scope="col" class="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
+            {{-- Filter panel --}}
+            <aside>
+                <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-senat-orange">Filter Dokumen</p>
+
+                <div class="mt-4 rounded-xl border border-[#d9e3f0] bg-white p-5">
+                    <div>
+                        <label for="filter-jenis" class="block text-[10px] font-bold uppercase tracking-[0.04em] text-senat-body">Jenis Dokumen</label>
+                        <select id="filter-jenis" x-model="category" @change="visible = pageSize"
+                                class="mt-2 h-10 w-full rounded-[7px] border border-[#d9e3f0] bg-white px-3 text-[11px] font-medium text-senat-ink focus:border-senat-primary focus:outline-none">
+                            <option value="">Semua Jenis Dokumen</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category }}">{{ $category }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mt-7">
+                        <label for="filter-tahun" class="block text-[10px] font-bold uppercase tracking-[0.04em] text-senat-body">Tahun Terbit</label>
+                        <select id="filter-tahun" x-model="year" @change="visible = pageSize"
+                                class="mt-2 h-10 w-full rounded-[7px] border border-[#d9e3f0] bg-white px-3 text-[11px] font-medium text-senat-ink focus:border-senat-primary focus:outline-none">
+                            <option value="">Semua Tahun</option>
+                            @foreach ($years as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mt-7">
+                        <label for="filter-status" class="block text-[10px] font-bold uppercase tracking-[0.04em] text-senat-body">Status Dokumen</label>
+                        <select id="filter-status" x-model="status" @change="visible = pageSize"
+                                class="mt-2 h-10 w-full rounded-[7px] border border-[#d9e3f0] bg-white px-3 text-[11px] font-medium text-senat-ink focus:border-senat-primary focus:outline-none">
+                            <option value="">Semua Status</option>
+                            @foreach ($statuses as $status)
+                                <option value="{{ $status }}">{{ $status }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <button type="button" @click="reset()"
+                            class="mt-8 inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-[7px] border border-[#bacfe5] bg-senat-badgeBg text-[11px] font-bold text-senat-link transition-colors hover:border-senat-link">
+                        <span aria-hidden="true">↺</span>
+                        Atur Ulang Filter
+                    </button>
+                </div>
+            </aside>
+
+            {{-- Daftar peraturan --}}
+            <div class="min-w-0">
+                <h2 class="text-[21px] font-bold leading-snug text-senat-ink sm:text-[25px]">Daftar Peraturan Senat Aktif</h2>
+                <p class="mt-2 text-[11px] text-senat-body">
+                    {{ $total }} peraturan normatif berlaku dan terverifikasi secara hukum.
+                </p>
+
+                <div class="mt-6 space-y-4">
                     @forelse ($regulations as $reg)
                         @php
-                            $badge = match($reg['status']) {
-                                'Disahkan'   => 'bg-emerald-50 text-emerald-700',
-                                'Pembahasan' => 'bg-amber-50 text-amber-700',
-                                default      => 'bg-slate-100 text-slate-600',
+                            $state = match ($reg['status']) {
+                                'Disahkan' => 'success',
+                                'Pembahasan' => 'warning',
+                                default => 'neutral',
                             };
                         @endphp
-                        <tr
-                            x-show="matches(@js($reg))"
-                            x-transition.opacity.duration.150ms
-                            class="hover:bg-slate-50/60 transition-colors duration-150"
-                        >
-                            <td class="px-5 py-4 whitespace-nowrap">
-                                <span class="font-mono text-xs font-semibold text-polines-navy tabular-nums">{{ $reg['nomor'] }}</span>
-                            </td>
-                            <td class="px-5 py-4">
-                                <p class="font-semibold text-slate-900 leading-snug">{{ $reg['title'] }}</p>
-                                <p class="mt-0.5 text-xs text-slate-400 tabular-nums">{{ $reg['file_size'] }} · PDF</p>
-                            </td>
-                            <td class="px-5 py-4 whitespace-nowrap text-slate-600">{{ $reg['category'] }}</td>
-                            <td class="px-5 py-4 text-center whitespace-nowrap text-slate-600 tabular-nums">{{ $reg['year'] }}</td>
-                            <td class="px-5 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $badge }}">
-                                    {{ $reg['status'] }}
-                                </span>
-                            </td>
-                            <td class="px-5 py-4 text-right whitespace-nowrap">
-                                <button
-                                    type="button"
-                                    @click="download(@js($reg))"
-                                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-polines-blue hover:border-polines-blue/50 hover:bg-blue-50 transition-colors duration-150"
-                                >
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                    <span x-show="copied !== {{ $reg['id'] }}">Unduh PDF</span>
-                                    <span x-show="copied === {{ $reg['id'] }}" x-cloak>Tersiapkan…</span>
-                                </button>
-                            </td>
-                        </tr>
+
+                        {{-- Regulation card --}}
+                        <article x-show="isVisible({{ $loop->index }})"
+                                 x-transition.opacity.duration.150ms
+                                 class="flex flex-col gap-5 rounded-xl border border-[#d9e3f0] bg-white p-5 sm:flex-row sm:items-start sm:p-6">
+
+                            <div class="grid h-[54px] w-12 shrink-0 place-items-center rounded-[10px] border border-[#a6c4e5] bg-senat-badgeBg text-[18px] font-bold text-senat-hero"
+                                 aria-hidden="true">▤</div>
+
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">
+                                    {{ $reg['category'] }} &bull; {{ $reg['nomor'] }}
+                                </p>
+
+                                <h3 class="mt-2 text-[14px] font-bold leading-[1.25] text-senat-ink">
+                                    {{ $reg['title'] }}
+                                </h3>
+
+                                <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[10px] text-senat-body">
+                                    <span class="tabular-nums">Tahun {{ $reg['year'] }}</span>
+                                    <span aria-hidden="true" class="text-senat-line">|</span>
+                                    <span class="tabular-nums whitespace-nowrap">{{ $reg['file_size'] }} · PDF</span>
+                                    <x-senat.badge :state="$state" class="ml-1">{{ $reg['status'] }}</x-senat.badge>
+                                </div>
+                            </div>
+
+                            <x-senat.button variant="primary" size="md" :href="$reg['download_url']" class="shrink-0 self-start">
+                                Unduh PDF
+                            </x-senat.button>
+                        </article>
                     @empty
-                        <tr>
-                            <td colspan="6" class="px-5 py-10 text-center text-sm text-slate-500">
-                                Belum ada dokumen produk hukum yang terdaftar.
-                            </td>
-                        </tr>
+                        <x-senat.empty
+                            title="Belum ada peraturan senat"
+                            message="Sekretariat belum memublikasikan dokumen peraturan pada repositori ini." />
                     @endforelse
-                </tbody>
-            </table>
-        </div>
+                </div>
 
-        {{-- Empty state pencarian --}}
-        @if (count($regulations) > 0)
-            <div
-                x-show="query.trim() !== '' && ![@foreach($regulations as $reg)@js($reg){{ $loop->last ? '' : ',' }}@endforeach].some(r => matches(r))"
-                x-cloak
-                class="mt-4 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-8 text-center"
-            >
-                <p class="text-sm text-slate-500">Tidak ada dokumen yang cocok dengan pencarian "<span x-text="query" class="font-semibold text-slate-700"></span>".</p>
+                {{-- Empty state hasil pencarian / filter --}}
+                @if ($total > 0)
+                    <div x-cloak x-show="matchedCount === 0" class="mt-4">
+                        <x-senat.empty
+                            title="Tidak ada dokumen yang cocok"
+                            message="Ubah kata kunci pencarian atau atur ulang filter dokumen untuk melihat hasil lainnya." />
+                    </div>
+                @endif
+
+                {{-- Results footer — node 2351:1274 --}}
+                @if ($total > 0)
+                    <div class="mt-4 flex flex-col gap-3 rounded-[10px] border border-[#d9e2ef] bg-[#f8fafc] px-5 py-[13px] sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-[12px] font-medium text-[#4b5565]">
+                            Menampilkan <span x-text="shownCount" class="tabular-nums">{{ min($pageSize, $total) }}</span>
+                            dari <span x-text="matchedCount" class="tabular-nums">{{ $total }}</span>
+                            peraturan yang tersedia.
+                        </p>
+
+                        <button type="button" @click="visible += pageSize"
+                                x-cloak x-show="hasMore"
+                                class="inline-flex h-[38px] shrink-0 items-center justify-center rounded-[8px] border border-[#9fb3c8] bg-white px-5 text-[12px] font-semibold text-[#155ead] transition-colors hover:border-[#155ead]">
+                            Muat lebih banyak
+                        </button>
+                    </div>
+                @endif
             </div>
-        @endif
-
-        <p class="mt-5 text-xs text-slate-400 leading-relaxed">
-            Unduhan bersifat simulasi untuk demonstrasi portal. Dokumen resmi bertanda tangan elektronik
-            diterbitkan melalui Sekretariat Senat. Hubungi sekretariat untuk versi legalisir.
-        </p>
+        </div>
     </section>
+</div>
 
 @endsection

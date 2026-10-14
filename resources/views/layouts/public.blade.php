@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Portal resmi Senat Akademik Politeknik Negeri Semarang — informasi kebijakan akademik, produk hukum, agenda sidang, dan kanal aspirasi civitas akademika.">
+    <meta name="description" content="@yield('description', 'Portal resmi Senat Akademik Politeknik Negeri Semarang — informasi kebijakan akademik, produk hukum, agenda sidang, dan kanal aspirasi civitas akademika.')">
     <title>@yield('title', 'Senat Akademik Politeknik Negeri Semarang')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +24,25 @@
                             navyDark: '#00284D',
                             blue: '#0A66C2',
                             orange: '#F37021',
+                            orangeHover: '#d95f14',
+                        },
+                        /* Design tokens — Figma "PBL - Senat Polines" (file 6LJSjDuCcOWgneDcN7LPHZ) */
+                        senat: {
+                            hero: '#003c75',
+                            primary: '#003366',
+                            primaryHover: '#002850',
+                            link: '#0963bd',
+                            orange: '#f37021',
+                            ink: '#172133',
+                            body: '#52637d',
+                            muted: '#637082',
+                            line: '#e2e8ee',
+                            surface: '#f7f9fc',
+                            sky: '#8fc7ff',
+                            skySoft: '#cfe0ff',
+                            badgeBg: '#f2f9ff',
+                            badgeLine: '#8cb8e3',
+                            border: '#cbd5e1',
                         },
                     },
                 },
@@ -35,41 +54,21 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        .senat-shell { max-width: 1440px; margin-inline: auto; padding-inline: 1.5rem; }
+        @media (min-width: 1024px) { .senat-shell { padding-inline: 88px; } }
     </style>
 
     @stack('head')
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased font-sans flex flex-col min-h-screen">
+<body class="bg-senat-surface text-senat-body antialiased font-sans flex flex-col min-h-screen">
 
-    @include('components.navbar')
+    @include('components.senat.header')
 
     <main class="flex-1">
         @yield('content')
     </main>
 
-    {{-- Floating Demo Role Switcher untuk Pengawas / Presentasi --}}
-    <aside class="fixed bottom-4 right-4 z-50">
-        <div class="rounded-2xl border border-slate-700/80 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-md text-white flex items-center gap-2">
-            <span class="text-[11px] font-mono text-slate-400 uppercase tracking-wider px-2 font-semibold">Demo Role:</span>
-            
-            <a href="{{ route('public.home') }}" 
-               class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all {{ request()->routeIs('public.*') ? 'bg-polines-blue text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800' }}">
-                🌐 Publik
-            </a>
-
-            <a href="{{ route('portal.attendance') }}" 
-               class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all {{ request()->routeIs('portal.attendance') ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800' }}">
-                👤 Anggota Senat
-            </a>
-
-            <a href="{{ route('portal.session') }}" 
-               class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all {{ request()->routeIs('portal.session') ? 'bg-polines-orange text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800' }}">
-                ⚙️ Admin Sekretariat
-            </a>
-        </div>
-    </aside>
-
-    @include('components.footer')
+    @include('components.senat.footer')
 
     @stack('scripts')
 </body>
