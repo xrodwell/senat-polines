@@ -301,9 +301,9 @@
                     </div>
 
                     <div class="mt-6 grid gap-5 sm:grid-cols-3">
-                        <x-senat.stat label="Total Anggota" :value="$direktori['members']" hint="Pimpinan, BPH, dan anggota komisi" icon="👥" />
-                        <x-senat.stat label="Komisi Kerja" :value="$direktori['committees']" hint="Komisi I–V Senat Akademik" icon="▦" />
-                        <x-senat.stat label="Masa Bakti" :value="$direktori['period']" hint="Periode kepengurusan Senat" icon="🗓" />
+                        <x-senat.stat label="Total Anggota" :value="$direktori['members']" hint="Pimpinan, BPH, dan anggota komisi" icon="users" />
+                        <x-senat.stat label="Komisi Kerja" :value="$direktori['committees']" hint="Komisi I–V Senat Akademik" icon="dashboard" />
+                        <x-senat.stat label="Masa Bakti" :value="$direktori['period']" hint="Periode kepengurusan Senat" icon="calendar" />
                     </div>
                 </section>
             @endif

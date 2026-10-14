@@ -1,12 +1,12 @@
 @php
     /**
-     * Footer / Public — Figma node 2006:14
-     * "Shared four-column footer for all Senat Polines public and portal screens."
+     * Footer / Public — Figma node 2006:14 (4 kolom desktop).
+     * Responsif: 1 kolom mobile → 2 kolom ≥640 → 4 kolom ≥1024.
      */
 @endphp
 
 <footer class="border-t border-senat-line bg-white">
-    <div class="senat-shell grid gap-10 py-12 lg:grid-cols-[330px_300px_300px_300px] lg:gap-0">
+    <div class="senat-shell grid grid-cols-1 gap-8 py-10 sm:grid-cols-2 sm:gap-10 lg:grid-cols-[300px_280px_1fr_1fr] lg:gap-0 lg:py-12">
 
         {{-- Kolom 1: identitas --}}
         <div class="lg:pr-10">
@@ -18,10 +18,10 @@
                     <span class="mt-1 block text-[10px] font-medium text-senat-muted">Politeknik Negeri Semarang</span>
                 </span>
             </div>
-            <p class="mt-5 max-w-[270px] text-[12px] leading-[1.45] text-senat-muted">
+            <p class="senat-prose mt-5 max-w-[290px] text-[12px] leading-[1.5] text-senat-muted">
                 Lembaga normatif tertinggi di bidang akademik Politeknik Negeri Semarang yang merumuskan kebijakan dan menjaga mutu akademik institusi.
             </p>
-            <p class="mt-6 text-[12px] font-medium leading-[1.45] text-senat-muted">
+            <p class="mt-6 text-[12px] font-medium leading-[1.5] text-senat-muted">
                 Jl. Prof. Soedarto, S.H.<br>
                 Tembalang, Semarang<br>
                 Jawa Tengah 50275
@@ -30,11 +30,12 @@
 
         {{-- Kolom 2: komisi --}}
         <div>
-            <h3 class="text-[13px] font-bold text-[#0f172a]">Komisi Senat</h3>
-            <ul class="mt-5 space-y-[6px] text-[12px] text-senat-muted">
+            <h2 class="text-[13px] font-bold text-[#0f172a]">Komisi Senat</h2>
+            <ul class="mt-4 space-y-[2px] text-[12px] text-senat-muted sm:mt-5">
                 @forelse (\App\Support\SenatDirectory::committees() as $committee)
                     <li>
-                        <a href="{{ route('public.profile.structure') }}" class="transition-colors hover:text-senat-primary">
+                        <a href="{{ route('public.profile.structure') }}"
+                           class="senat-tap inline-flex min-h-[36px] items-center transition-colors hover:text-senat-primary">
                             {{ \App\Support\SenatDirectory::committeeLabel($committee['code']) }}
                             — {{ \Illuminate\Support\Str::after($committee['name'], 'Komisi ') }}
                         </a>
@@ -51,21 +52,21 @@
 
         {{-- Kolom 3: layanan --}}
         <div>
-            <h3 class="text-[13px] font-bold text-[#0f172a]">Layanan</h3>
-            <ul class="mt-5 space-y-[6px] text-[12px] text-senat-muted">
-                <li><a href="{{ route('public.regulations') }}" class="transition-colors hover:text-senat-primary">Produk Hukum &amp; Peraturan</a></li>
-                <li><a href="{{ route('public.regulations.decrees') }}" class="transition-colors hover:text-senat-primary">Surat Keputusan Senat</a></li>
-                <li><a href="{{ route('public.aspirations') }}" class="transition-colors hover:text-senat-primary">Kanal Aspirasi Civitas</a></li>
-                <li><a href="{{ route('public.aspirations.track') }}" class="transition-colors hover:text-senat-primary">Lacak Status Tiket</a></li>
-                <li><a href="{{ route('public.archives') }}" class="transition-colors hover:text-senat-primary">Arsip Kegiatan &amp; LPJ</a></li>
+            <h2 class="text-[13px] font-bold text-[#0f172a]">Layanan</h2>
+            <ul class="mt-4 space-y-[2px] text-[12px] text-senat-muted sm:mt-5">
+                <li><a href="{{ route('public.regulations') }}" class="senat-tap inline-flex min-h-[36px] items-center transition-colors hover:text-senat-primary">Produk Hukum &amp; Peraturan</a></li>
+                <li><a href="{{ route('public.regulations.decrees') }}" class="senat-tap inline-flex min-h-[36px] items-center transition-colors hover:text-senat-primary">Surat Keputusan Senat</a></li>
+                <li><a href="{{ route('public.aspirations') }}" class="senat-tap inline-flex min-h-[36px] items-center transition-colors hover:text-senat-primary">Kanal Aspirasi Civitas</a></li>
+                <li><a href="{{ route('public.aspirations.track') }}" class="senat-tap inline-flex min-h-[36px] items-center transition-colors hover:text-senat-primary">Lacak Status Tiket</a></li>
+                <li><a href="{{ route('public.archives') }}" class="senat-tap inline-flex min-h-[36px] items-center transition-colors hover:text-senat-primary">Arsip Kegiatan &amp; LPJ</a></li>
             </ul>
         </div>
 
         {{-- Kolom 4: kontak --}}
         <div>
-            <h3 class="text-[13px] font-bold text-[#0f172a]">Kontak &amp; Jam Operasional</h3>
-            <ul class="mt-5 space-y-[6px] text-[12px] text-senat-muted">
-                <li>senat@polines.ac.id</li>
+            <h2 class="text-[13px] font-bold text-[#0f172a]">Kontak &amp; Jam Operasional</h2>
+            <ul class="mt-4 space-y-1 text-[12px] text-senat-muted sm:mt-5">
+                <li><a href="mailto:senat@polines.ac.id" class="transition-colors hover:text-senat-primary">senat@polines.ac.id</a></li>
                 <li>(024) 7473417</li>
                 <li>Senin – Jumat</li>
                 <li>08.00 – 16.00 WIB</li>

@@ -133,7 +133,7 @@
 
             {{-- Panel koordinasi komisi --}}
             <div class="mx-auto flex w-full max-w-[400px] items-center gap-4 rounded-[10px] border border-[#a3c2e0] bg-senat-badgeBg px-5 py-3">
-                <span class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-senat-hero text-[13px] font-bold leading-none text-white" aria-hidden="true">≡</span>
+                <span class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-senat-hero text-[13px] font-bold leading-none text-white" aria-hidden="true"><x-senat.icon name="minutes" class="h-[18px] w-[18px]" /></span>
                 <div class="min-w-0">
                     <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-hero">Koordinasi Komisi Senat Akademik</p>
                     <p class="mt-1 text-[9px] text-senat-body">Telaah kebijakan melalui lima bidang mandat.</p>
@@ -264,11 +264,11 @@
 
             <div class="mt-6 grid gap-4 sm:grid-cols-3">
                 <x-senat.stat label="Komisi Fungsional" :value="$direktori['committees'] ?? count($committees)"
-                              hint="Komisi I s.d. Komisi V" icon="▦" />
+                              hint="Komisi I s.d. Komisi V" icon="dashboard" />
                 <x-senat.stat label="Anggota Senat" :value="$direktori['members'] ?? 0"
-                              hint="Pimpinan, BPH, dan anggota komisi" icon="👥" />
+                              hint="Pimpinan, BPH, dan anggota komisi" icon="users" />
                 <x-senat.stat label="Periode Jabatan" :value="$direktori['period'] ?? $period"
-                              hint="Masa bakti kolegial Senat" icon="🗓" />
+                              hint="Masa bakti kolegial Senat" icon="calendar" />
             </div>
 
             <div class="mt-6 flex flex-wrap gap-3">

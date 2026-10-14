@@ -54,19 +54,19 @@
                     {{ $notulen['title'] ?? 'Belum ada risalah yang ditampilkan.' }}
                 </p>
             </div>
-            <x-senat.button variant="secondary" size="sm" icon="⤓" type="button">Unduh Risalah</x-senat.button>
+            <x-senat.button variant="secondary" size="sm" icon="download" type="button">Unduh Risalah</x-senat.button>
         </div>
 
         @if ($notulen)
             <dl class="mt-5 grid grid-cols-1 gap-4 border-t border-senat-line pt-4 sm:grid-cols-2">
                 <div>
-                    <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true">◫</span> Waktu</dt>
+                    <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true"><x-senat.icon name="calendar" class="h-[18px] w-[18px]" /></span> Waktu</dt>
                     <dd class="mt-1 text-[13px] font-semibold text-senat-ink">
                         {{ $tanggal($notulen['date']) }} · {{ $notulen['time'] }}
                     </dd>
                 </div>
                 <div>
-                    <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true">▣</span> Lokasi</dt>
+                    <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true"><x-senat.icon name="folder" class="h-[18px] w-[18px]" /></span> Lokasi</dt>
                     <dd class="mt-1 text-[13px] font-semibold text-senat-ink">{{ $notulen['room'] }}</dd>
                 </div>
             </dl>

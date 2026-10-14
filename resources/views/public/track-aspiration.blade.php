@@ -219,7 +219,7 @@
                 <div x-show="state === 'notfound'" x-cloak
                      class="mt-8 rounded-[10px] border border-[#f7c8c3] bg-[#fff7f6] p-4">
                     <div class="flex gap-3">
-                        <span class="text-[14px] font-bold leading-none text-[#b4233b]" aria-hidden="true">!</span>
+                        <span class="text-[14px] font-bold leading-none text-[#b4233b]" aria-hidden="true"><x-senat.icon name="warning" class="h-[18px] w-[18px]" /></span>
                         <div>
                             <p class="text-[13px] font-semibold text-[#13233a]">Kode tiket tidak ditemukan</p>
                             <p class="mt-1 text-[11px] leading-relaxed text-[#4b5565]">

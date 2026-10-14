@@ -88,7 +88,7 @@
                             {{ $i % 2 === 1 ? 'border-l' : '' }}
                             lg:border-l lg:first:border-l-0">
                     <dt class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-sky">{{ $stat['label'] }}</dt>
-                    <dd class="mt-[6px] text-[27px] font-bold leading-none text-white tabular-nums">{{ $stat['value'] }}</dd>
+                    <dd class="mt-[6px] text-[19px] font-bold leading-none text-white tabular-nums sm:text-[22px] lg:text-[27px]">{{ $stat['value'] }}</dd>
                     <dd class="mt-[7px] text-[10px] leading-[1.1] text-[#adcff0]">{{ $stat['hint'] }}</dd>
                 </div>
             @endforeach

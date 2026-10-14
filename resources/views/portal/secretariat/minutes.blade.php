@@ -72,7 +72,7 @@
                 </div>
             </div>
             <div x-cloak x-show="saved" x-transition class="mt-4 flex items-center gap-3 rounded-[8px] bg-[#eaf8f0] px-3 py-2">
-                <span class="text-[15px] font-semibold text-[#116a3c]" aria-hidden="true">✓</span>
+                <span class="text-[15px] font-semibold text-[#116a3c]" aria-hidden="true"><x-senat.icon name="check" class="h-[18px] w-[18px]" /></span>
                 <p class="text-[12px] text-senat-ink">Draft notulensi tersimpan pada antrean review sekretariat.</p>
             </div>
         </section>
@@ -88,7 +88,7 @@
                 <h3 class="mt-6 text-[13px] font-semibold text-senat-ink">Lampiran</h3>
                 @if ($notulenItem)
                     <div class="mt-3 flex items-center gap-3 rounded-[10px] bg-senat-badgeBg px-4 py-2.5">
-                        <span class="text-[18px] font-bold text-senat-link" aria-hidden="true">▣</span>
+                        <span class="text-[18px] font-bold text-senat-link" aria-hidden="true"><x-senat.icon name="folder" class="h-[18px] w-[18px]" /></span>
                         <span class="min-w-0 flex-1">
                             <span class="block truncate text-[13px] font-medium text-senat-ink">{{ $notulenItem['title'] }}</span>
                             <span class="mt-0.5 block text-[11px] text-senat-muted">{{ $notulenItem['category'] }} · {{ $notulenItem['file_size'] }}</span>

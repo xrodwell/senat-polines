@@ -28,7 +28,7 @@
     {{-- ================= PROFIL ================= --}}
     <section class="rounded-[14px] border border-senat-line bg-white p-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
         <div class="flex flex-wrap items-center gap-5">
-            <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-[42px] bg-[#eaf3fe] text-[30px] font-bold text-senat-link" aria-hidden="true">◎</span>
+            <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-[42px] bg-[#eaf3fe] text-[30px] font-bold text-senat-link" aria-hidden="true"><x-senat.icon name="eye-off" class="h-[18px] w-[18px]" /></span>
             <div class="min-w-0">
                 <h2 class="text-[22px] font-bold leading-snug text-senat-ink">{{ $chair['name'] ?? 'Data anggota internal' }}</h2>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -108,7 +108,7 @@
             </p>
 
             <div class="mt-5 flex items-center gap-4 rounded-[14px] bg-[#eaf8f0] px-5 py-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
-                <span class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-[#116a3c] text-[16px] font-bold text-white" aria-hidden="true">◉</span>
+                <span class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-[#116a3c] text-[16px] font-bold text-white" aria-hidden="true"><x-senat.icon name="eye" class="h-[18px] w-[18px]" /></span>
                 <div>
                     <p class="text-[28px] font-bold leading-none tabular-nums text-senat-ink">{{ $stats['attendance_rate'] }}%</p>
                     <p class="mt-1.5 text-[12px] font-medium text-senat-body">Kehadiran</p>

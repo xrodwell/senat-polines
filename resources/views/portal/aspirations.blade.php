@@ -90,7 +90,7 @@
             </p>
 
             <div class="mt-5 rounded-[12px] bg-[#eaf3fe] px-5 py-5">
-                <p class="text-[22px] font-bold text-senat-link" aria-hidden="true">◉</p>
+                <x-senat.icon name="aspiration" class="h-[22px] w-[22px] text-senat-link" />
                 <p class="mt-2 text-[14px] font-semibold text-senat-ink">Komentar Draf Aturan</p>
                 <p class="mt-1 text-[12px] text-senat-muted">Akan tersedia ketika draf dibuka.</p>
             </div>

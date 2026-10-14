@@ -91,7 +91,7 @@
 
                     <div x-cloak x-show="saved" x-transition
                          class="flex items-center gap-3 rounded-[8px] bg-[#eaf8f0] px-3 py-2">
-                        <span class="text-[15px] font-semibold text-[#116a3c]" aria-hidden="true">✓</span>
+                        <span class="text-[15px] font-semibold text-[#116a3c]" aria-hidden="true"><x-senat.icon name="check" class="h-[18px] w-[18px]" /></span>
                         <p class="text-[12px] text-senat-ink">Draft, undangan, dan status sidang tampil di sini.</p>
                     </div>
                 </form>
@@ -123,7 +123,7 @@
 
                 <div class="mt-5 rounded-[14px] bg-senat-badgeBg p-4 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <p class="flex items-center gap-2 text-[14px] font-semibold text-senat-ink">
-                        <span class="text-[18px] font-bold text-senat-link" aria-hidden="true">◫</span>
+                        <span class="text-[18px] font-bold text-senat-link" aria-hidden="true"><x-senat.icon name="calendar" class="h-[18px] w-[18px]" /></span>
                         Virtual &amp; Hybrid Assembly
                     </p>
                     <p class="mt-2 text-[12px] leading-snug text-senat-body">

@@ -2,8 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="@yield('description', 'Portal resmi Senat Akademik Politeknik Negeri Semarang — informasi kebijakan akademik, produk hukum, agenda sidang, dan kanal aspirasi civitas akademika.')">
+    <meta name="theme-color" content="#003c75">
     <title>@yield('title', 'Senat Akademik Politeknik Negeri Semarang')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,19 +53,15 @@
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <style>
-        [x-cloak] { display: none !important; }
-        .senat-shell { max-width: 1440px; margin-inline: auto; padding-inline: 1.5rem; }
-        @media (min-width: 1024px) { .senat-shell { padding-inline: 88px; } }
-    </style>
+    @include('components.senat.styles')
 
     @stack('head')
 </head>
-<body class="bg-senat-surface text-senat-body antialiased font-sans flex flex-col min-h-screen">
+<body class="flex min-h-screen flex-col bg-senat-surface font-sans text-senat-body antialiased">
 
     @include('components.senat.header')
 
-    <main class="flex-1">
+    <main id="konten" class="flex-1">
         @yield('content')
     </main>
 

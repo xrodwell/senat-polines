@@ -7,7 +7,9 @@
 
 {{-- Empty / Content — Figma node 2339:1329 --}}
 <div {{ $attributes->class('flex flex-col items-center justify-center rounded-xl border border-dashed border-senat-border bg-white px-6 py-12 text-center') }}>
-    <span class="flex h-12 w-12 items-center justify-center rounded-full bg-senat-surface text-[18px] text-senat-muted" aria-hidden="true">📭</span>
+    <span class="flex h-12 w-12 items-center justify-center rounded-full bg-senat-surface text-senat-muted" aria-hidden="true">
+        <x-senat.icon name="inbox" class="h-6 w-6" />
+    </span>
     <p class="mt-4 text-[14px] font-semibold text-senat-ink">{{ $title }}</p>
     @if ($message)
         <p class="mt-1 max-w-md text-[12px] leading-relaxed text-senat-muted">{{ $message }}</p>

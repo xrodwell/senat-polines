@@ -144,11 +144,11 @@
 
             <div class="mt-6 grid gap-4 sm:grid-cols-3">
                 <x-senat.stat label="Komisi Fungsional" :value="$direktori['committees'] ?? count($committees)"
-                              hint="Komisi I s.d. Komisi V" icon="▦" />
+                              hint="Komisi I s.d. Komisi V" icon="dashboard" />
                 <x-senat.stat label="Anggota Senat" :value="$direktori['members'] ?? 0"
-                              hint="Pimpinan, BPH, dan anggota komisi" icon="👥" />
+                              hint="Pimpinan, BPH, dan anggota komisi" icon="users" />
                 <x-senat.stat label="Periode Jabatan" :value="$direktori['period'] ?? '—'"
-                              hint="Masa bakti kolegial Senat" icon="🗓" />
+                              hint="Masa bakti kolegial Senat" icon="calendar" />
             </div>
         </div>
     </section>

@@ -68,13 +68,13 @@
                 <div class="mt-5 border-t border-senat-line pt-4">
                     <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true">◉</span> Status</dt>
+                            <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true"><x-senat.icon name="eye" class="h-[18px] w-[18px]" /></span> Status</dt>
                             <dd class="mt-1 text-[13px] font-semibold {{ $votingDibuka ? 'text-[#116a3c]' : 'text-senat-ink' }}">
                                 {{ $votingDibuka ? 'Voting dibuka' : 'Menunggu dibuka' }}
                             </dd>
                         </div>
                         <div>
-                            <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true">◎</span> Kuorum</dt>
+                            <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted"><span aria-hidden="true"><x-senat.icon name="eye-off" class="h-[18px] w-[18px]" /></span> Kuorum</dt>
                             <dd class="mt-1 text-[13px] font-semibold text-senat-ink">{{ $kuorum }}</dd>
                         </div>
                     </dl>

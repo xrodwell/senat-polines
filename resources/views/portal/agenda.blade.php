@@ -39,7 +39,7 @@
     {{-- ================= NOTICE ================= --}}
     @if ($fokus)
         <div class="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[14px] bg-[#fff4df] px-5 py-3 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
-            <span class="text-[16px] font-bold leading-none text-[#a95100]" aria-hidden="true">!</span>
+            <span class="text-[16px] font-bold leading-none text-[#a95100]" aria-hidden="true"><x-senat.icon name="warning" class="h-[18px] w-[18px]" /></span>
             <p class="min-w-0 flex-1 text-[13px] font-medium text-[#c56f00]">
                 Kehadiran {{ $fokus['title'] }} belum dikonfirmasi.
             </p>
@@ -50,9 +50,9 @@
     <div class="rounded-[14px] border border-senat-line bg-white shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
         <div class="flex flex-wrap" role="tablist" aria-label="Kelompok agenda">
             @foreach ([
-                'hari-ini' => ['label' => 'HARI INI', 'icon' => '◫'],
-                'reguler' => ['label' => 'REGULER', 'icon' => '□'],
-                'khusus' => ['label' => 'KHUSUS', 'icon' => '□'],
+                'hari-ini' => ['label' => 'HARI INI', 'icon' => 'calendar'],
+                'reguler' => ['label' => 'REGULER', 'icon' => 'list'],
+                'khusus' => ['label' => 'KHUSUS', 'icon' => 'list'],
             ] as $key => $meta)
                 <button type="button" role="tab" @click="tab = '{{ $key }}'"
                         :aria-selected="tab === '{{ $key }}'"
@@ -161,7 +161,7 @@
                         </div>
 
                         <div class="mt-4 flex flex-wrap items-start gap-3 rounded-lg bg-[#fff4df] px-3 py-3">
-                            <span class="text-[14px] font-semibold leading-none text-[#a95100]" aria-hidden="true">!</span>
+                            <span class="text-[14px] font-semibold leading-none text-[#a95100]" aria-hidden="true"><x-senat.icon name="warning" class="h-[18px] w-[18px]" /></span>
                             <div class="min-w-0 flex-1">
                                 <p class="text-[12px] font-semibold text-senat-ink">Izin ditolak atau kamera tidak tersedia?</p>
                                 <p class="mt-1 text-[11px] text-senat-muted">Gunakan kode sesi atau aktifkan izin kamera pada browser.</p>
@@ -222,7 +222,7 @@
         <ul class="mt-5 divide-y divide-senat-line">
             @forelse ($upcoming as $meeting)
                 <li class="flex flex-wrap items-center gap-x-4 gap-y-2 py-4 first:pt-0 last:pb-0">
-                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#eaf8f0] text-[13px] font-bold text-[#147a4a]" aria-hidden="true">◫</span>
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#eaf8f0] text-[13px] font-bold text-[#147a4a]" aria-hidden="true"><x-senat.icon name="calendar" class="h-[18px] w-[18px]" /></span>
                     <div class="min-w-0 flex-1">
                         <p class="text-[14px] font-semibold text-senat-ink">{{ $meeting['title'] }}</p>
                         <p class="mt-0.5 text-[12px] text-senat-muted">{{ $meeting['type'] }} · {{ $tanggalPanjang($meeting['date']) }}</p>

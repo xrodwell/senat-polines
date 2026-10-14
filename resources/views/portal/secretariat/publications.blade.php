@@ -9,7 +9,7 @@
             [
                 'tone' => 'bg-[#eaf3fe]',
                 'accent' => 'text-[#155ead]',
-                'icon' => '▣',
+                'icon' => 'folder',
                 'title' => 'Produk / RUU Kampus',
                 'desc' => 'Peraturan, SK, Ketetapan, AD/ART, dan tahapan dokumen.',
                 'href' => route('portal.secretariat.publications'),
@@ -17,7 +17,7 @@
             [
                 'tone' => 'bg-[#fff4df]',
                 'accent' => 'text-[#a95100]',
-                'icon' => '≡',
+                'icon' => 'minutes',
                 'title' => 'Risalah & Notulensi',
                 'desc' => 'Risalah sidang, keputusan, action items, dan lampiran.',
                 'href' => route('portal.secretariat.minutes'),
@@ -25,7 +25,7 @@
             [
                 'tone' => 'bg-[#f1eeff]',
                 'accent' => 'text-[#5131b4]',
-                'icon' => '◉',
+                'icon' => 'aspiration',
                 'title' => 'Warta & Berita',
                 'desc' => 'Draf, review, terbit, serta arsip publikasi.',
                 'href' => route('portal.secretariat.publications'),
@@ -67,7 +67,7 @@
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @foreach ($modul as $card)
                 <section class="rounded-[14px] p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)] {{ $card['tone'] }}">
-                    <p class="text-[22px] font-bold leading-none {{ $card['accent'] }}" aria-hidden="true">{{ $card['icon'] }}</p>
+                    <x-senat.icon :name="$card['icon']" class="h-[22px] w-[22px] {{ $card['accent'] }}" />
                     <h2 class="mt-5 text-[17px] font-bold text-senat-ink">{{ $card['title'] }}</h2>
                     <p class="mt-2 text-[13px] leading-snug text-senat-body">{{ $card['desc'] }}</p>
                     <x-senat.button variant="secondary" size="sm" class="mt-6" :href="$card['href']">Kelola</x-senat.button>

@@ -71,9 +71,9 @@
 
             <div class="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                 <div class="grid gap-4 sm:grid-cols-3">
-                    <x-senat.stat label="Draf dibuka" :value="str_pad((string) $drafDibuka, 2, '0', STR_PAD_LEFT)" icon="▣" />
-                    <x-senat.stat label="Tanggapan" value="00" icon="◉" />
-                    <x-senat.stat label="Perlu moderasi" value="00" icon="!" />
+                    <x-senat.stat label="Draf dibuka" :value="str_pad((string) $drafDibuka, 2, '0', STR_PAD_LEFT)" icon="folder" />
+                    <x-senat.stat label="Tanggapan" value="00" icon="aspiration" />
+                    <x-senat.stat label="Perlu moderasi" value="00" icon="warning" />
                 </div>
                 <x-senat.button variant="primary" class="lg:mb-1" type="button">Atur Public Hearing</x-senat.button>
             </div>

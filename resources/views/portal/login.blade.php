@@ -144,8 +144,8 @@
                                 @click="show = !show"
                                 :aria-label="show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
                                 class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-[13px] text-senat-body hover:text-senat-link">
-                                <span x-show="!show" aria-hidden="true">◉</span>
-                                <span x-cloak x-show="show" aria-hidden="true">◎</span>
+                                <span x-show="!show" aria-hidden="true"><x-senat.icon name="eye" class="h-[18px] w-[18px]" /></span>
+                                <span x-cloak x-show="show" aria-hidden="true"><x-senat.icon name="eye-off" class="h-[18px] w-[18px]" /></span>
                             </button>
                         </div>
                     </div>
@@ -172,7 +172,7 @@
 
                 {{-- Security line --}}
                 <p class="mt-10 text-center text-[10px] text-senat-body">
-                    <span aria-hidden="true">▣</span> Koneksi aman • Akses tercatat pada sistem Sekretariat Senat
+                    <span aria-hidden="true"><x-senat.icon name="folder" class="h-[18px] w-[18px]" /></span> Koneksi aman • Akses tercatat pada sistem Sekretariat Senat
                 </p>
 
                 <div class="mt-6 h-px w-full bg-[#d6e0ed]"></div>

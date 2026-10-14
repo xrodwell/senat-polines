@@ -31,8 +31,8 @@
 
     {{-- ================= NOTICE ================= --}}
     @if ($perluKonfirmasi > 0)
-        <div class="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[14px] bg-[#fff4df] px-5 py-3 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
-            <span class="text-[18px] font-bold leading-none text-[#e88a00]" aria-hidden="true">!</span>
+        <div class="mb-6 flex flex-wrap items-start gap-x-4 gap-y-3 rounded-[14px] bg-[#fff4df] px-5 py-3 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
+            <x-senat.icon name="warning" class="h-[18px] w-[18px] shrink-0 text-[#e88a00]" />
             <p class="min-w-0 flex-1 text-[13px] font-medium text-[#975c00]">
                 {{ $perluKonfirmasi }} sidang membutuhkan konfirmasi presensi sebelum waktu dimulai.
             </p>
@@ -41,11 +41,11 @@
     @endif
 
     {{-- ================= KPI ================= --}}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <x-senat.stat label="Agenda" :value="$stats['total']" :hint="count($upcoming) . ' sidang terjadwal'" icon="▣" />
-        <x-senat.stat label="E-Voting" value="—" hint="Belum ada voting dibuka" icon="✓" />
-        <x-senat.stat label="Kehadiran" :value="$stats['attendance_rate'] . '%'" hint="Periode berjalan" icon="◷" />
-        <x-senat.stat label="Tindak lanjut" :value="count($aspirations)" hint="Aspirasi masuk komisi" icon="!" />
+    <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <x-senat.stat label="Agenda" :value="$stats['total']" :hint="count($upcoming) . ' sidang terjadwal'" icon="folder" />
+        <x-senat.stat label="E-Voting" value="—" hint="Belum ada voting dibuka" icon="check" />
+        <x-senat.stat label="Kehadiran" :value="$stats['attendance_rate'] . '%'" hint="Periode berjalan" icon="clock" />
+        <x-senat.stat label="Tindak lanjut" :value="count($aspirations)" hint="Aspirasi masuk komisi" icon="warning" />
     </div>
 
     {{-- ================= PRIORITAS + AGENDA TERDEKAT ================= --}}

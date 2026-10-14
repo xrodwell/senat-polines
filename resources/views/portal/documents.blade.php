@@ -83,7 +83,7 @@
             @forelse ($docs as $doc)
                 <li class="flex flex-wrap items-center gap-x-4 gap-y-3 py-4 first:pt-3"
                     x-show="(filter === 'semua' || filter === @js($doc['category'])) && (q === '' || @js(mb_strtolower($doc['title'] . ' ' . $doc['category'] . ' ' . $doc['meta'])).includes(q.toLowerCase()))">
-                    <span class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf3fe] text-[16px] font-bold text-senat-link" aria-hidden="true">▣</span>
+                    <span class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf3fe] text-[16px] font-bold text-senat-link" aria-hidden="true"><x-senat.icon name="folder" class="h-[18px] w-[18px]" /></span>
 
                     <div class="min-w-0 flex-1">
                         <p class="text-[14px] font-semibold leading-snug text-senat-ink">{{ $doc['title'] }}</p>

@@ -43,17 +43,17 @@
         {{-- Meta: kategori, tanggal, penulis (Figma 2225:250) --}}
         <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] font-medium text-slate-500">
             <span class="inline-flex items-center gap-1.5">
-                <span aria-hidden="true">📅</span>
+                <x-senat.icon name="calendar" class="h-3.5 w-3.5" />
                 {{ \Carbon\Carbon::parse($post['date'])->translatedFormat('d F Y') }}
             </span>
             <span class="text-slate-300">|</span>
             <span class="inline-flex items-center gap-1.5">
-                <span aria-hidden="true">✍️</span>
+                <x-senat.icon name="user" class="h-3.5 w-3.5" />
                 {{ $post['author'] }}
             </span>
             <span class="text-slate-300">|</span>
             <span class="inline-flex items-center gap-1.5">
-                <span aria-hidden="true">⏱️</span>
+                <x-senat.icon name="clock" class="h-3.5 w-3.5" />
                 {{ $readMinutes }} Menit Membaca
             </span>
             <span class="text-slate-300">|</span>
@@ -131,7 +131,7 @@
                                 <a href="{{ route('public.news.show', $item['slug']) }}"
                                    class="block border-b border-slate-100 py-4 last:border-b-0">
                                     <p class="text-[11px] font-medium text-slate-400">
-                                        <span aria-hidden="true">📅</span>
+                                        <x-senat.icon name="calendar" class="h-3.5 w-3.5" />
                                         {{ \Carbon\Carbon::parse($item['date'])->translatedFormat('d M Y') }}
                                     </p>
                                     <p class="mt-1 text-[12.5px] font-semibold leading-snug text-[#0f172a] transition-colors duration-150 hover:text-senat-primary">

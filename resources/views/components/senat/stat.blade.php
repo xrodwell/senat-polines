@@ -16,8 +16,8 @@
             @endif
         </div>
         @if ($icon)
-            <span class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border border-senat-badgeLine bg-senat-badgeBg text-[15px] text-senat-link" aria-hidden="true">
-                {{ $icon }}
+            <span class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border border-senat-badgeLine bg-senat-badgeBg text-senat-link" aria-hidden="true">
+                <x-senat.icon :name="$icon" class="h-[18px] w-[18px]" />
             </span>
         @endif
     </div>

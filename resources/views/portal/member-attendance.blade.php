@@ -50,7 +50,7 @@
                     <div class="flex items-center gap-2 text-xs">
                         <span class="text-slate-500">Status Bilik Suara:</span>
                         <span class="font-semibold px-2 py-0.5 rounded text-[11px] border"
-                              :class="activeVote && activeVote.isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-100 text-slate-500 border-slate-300'">
+                              :class="activeVote && activeVote.isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-100 text-emerald-800 border-slate-300'">
                             <span x-text="activeVote && activeVote.isOpen ? 'DIBUKA UNTUK ANGGOTA' : 'DITUTUP'"></span>
                         </span>
                     </div>

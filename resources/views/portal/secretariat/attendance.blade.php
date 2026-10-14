@@ -103,11 +103,11 @@
         <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
             <h2 class="text-[18px] font-bold text-senat-ink">Daftar Hadir Sidang</h2>
 
-            <div class="mt-4 grid grid-cols-2 gap-3 text-[11px] font-semibold text-senat-body md:grid-cols-[440px_150px_140px_minmax(0,1fr)]">
+            <div class="mt-4 grid grid-cols-2 gap-3 text-[11px] font-semibold text-senat-body lg:grid-cols-[440px_150px_140px_minmax(0,1fr)]">
                 <span>Anggota</span>
-                <span class="hidden md:block">Status</span>
-                <span class="hidden md:block">Waktu</span>
-                <span class="hidden md:block">Keterangan</span>
+                <span class="hidden lg:block">Status</span>
+                <span class="hidden lg:block">Waktu</span>
+                <span class="hidden lg:block">Keterangan</span>
             </div>
             <div class="mt-2 h-px bg-senat-sidebarLine"></div>
 

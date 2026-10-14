@@ -36,7 +36,7 @@
     <dl class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
             <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted">
-                <span aria-hidden="true">◫</span> Waktu
+                <span aria-hidden="true"><x-senat.icon name="calendar" class="h-[18px] w-[18px]" /></span> Waktu
             </dt>
             <dd class="mt-1 text-[13px] font-semibold text-senat-ink">
                 {{ $tanggalPanjang($meeting['date']) }} · {{ $meeting['time'] }}
@@ -44,7 +44,7 @@
         </div>
         <div>
             <dt class="flex items-center gap-2 text-[11px] font-medium text-senat-muted">
-                <span aria-hidden="true">▣</span> Lokasi
+                <span aria-hidden="true"><x-senat.icon name="folder" class="h-[18px] w-[18px]" /></span> Lokasi
             </dt>
             <dd class="mt-1 text-[13px] font-semibold text-senat-ink">{{ $meeting['room'] }}</dd>
         </div>

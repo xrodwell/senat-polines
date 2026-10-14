@@ -131,7 +131,7 @@
 
                                 <div class="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-[12px] text-senat-body">
                                     <span class="inline-flex items-center gap-1.5">
-                                        <span aria-hidden="true">📅</span>
+                                        <x-senat.icon name="calendar" class="h-3.5 w-3.5" />
                                         {{ \Carbon\Carbon::parse($meeting['date'])->translatedFormat('d F Y') }}
                                     </span>
                                     <span class="inline-flex items-center gap-1.5">

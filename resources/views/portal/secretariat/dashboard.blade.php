@@ -35,7 +35,7 @@
 
         $aksiCepat = [
             ['href' => route('portal.secretariat.sessions'), 'icon' => '+', 'title' => 'Buat Sidang', 'desc' => 'Atur jenis, waktu, lokasi, dan peserta', 'accent' => true],
-            ['href' => route('portal.secretariat.minutes'), 'icon' => '≡', 'title' => 'Susun Notulensi', 'desc' => 'Catat pembahasan, keputusan, action items', 'accent' => false],
+            ['href' => route('portal.secretariat.minutes'), 'icon' => 'minutes', 'title' => 'Susun Notulensi', 'desc' => 'Catat pembahasan, keputusan, action items', 'accent' => false],
             ['href' => route('portal.secretariat.voting'), 'icon' => '✓', 'title' => 'Gelar Voting', 'desc' => 'Buka voting dan pantau kuorum', 'accent' => false],
         ];
     @endphp
@@ -58,15 +58,15 @@
         </div>
 
         {{-- Stat / KPI --}}
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
             <x-senat.stat label="Sidang terjadwal" :value="str_pad((string) $stats['total'], 2, '0', STR_PAD_LEFT)"
-                          :hint="$upcomingCount.' agenda mendatang'" icon="◫" />
+                          :hint="$upcomingCount.' agenda mendatang'" icon="calendar" />
             <x-senat.stat label="Notulensi draft" :value="str_pad((string) ($notulenItem ? 1 : 0), 2, '0', STR_PAD_LEFT)"
-                          hint="Perlu verifikasi sekretariat" icon="≡" />
+                          hint="Perlu verifikasi sekretariat" icon="minutes" />
             <x-senat.stat label="Voting dibuka" :value="str_pad((string) ($activeMeeting ? 1 : 0), 2, '0', STR_PAD_LEFT)"
-                          :hint="$activeMeeting ? 'Sesi sedang berlangsung' : 'Belum ada voting aktif'" icon="✓" />
+                          :hint="$activeMeeting ? 'Sesi sedang berlangsung' : 'Belum ada voting aktif'" icon="check" />
             <x-senat.stat label="Aspirasi kajian" :value="str_pad((string) $aspirasiKajian, 2, '0', STR_PAD_LEFT)"
-                          hint="Menunggu telaah komisi" icon="◉" />
+                          hint="Menunggu telaah komisi" icon="aspiration" />
         </div>
 
         <div class="grid gap-5 lg:grid-cols-2">
@@ -77,7 +77,7 @@
                     @foreach ($aksiCepat as $aksi)
                         <a href="{{ $aksi['href'] }}"
                            class="flex items-center gap-3 rounded-[10px] px-4 py-3 transition-colors {{ $aksi['accent'] ? 'bg-senat-badgeBg' : 'border border-senat-sidebarLine bg-white hover:border-senat-badgeLine' }}">
-                            <span class="w-4 text-center text-[16px] font-semibold {{ $aksi['accent'] ? 'text-senat-link' : 'text-senat-muted' }}" aria-hidden="true">{{ $aksi['icon'] }}</span>
+                            <x-senat.icon :name="$aksi['icon']" class="h-4 w-4 shrink-0 {{ $aksi['accent'] ? 'text-senat-link' : 'text-senat-muted' }}" />
                             <span class="min-w-0 flex-1">
                                 <span class="block text-[14px] font-semibold text-senat-ink">{{ $aksi['title'] }}</span>
                                 <span class="mt-0.5 block truncate text-[11px] text-senat-body">{{ $aksi['desc'] }}</span>
