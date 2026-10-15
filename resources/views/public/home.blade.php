@@ -9,7 +9,7 @@
     /**
      * 01 — Beranda · Figma node 2013:3 (1440x2255)
      * Konversi React+Tailwind absolut → Blade + Tailwind responsif (flex/grid).
-     * Urutan desain: Hero → Agenda Sidang Terdekat → Lima Komisi → (Fitur Unggulan) → Warta.
+     * Urutan desain: Hero → Agenda Sidang Terdekat → Warta Terbaru → (Fitur Unggulan) → Lima Komisi.
      */
     $period        = $direktori['period'] ?? '2026–2029';
     $memberCount   = $direktori['members'] ?? null;
@@ -144,39 +144,49 @@
     </div>
 </section>
 
-{{-- ==================== LIMA KOMISI SENAT (2013:57 → 2013:88) ==================== --}}
+{{-- ==================== WARTA & KEPUTUSAN SENAT (2013:89 → 2013:110) ==================== --}}
 <section class="pt-[60px]">
     <div class="senat-shell">
-        <div>
-            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Struktur Kerja</p>
-            <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
-                Lima Komisi Senat Polines
-            </h2>
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Siaran Pers</p>
+                <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
+                    Warta &amp; Keputusan Senat Terbaru
+                </h2>
+            </div>
+            <a href="{{ route('public.news') }}"
+               class="shrink-0 text-[12px] font-bold text-senat-link transition-colors hover:text-senat-primary">
+                Lihat Semua Warta ›
+            </a>
         </div>
 
-        <div class="mt-[33px] grid grid-cols-1 gap-[19px] sm:grid-cols-2 lg:grid-cols-5">
-            @forelse ($committees as $committee)
-                @php
-                    $roman = \Illuminate\Support\Str::after($committee['code'], 'KOM-');
-                @endphp
-                <a href="{{ route('public.profile.structure') }}"
-                   class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#d9e3f0] bg-white p-[18px] transition-colors duration-150 hover:border-senat-primary/50">
-                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] bg-senat-hero text-[12px] font-bold text-white">
-                        {{ $roman }}
-                    </span>
-                    <p class="mt-3 text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-body">
-                        KOMISI {{ $roman }}
-                    </p>
-                    <h3 class="mt-[6px] text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary">
-                        {{ \Illuminate\Support\Str::after($committee['name'], 'Komisi ') }}
-                    </h3>
-                    <p class="mt-[14px] text-[11px] leading-[1.3] text-senat-body line-clamp-4">
-                        {{ $committee['focus'] }}
-                    </p>
+        <div class="mt-[30px] grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            @forelse ($posts as $post)
+                <a href="{{ route('public.news.show', $post['slug']) }}"
+                   class="group flex flex-col overflow-hidden rounded-[14px] border border-[#d9e3f0] bg-white transition-colors duration-150 hover:border-senat-primary/50">
+                    {{-- Thumbnail / placeholder (2013:92) --}}
+                    <div class="h-[125px] w-full overflow-hidden bg-[#d4dee5]">
+                        @if (! empty($post['thumbnail']))
+                            <img src="{{ $post['thumbnail'] }}" alt="{{ $post['title'] }}" loading="lazy"
+                                 class="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105">
+                        @endif
+                    </div>
+
+                    <div class="flex flex-1 flex-col p-[14px]">
+                        <p class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-link">
+                            {{ $post['category'] }}
+                        </p>
+                        <h3 class="mt-[6px] text-[13px] font-bold leading-snug text-senat-ink line-clamp-3 group-hover:text-senat-primary">
+                            {{ $post['title'] }}
+                        </h3>
+                        <p class="mt-2 text-[11px] leading-[1.3] text-senat-body line-clamp-2">
+                            {{ $post['excerpt'] }}
+                        </p>
+                    </div>
                 </a>
             @empty
-                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-5">
-                    <p class="text-[13px] text-senat-muted">Data komisi belum dimuat.</p>
+                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-4">
+                    <p class="text-[13px] text-senat-muted">Belum ada warta yang diterbitkan.</p>
                 </div>
             @endforelse
         </div>
@@ -242,43 +252,39 @@
     </div>
 </section>
 
-{{-- ==================== WARTA & KEPUTUSAN SENAT (2013:89 → 2013:110) ==================== --}}
+{{-- ==================== LIMA KOMISI SENAT (2013:57 → 2013:88) ==================== --}}
 <section class="pb-[50px] pt-[68px]">
     <div class="senat-shell">
         <div>
-            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Siaran Pers</p>
+            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Struktur Kerja</p>
             <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
-                Warta &amp; Keputusan Senat Terbaru
+                Lima Komisi Senat Polines
             </h2>
         </div>
 
-        <div class="mt-[30px] grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            @forelse ($posts as $post)
-                <a href="{{ route('public.news.show', $post['slug']) }}"
-                   class="group flex flex-col overflow-hidden rounded-[14px] border border-[#d9e3f0] bg-white transition-colors duration-150 hover:border-senat-primary/50">
-                    {{-- Thumbnail / placeholder (2013:92) --}}
-                    <div class="h-[125px] w-full overflow-hidden bg-[#d4dee5]">
-                        @if (! empty($post['thumbnail']))
-                            <img src="{{ $post['thumbnail'] }}" alt="{{ $post['title'] }}" loading="lazy"
-                                 class="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105">
-                        @endif
-                    </div>
-
-                    <div class="flex flex-1 flex-col p-[14px]">
-                        <p class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-link">
-                            {{ $post['category'] }}
-                        </p>
-                        <h3 class="mt-[6px] text-[13px] font-bold leading-snug text-senat-ink line-clamp-3 group-hover:text-senat-primary">
-                            {{ $post['title'] }}
-                        </h3>
-                        <p class="mt-2 text-[11px] leading-[1.3] text-senat-body line-clamp-2">
-                            {{ $post['excerpt'] }}
-                        </p>
-                    </div>
+        <div class="mt-[33px] grid grid-cols-1 gap-[19px] sm:grid-cols-2 lg:grid-cols-5">
+            @forelse ($committees as $committee)
+                @php
+                    $roman = \Illuminate\Support\Str::after($committee['code'], 'KOM-');
+                @endphp
+                <a href="{{ route('public.profile.structure') }}"
+                   class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#d9e3f0] bg-white p-[18px] transition-colors duration-150 hover:border-senat-primary/50">
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] bg-senat-hero text-[12px] font-bold text-white">
+                        {{ $roman }}
+                    </span>
+                    <p class="mt-3 text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-body">
+                        KOMISI {{ $roman }}
+                    </p>
+                    <h3 class="mt-[6px] text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary">
+                        {{ \Illuminate\Support\Str::after($committee['name'], 'Komisi ') }}
+                    </h3>
+                    <p class="mt-[14px] text-[11px] leading-[1.3] text-senat-body line-clamp-4">
+                        {{ $committee['focus'] }}
+                    </p>
                 </a>
             @empty
-                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-4">
-                    <p class="text-[13px] text-senat-muted">Belum ada warta yang diterbitkan.</p>
+                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-5">
+                    <p class="text-[13px] text-senat-muted">Data komisi belum dimuat.</p>
                 </div>
             @endforelse
         </div>
