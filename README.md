@@ -38,8 +38,31 @@ Pastikan `storage/` dan `bootstrap/cache/` dapat ditulis oleh proses PHP. Sebaga
 
 Buka http://127.0.0.1:8000.
 
-## Data dan frontend
+## Data, Interoperabilitas API, dan Frontend
 
-Data demo dibaca dari `storage/mock/*.json`; database tidak diperlukan untuk menjalankan demo dengan konfigurasi `.env.example`.
+Web ini mendukung arsitektur **Hybrid Interoperabilitas**:
+1. **REST API Backend**: Menarik data langsung dari endpoint API `Backend-Senat-Polines` (Komisi, Berita, Regulasi). Konfigurasi URL di `.env`:
+   ```env
+   SENAT_BACKEND_API_URL=http://127.0.0.1:8001/api
+   ```
+2. **Graceful Fallback**: Jika backend API offline atau tidak diaktifkan, sistem otomatis beralih (*fallback*) ke dataset lokal di `storage/mock/*.json` tanpa menimbulkan error.
+3. **Frontend**: Memakai Tailwind CSS dan Alpine.js melalui CDN, sehingga Node/npm maupun build aset tidak diperlukan untuk menjalankan web saat ini. Koneksi internet diperlukan untuk memuat aset CDN.
 
-Frontend memakai Tailwind CSS dan Alpine.js melalui CDN, sehingga Node/npm maupun build aset tidak diperlukan untuk menjalankan web saat ini. Koneksi internet diperlukan untuk memuat aset CDN.
+### Menjalankan Backend API (Opsional untuk Interoperabilitas)
+Jika ingin menguji penarikan data dinamis dari Backend API:
+```bash
+# 1. Clone repository backend
+git clone https://github.com/UlfanNayakaDipta/Backend-Senat-Polines.git
+cd Backend-Senat-Polines
+
+# 2. Setup dependensi dan env
+composer install
+cp .env.example .env
+touch database/database.sqlite
+# Set DB_CONNECTION=sqlite di .env
+php artisan key:generate
+php artisan migrate --seed
+
+# 3. Jalankan server API di port 8001
+php artisan serve --port=8001
+```
