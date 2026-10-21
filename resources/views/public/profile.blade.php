@@ -101,14 +101,22 @@
                     <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                         <div class="pt-4 md:pt-0 md:pr-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ketua Senat</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Prof. Ir. Supriyadi, M.T.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 196803121993031002</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">
+                                {{ $ketua['enrollment']['user']['nama'] ?? 'Prof. Ir. Supriyadi, M.T.' }}
+                            </h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">
+                                NIP. {{ $ketua['enrollment']['user']['nim_nip'] ?? '196803121993031002' }}
+                            </p>
                             <p class="text-xs text-slate-600 mt-3 leading-relaxed">Penanggung jawab utama persidangan pleno dan representasi Senat ke Direktur &amp; Kemendiktisaintek.</p>
                         </div>
                         <div class="pt-4 md:pt-0 md:px-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sekretaris Senat</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Dr. Eng. Agus Subagio, S.T., M.T.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 197405191999031001</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">
+                                {{ $sekretaris['enrollment']['user']['nama'] ?? 'Dr. Eng. Agus Subagio, S.T., M.T.' }}
+                            </h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">
+                                NIP. {{ $sekretaris['enrollment']['user']['nim_nip'] ?? '197405191999031001' }}
+                            </p>
                             <p class="text-xs text-slate-600 mt-3 leading-relaxed">Pengelola persidangan, verifikasi risalah keputusan sidang pleno, dan pengelolaan arsip normatif.</p>
                         </div>
                         <div class="pt-4 md:pt-0 md:pl-6">

@@ -10,6 +10,8 @@ use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Http;
+
 
 class PublicController extends Controller
 {
@@ -33,8 +35,19 @@ class PublicController extends Controller
 
     public function profile(): View
     {
+        // 1. Ambil data pengurus dari API Backend (Port 3000)
+        $response = Http::get('http://127.0.0.1:3000/api/struktur-organisasi');
+        $struktur = $response->json()['data'] ?? [];
+
+        // 2. Pisahkan data Ketua dan Sekretaris
+        $ketua = collect($struktur)->firstWhere('jabatan', 'Ketua');
+        $sekretaris = collect($struktur)->firstWhere('jabatan', 'Sekretaris');
+
         return view('public.profile', [
             'committees' => $this->committees->all(),
+            'struktur'   => $struktur,
+            'ketua'      => $ketua,
+            'sekretaris' => $sekretaris,
         ]);
     }
 
