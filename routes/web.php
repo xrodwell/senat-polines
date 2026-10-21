@@ -71,3 +71,6 @@ Route::prefix('portal')->group(function (): void {
         Route::get('/publikasi', [PortalController::class, 'secretariatPublications'])->name('portal.secretariat.publications');
     });
 });
+
+// API Proxy Frontend -> Backend untuk Chatbot Aspirasi
+Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])->name('api.chatbot.send');

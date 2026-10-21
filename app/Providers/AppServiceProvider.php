@@ -4,11 +4,13 @@ namespace App\Providers;
 
 use App\Contracts\ArchiveRepositoryInterface;
 use App\Contracts\AspirationRepositoryInterface;
+use App\Contracts\ChatbotRepositoryInterface;
 use App\Contracts\CommitteeRepositoryInterface;
 use App\Contracts\FeatureRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Repositories\Api\ApiChatbotRepository;
 use App\Repositories\Api\ApiCommitteeRepository;
 use App\Repositories\Api\ApiPostRepository;
 use App\Repositories\Api\ApiRegulationRepository;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(FeatureRepositoryInterface::class, JsonFeatureRepository::class);
         $this->app->bind(AspirationRepositoryInterface::class, JsonAspirationRepository::class);
         $this->app->bind(ArchiveRepositoryInterface::class, JsonArchiveRepository::class);
+        $this->app->bind(ChatbotRepositoryInterface::class, ApiChatbotRepository::class);
     }
 
     public function boot(): void
