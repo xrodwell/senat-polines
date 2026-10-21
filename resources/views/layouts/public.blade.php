@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="@yield('description', 'Portal resmi Senat Akademik Politeknik Negeri Semarang — informasi kebijakan akademik, produk hukum, agenda sidang, dan kanal aspirasi civitas akademika.')">
     <meta name="theme-color" content="#003c75">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Senat Akademik Politeknik Negeri Semarang')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,6 +67,8 @@
     </main>
 
     @include('components.senat.footer')
+
+    @include('components.senat.chat-widget')
 
     @stack('scripts')
 </body>

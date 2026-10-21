@@ -73,4 +73,6 @@ Route::prefix('portal')->group(function (): void {
 });
 
 // API Proxy Frontend -> Backend untuk Chatbot Aspirasi
-Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])->name('api.chatbot.send');
+Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('api.chatbot.send');

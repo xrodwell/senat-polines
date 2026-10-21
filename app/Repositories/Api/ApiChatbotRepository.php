@@ -18,7 +18,7 @@ class ApiChatbotRepository implements ChatbotRepositoryInterface
     public function sendMessage(string $message, array $history = []): array
     {
         try {
-            $response = Http::timeout(10)->post("{$this->baseUrl}/api/chatbot/chat", [
+            $response = Http::timeout(30)->post("{$this->baseUrl}/api/chatbot/chat", [
                 'message' => $message,
                 'history' => $history,
             ]);
