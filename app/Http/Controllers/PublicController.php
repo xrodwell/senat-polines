@@ -35,11 +35,11 @@ class PublicController extends Controller
 
     public function profile(): View
     {
-        // 1. Ambil data pengurus dari API Backend (Port 3000)
-        $response = Http::get('http://127.0.0.1:3000/api/struktur-organisasi');
+        $baseUrl = config('services.backend_api.url');
+
+        $response = Http::get("{$baseUrl}/api/struktur-organisasi");
         $struktur = $response->json()['data'] ?? [];
 
-        // 2. Pisahkan data Ketua dan Sekretaris
         $ketua = collect($struktur)->firstWhere('jabatan', 'Ketua');
         $sekretaris = collect($struktur)->firstWhere('jabatan', 'Sekretaris');
 
