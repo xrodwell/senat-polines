@@ -12,6 +12,8 @@ use App\Contracts\RegulationRepositoryInterface;
 use App\Support\SenatDirectory;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Http;
+
 
 class PublicController extends Controller
 {
@@ -41,9 +43,24 @@ class PublicController extends Controller
     /** 02A — Profil · Visi, Misi & Tujuan */
     public function profile(): View
     {
+        $baseUrl = config('services.backend_api.url');
+
+        try {
+            $response = Http::timeout(3)->get("{$baseUrl}/api/struktur-organisasi");
+            $struktur = $response->json()['data'] ?? [];
+        } catch (\Throwable $e) {
+            $struktur = [];
+        }
+
+        $ketua = collect($struktur)->firstWhere('jabatan', 'Ketua');
+        $sekretaris = collect($struktur)->firstWhere('jabatan', 'Sekretaris');
+
         return view('public.profile.vision', [
             'committees' => $this->committees->all(),
             'direktori' => SenatDirectory::stats(),
+            'struktur'   => $struktur,
+            'ketua'      => $ketua,
+            'sekretaris' => $sekretaris,
         ]);
     }
 
