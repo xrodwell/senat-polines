@@ -19,18 +19,12 @@
             <span class="relative inline-flex h-4 w-4 rounded-full border-2 border-white bg-emerald-500"></span>
         </span>
 
-        {{-- Icon Open / Close transitions --}}
+        {{-- Icon Open / Close — CSS state, bukan x-show (hindari bug x-show+x-transition) --}}
         <div class="relative h-6 w-6">
             {{-- Chat / Bot Icon --}}
             <svg
-                x-show="!isOpen"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-75 rotate-45"
-                x-transition:enter-end="opacity-100 scale-100 rotate-0"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100 scale-100 rotate-0"
-                x-transition:leave-end="opacity-0 scale-75 -rotate-45"
-                class="h-6 w-6"
+                class="absolute inset-0 h-6 w-6 transition-all duration-200 ease-out"
+                :class="isOpen ? 'rotate-45 scale-75 opacity-0' : 'rotate-0 scale-100 opacity-100'"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -41,15 +35,8 @@
 
             {{-- Close (X) Icon --}}
             <svg
-                x-show="isOpen"
-                x-cloak
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-75 -rotate-45"
-                x-transition:enter-end="opacity-100 scale-100 rotate-0"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100 scale-100 rotate-0"
-                x-transition:leave-end="opacity-0 scale-75 rotate-45"
-                class="h-6 w-6"
+                class="absolute inset-0 h-6 w-6 transition-all duration-200 ease-out"
+                :class="isOpen ? 'rotate-0 scale-100 opacity-100' : '-rotate-45 scale-75 opacity-0'"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -60,17 +47,13 @@
         </div>
     </button>
 
-    {{-- Chat Box Window --}}
+    {{-- Chat Box Window — dikontrol kelas CSS, bukan x-show (deterministik di semua browser) --}}
     <div
-        x-show="isOpen"
-        x-cloak
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-        class="absolute right-0 bottom-18 flex h-[520px] w-[92vw] max-w-[380px] sm:max-w-[400px] flex-col overflow-hidden rounded-2xl border border-senat-line bg-white shadow-2xl"
+        role="dialog"
+        aria-label="Asisten Virtual Senat Polines"
+        :aria-hidden="isOpen ? 'false' : 'true'"
+        :style="panelStyle"
+        class="absolute right-0 bottom-20 flex h-[min(520px,calc(100dvh-7rem))] w-[92vw] max-w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-senat-line bg-white shadow-2xl sm:max-w-[400px]"
     >
         {{-- Header Widget --}}
         <div class="flex items-center justify-between border-b border-senat-primaryHover/20 bg-senat-primary px-4 py-3.5 text-white">
@@ -204,6 +187,12 @@ function senatChatWidget() {
                 this.$nextTick(() => this.scrollToBottom());
             }
         },
+        get panelStyle() {
+            const base = 'transition:opacity 300ms cubic-bezier(0.16,1,0.3,1),transform 300ms cubic-bezier(0.16,1,0.3,1),visibility 300ms;will-change:opacity,transform;';
+            return base + (this.isOpen
+                ? 'opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scale(1);'
+                : 'opacity:0;visibility:hidden;pointer-events:none;transform:translateY(12px) scale(.96);');
+        },
         sendPrompt(text) {
             this.inputMessage = text;
             this.submitMessage();
@@ -261,11 +250,16 @@ function senatChatWidget() {
         },
         formatMessage(text) {
             if (!text) return '';
-            // Basic markdown styling for links, bold, and list bullets
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/`([^`]+)`/g, '<code class="bg-senat-surface px-1 py-0.5 rounded text-[11px] font-mono border border-senat-line">$1</code>');
+            // Escape dulu (model output tidak dipercaya), baru beri markup terbatas
+            const escaped = String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            return escaped
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`([^`]+)`/g, '<code class="rounded border border-senat-line bg-senat-surface px-1 py-0.5 font-mono text-[11px]">$1</code>');
         }
     };
 }

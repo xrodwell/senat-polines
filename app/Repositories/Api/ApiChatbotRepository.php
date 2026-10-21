@@ -12,7 +12,7 @@ class ApiChatbotRepository implements ChatbotRepositoryInterface
 
     public function __construct()
     {
-        $this->baseUrl = config('services.backend_api.url', 'http://127.0.0.1:8001');
+        $this->baseUrl = rtrim(config('services.backend_api.url', 'http://127.0.0.1:8001'), '/');
     }
 
     public function sendMessage(string $message, array $history = []): array

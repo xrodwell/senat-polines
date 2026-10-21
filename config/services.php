@@ -36,6 +36,6 @@ return [
     ],
 
     'backend_api' => [
-        'url' => env('BACKEND_API_URL', 'http://127.0.0.1:3000'),
+        'url' => rtrim(env('BACKEND_API_URL', 'http://127.0.0.1:8001'), '/'),
     ],
 ];

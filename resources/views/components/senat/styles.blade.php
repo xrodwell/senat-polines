@@ -9,6 +9,9 @@
     Satu sumber kebenaran: dipakai layouts/public.blade.php dan layouts/portal.blade.php.
 --}}
 <style>
+    /* Alpine: cegah flash elemen terkontrol sebelum runtime siap */
+    [x-cloak] { display: none !important; }
+
     :root {
         --senat-focus: #155EAD;
         --senat-gutter: 1.25rem;
