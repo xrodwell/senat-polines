@@ -53,6 +53,7 @@
         aria-label="Asisten Virtual Senat Polines"
         :aria-hidden="isOpen ? 'false' : 'true'"
         :style="panelStyle"
+        style="opacity:0;visibility:hidden;pointer-events:none;"
         class="absolute right-0 bottom-20 flex h-[min(520px,calc(100dvh-7rem))] w-[92vw] max-w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-senat-line bg-white shadow-2xl sm:max-w-[400px]"
     >
         {{-- Header Widget --}}

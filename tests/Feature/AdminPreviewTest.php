@@ -48,4 +48,14 @@ class AdminPreviewTest extends TestCase
             ->call('select', 'Super Admin')
             ->assertSet('active', 'Dashboard');
     }
+
+    public function test_public_home_renders_admin_link_and_livewire_scripts(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Panel Admin')
+            ->assertSee('livewire.js')
+            ->assertSee('senatChatWidget()')
+            ->assertSee('style="opacity:0;visibility:hidden;pointer-events:none;"', false);
+    }
 }
