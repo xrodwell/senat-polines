@@ -56,9 +56,19 @@ class AdminPreviewTest extends TestCase
     {
         Livewire::test(AdminPreview::class)
             ->assertSet('active', 'Dashboard Rapat')
+            ->call('select', 'Jadwal & Agenda Sidang')
+            ->assertSet('active', 'Jadwal & Agenda Sidang')
+            ->call('select', 'Presensi & Verifikasi QR')
+            ->assertSet('active', 'Presensi & Verifikasi QR')
             ->call('select', 'Kuorum & Kehadiran Anggota')
             ->assertSet('active', 'Kuorum & Kehadiran Anggota')
-            ->assertSee('Status Kuorum Sidang Pleno PLN-892');
+            ->assertSee('Status Kuorum Sidang Pleno PLN-892')
+            ->call('select', 'Risalah & Notulensi Sidang')
+            ->assertSet('active', 'Risalah & Notulensi Sidang')
+            ->call('select', 'E-Voting & Pengambilan Keputusan')
+            ->assertSet('active', 'E-Voting & Pengambilan Keputusan')
+            ->call('select', 'Dashboard Rapat')
+            ->assertSet('active', 'Dashboard Rapat');
     }
 
     public function test_unknown_screen_is_ignored(): void

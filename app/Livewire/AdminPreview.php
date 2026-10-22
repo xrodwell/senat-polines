@@ -9,6 +9,7 @@ use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use Illuminate\View\View;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class AdminPreview extends Component
@@ -38,6 +39,7 @@ class AdminPreview extends Component
         ],
     ];
 
+    #[Url(as: 'tab', history: true)]
     public string $active = 'Dashboard Rapat';
 
     // Form inputs state
@@ -48,9 +50,11 @@ class AdminPreview extends Component
 
     public function mount(): void
     {
-        $tab = request()->query('tab');
-        if ($tab) {
-            $this->select($tab);
+        // Query param 'tab' is automatically bound to $active via #[Url].
+        // If tab is provided but invalid, fallback to Dashboard Rapat.
+        $allowed = ['Dashboard', 'Dashboard Rapat', ...array_merge(...array_values(self::GROUPS))];
+        if (! in_array($this->active, $allowed, true)) {
+            $this->active = 'Dashboard Rapat';
         }
     }
 

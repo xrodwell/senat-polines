@@ -56,7 +56,7 @@
 
             <nav class="mt-5 space-y-6 px-[15px] pb-6" aria-label="Menu Admin">
                 @foreach ($groups as $group => $items)
-                    <div aria-labelledby="grup-{{ $loop->index }}">
+                    <div wire:key="group-{{ \Illuminate\Support\Str::slug($group) }}" aria-labelledby="grup-{{ $loop->index }}">
                         <p id="grup-{{ $loop->index }}" class="px-2 pb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-senat-muted">
                             {{ $group }}
                         </p>
@@ -64,7 +64,8 @@
                             @foreach ($items as $item)
                                 @php $isActive = ($active === $item); @endphp
                                 <button type="button"
-                                        wire:click="select(@js($item))"
+                                        wire:key="menu-{{ \Illuminate\Support\Str::slug($item) }}"
+                                        wire:click="select('{{ $item }}')"
                                         @if ($isActive) aria-current="page" @endif
                                         class="senat-tap flex min-h-[40px] w-full items-center gap-[11px] rounded-[9px] px-[12px] text-left transition-colors {{ $isActive ? 'bg-[#eef4fb] ring-1 ring-senat-badgeLine' : 'hover:bg-senat-surface' }}">
                                     <span class="h-2 w-2 shrink-0 rounded-full {{ $isActive ? 'bg-senat-link' : 'bg-slate-300' }}"></span>
@@ -117,6 +118,7 @@
 
             {{-- 1. SCREEN: Dashboard Rapat --}}
             @if ($active === 'Dashboard Rapat' || $active === 'Dashboard')
+                <div wire:key="screen-dashboard-rapat" class="space-y-6">
                 {{-- Info Banner Khas Portal --}}
                 <div class="flex items-start gap-3 rounded-[14px] bg-senat-badgeBg px-4 py-3.5 text-senat-link shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <span class="text-[18px] font-bold leading-none" aria-hidden="true">i</span>
@@ -215,10 +217,11 @@
                         </div>
                     @endif
                 </section>
+                </div>
 
             {{-- 2. SCREEN: Jadwal & Agenda Sidang (Figma 13B) --}}
             @elseif ($active === 'Jadwal & Agenda Sidang')
-                <div class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
+                <div wire:key="screen-jadwal-agenda" class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                         <h2 class="text-[18px] font-bold text-senat-ink">Buat Sidang Baru</h2>
                         <p class="mt-1.5 text-[13px] text-senat-body">Gunakan jenis sidang sesuai ketentuan Senat.</p>
@@ -277,7 +280,7 @@
 
             {{-- 3. SCREEN: Presensi & Verifikasi QR (Figma 13D) --}}
             @elseif ($active === 'Presensi & Verifikasi QR')
-                <div class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
+                <div wire:key="screen-presensi-qr" class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                         @if ($activeMeeting)
                             <x-senat.badge state="success">Sidang Aktif</x-senat.badge>
@@ -337,7 +340,7 @@
 
             {{-- 4. SCREEN: Kuorum & Kehadiran Anggota --}}
             @elseif ($active === 'Kuorum & Kehadiran Anggota')
-                <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-6 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                <section wire:key="screen-kuorum-kehadiran" class="rounded-[14px] border border-senat-sidebarLine bg-white p-6 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <x-senat.badge state="success">Kuorum Terpenuhi</x-senat.badge>
                     <h2 class="mt-3 text-[20px] font-bold text-senat-ink">Status Kuorum Sidang Pleno PLN-892</h2>
                     <p class="mt-1 text-[13px] text-senat-body">Ketentuan Statuta Politeknik Negeri Semarang: minimal kehadiran 2/3 anggota aktif untuk keabsahan penetapan keputusan.</p>
@@ -365,8 +368,8 @@
 
             {{-- 5. SCREEN: Risalah & Notulensi Sidang (Figma 13C) --}}
             @elseif ($active === 'Risalah & Notulensi Sidang')
-                <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]"
-                         x-data="{ saved: false }">
+                <div wire:key="screen-risalah-notulensi" class="space-y-6">
+                <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <div class="flex flex-wrap items-start justify-between gap-4">
                         <div class="min-w-0 max-w-[720px]">
                             <x-senat.badge state="warning">Draf Notulensi</x-senat.badge>
@@ -420,10 +423,11 @@
                         </ul>
                     </section>
                 </div>
+                </div>
 
             {{-- 6. SCREEN: E-VOTING & PENGAMBILAN KEPUTUSAN (Figma 13E) --}}
             @elseif ($active === 'E-Voting & Pengambilan Keputusan')
-                <div class="grid gap-5 xl:grid-cols-[682px_minmax(0,1fr)]">
+                <div wire:key="screen-evoting-keputusan" class="grid gap-5 xl:grid-cols-[682px_minmax(0,1fr)]">
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]"
                              x-data="{ status: 'Dibuka' }">
                         <x-senat.badge state="success" x-show="status === 'Dibuka'">Dibuka</x-senat.badge>
@@ -487,7 +491,7 @@
 
             {{-- 7. SCREEN: Pengaturan Informasi & Hero --}}
             @elseif ($active === 'Pengaturan Informasi & Hero')
-                <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
+                <div wire:key="screen-pengaturan-hero" class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
                     <h2 class="text-[16px] font-bold text-slate-900">Editor Hero Banner & Informasi Beranda Publik</h2>
                     <p class="text-[12px] text-slate-500">Konfigurasi visual dan pesan sambutan pada halaman utama portal Senat</p>
 
@@ -521,7 +525,7 @@
 
             {{-- 8. SCREEN: Profil, Tupoksi & Struktur --}}
             @elseif ($active === 'Profil, Tupoksi & Struktur')
-                <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
+                <div wire:key="screen-profil-struktur" class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
                     <h2 class="text-[16px] font-bold text-slate-900">Manajemen Dokumen Profil & Struktur Senat</h2>
                     <p class="text-[12px] text-slate-500">Kelola visi, misi, landasan hukum, dan diagram struktur organisasi</p>
 
@@ -543,7 +547,7 @@
 
             {{-- 9. SCREEN: Direktori Komisi & Anggota --}}
             @elseif ($active === 'Direktori Komisi & Anggota')
-                <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
+                <div wire:key="screen-direktori-komisi" class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                         <div>
                             <h2 class="text-[16px] font-bold text-slate-900">Direktori Komisi & Anggota Senat</h2>
@@ -569,7 +573,7 @@
 
             {{-- 10. SCREEN: Manajemen Berita & Siaran Pers --}}
             @elseif ($active === 'Manajemen Berita & Siaran Pers')
-                <div class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
+                <div wire:key="screen-berita-siaran-pers" class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                         <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-4">
                             <div>
@@ -611,7 +615,7 @@
 
             {{-- 11. SCREEN: Katalog Regulasi & Produk Hukum --}}
             @elseif ($active === 'Katalog Regulasi & Produk Hukum')
-                <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                <section wire:key="screen-regulasi-hukum" class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-4">
                         <div>
                             <h2 class="text-[18px] font-bold text-senat-ink">Katalog Produk Hukum & Peraturan Senat</h2>
@@ -651,7 +655,7 @@
 
             {{-- 12. SCREEN: Repositori Arsip & Dokumen --}}
             @elseif ($active === 'Repositori Arsip & Dokumen')
-                <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                <section wire:key="screen-arsip-dokumen" class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-4">
                         <div>
                             <h2 class="text-[18px] font-bold text-senat-ink">Repositori Dokumen & Laporan Tahunan</h2>
@@ -677,7 +681,7 @@
 
             {{-- 13. SCREEN: Pusat Aspirasi & Tindak Lanjut --}}
             @elseif ($active === 'Pusat Aspirasi & Tindak Lanjut')
-                <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                <section wire:key="screen-pusat-aspirasi" class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-4">
                         <div>
                             <h2 class="text-[18px] font-bold text-senat-ink">Manajemen Aspirasi Sivitas Akademika</h2>
