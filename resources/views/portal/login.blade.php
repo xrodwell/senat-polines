@@ -9,37 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        senat: {
-                            hero: '#003c75',
-                            primary: '#003366',
-                            primaryHover: '#002850',
-                            link: '#0963bd',
-                            orange: '#f37021',
-                            ink: '#172133',
-                            body: '#52637d',
-                            muted: '#667085',
-                            line: '#e2e8ee',
-                            surface: '#f7f9fc',
-                            sky: '#8fc7ff',
-                            skySoft: '#cfe0ff',
-                            border: '#cbd5e1',
-                        },
-                    },
-                },
-            },
-        };
-    </script>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @vite(['resources/css/app.css'])
 
     <style>
         [x-cloak] { display: none !important; }

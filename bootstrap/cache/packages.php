@@ -1,14 +1,32 @@
 <?php return array (
-  'nesbot/carbon' => 
+  'livewire/livewire' =>
   array (
-    'providers' => 
+    'aliases' =>
+    array (
+      'Livewire' => 'Livewire\\Livewire',
+    ),
+    'providers' =>
+    array (
+      0 => 'Livewire\\LivewireServiceProvider',
+    ),
+  ),
+  'nesbot/carbon' =>
+  array (
+    'providers' =>
     array (
       0 => 'Carbon\\Laravel\\ServiceProvider',
     ),
   ),
-  'nunomaduro/termwind' => 
+  'nunomaduro/collision' =>
   array (
-    'providers' => 
+    'providers' =>
+    array (
+      0 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+    ),
+  ),
+  'nunomaduro/termwind' =>
+  array (
+    'providers' =>
     array (
       0 => 'Termwind\\Laravel\\TermwindServiceProvider',
     ),

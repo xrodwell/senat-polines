@@ -21,11 +21,11 @@ Dokumen kerja untuk agen implementasi. **Baca ini dulu sebelum menulis view.**
 
 ## 2. Stack target (WAJIB diikuti)
 
-- Laravel 11 + Blade. **Tailwind dimuat via CDN** di dalam layout (config inline), bukan build Vite. Jangan jalankan `npm`.
-- Alpine.js 3 (CDN) untuk interaksi (dropdown, tab, modal, scan simulasi).
-- Tidak ada React/Vue. Tidak ada dependency baru.
+- Laravel 13 + Blade + Livewire 4. Tailwind CSS v4 dimuat lewat build Vite (`@vite(['resources/css/app.css'])`), bukan CDN.
+- Interaksi memakai Alpine yang dibundel Livewire (tanpa script CDN, tanpa `alpinejs` standalone).
+- Tidak ada React/Vue.
 
-## 3. Design token (sudah didefinisikan di layout)
+## 3. Design token (didefinisikan di `resources/css/app.css` via `@theme`)
 
 Gunakan kelas `senat-*` berikut — jangan hardcode hex baru kalau token sudah ada:
 
@@ -121,10 +121,9 @@ Semua controller **sudah** menyediakan data berikut. Jangan mengubah controller/
 ## 7. Verifikasi (wajib, sebelum lapor)
 
 ```bash
-cd /home/ubuntu/senat-polines
-php /tmp/bladecheck/compile.php resources/views/<view>.blade.php   # wajib lint=OK
+npm run build                                                      # wajib sukses
 php artisan view:clear
-php artisan serve --host=127.0.0.1 --port=8099 &                   # kalau belum jalan
+php artisan serve --host=127.0.0.1 --port=8099 &
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8099/<path>   # wajib 200
 ```
 
@@ -132,5 +131,5 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8099/<path>   # wajib 
 
 - Jangan mengubah `routes/web.php`, `app/Http/Controllers/*`, `app/Support/*`, `components/senat/*`, `layouts/*` (kalau perlu, laporkan).
 - Jangan mengubah file `storage/mock/*.json`.
-- Jangan menambah dependency/`npm`/Vite.
+- Jangan menambah dependency baru di luar stack Vite/Tailwind v4/Livewire yang sudah terpasang.
 - Jangan mengarang data kelembagaan baru. Nama orang, komisi, nomor surat, NIP hanya dari data mock/SenatDirectory yang tersedia. Kalau desain menampilkan data yang tidak ada di mock, gunakan data mock terdekat dan jangan mengarang angka resmi.

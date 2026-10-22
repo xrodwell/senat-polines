@@ -12,47 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ["'Plus Jakarta Sans'", 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        polines: {
-                            navy: '#003366',
-                            navyDark: '#00284D',
-                            blue: '#0A66C2',
-                            orange: '#F37021',
-                            orangeHover: '#d95f14',
-                        },
-                        /* Design tokens — Figma "PBL - Senat Polines" (file 6LJSjDuCcOWgneDcN7LPHZ) */
-                        senat: {
-                            hero: '#003c75',
-                            primary: '#003366',
-                            primaryHover: '#002850',
-                            link: '#0963bd',
-                            orange: '#f37021',
-                            ink: '#172133',
-                            body: '#52637d',
-                            muted: '#637082',
-                            line: '#e2e8ee',
-                            surface: '#f7f9fc',
-                            sky: '#8fc7ff',
-                            skySoft: '#cfe0ff',
-                            badgeBg: '#f2f9ff',
-                            badgeLine: '#8cb8e3',
-                            border: '#cbd5e1',
-                        },
-                    },
-                },
-            },
-        };
-    </script>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @vite(['resources/css/app.css'])
 
     @include('components.senat.styles')
 

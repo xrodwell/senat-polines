@@ -72,6 +72,9 @@ Route::prefix('portal')->group(function (): void {
     });
 });
 
+// Admin Sekretariat — preview UI (lihat docs/PRD-admin-panel.md)
+Route::get('/admin', \App\Livewire\AdminPreview::class)->name('admin.preview');
+
 // API Proxy Frontend -> Backend untuk Chatbot Aspirasi
 Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
