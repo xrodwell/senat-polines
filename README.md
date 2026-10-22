@@ -1,16 +1,16 @@
 # Portal Senat Akademik Politeknik Negeri Semarang (Polines)
 
-Web demo berbasis Laravel 13 + Livewire 4.
+Portal resmi Senat Akademik Politeknik Negeri Semarang berbasis Laravel 13 dan Tailwind CSS v4, dilengkapi pratinjau panel administrasi sekretariat dan manajemen rapat/publikasi berbasis Livewire 4.
 
-## Menjalankan secara lokal
+## Menjalankan secara Lokal
 
-Prasyarat: Git, PHP >=8.3 (sesuai batas versi di `composer.json`/`composer.lock`), Composer, Node.js dan npm. Pastikan `git`, `php`, `composer`, `node`, dan `npm` tersedia di PATH. `composer install` memeriksa persyaratan PHP; aktifkan ekstensi yang dilaporkan kurang di `php.ini` PHP CLI, jangan gunakan `--ignore-platform-reqs`.
+Prasyarat: Git, PHP >=8.3, Composer, Node.js dan npm. Pastikan `git`, `php`, `composer`, `node`, dan `npm` tersedia di PATH lingkungan Anda.
 
-Frontend memakai Vite + Tailwind CSS v4, jadi `npm install && npm run build` wajib sekali sebelum `php artisan serve` (atau jalankan `npm run dev`).
+Frontend menggunakan Vite + Tailwind CSS v4, sehingga `npm install && npm run build` perlu dijalankan sebelum memulai server Laravel.
 
 ### Windows PowerShell
 
-Jalankan perintah berikut berurutan untuk clone baru; lanjutkan hanya jika perintah sebelumnya berhasil.
+Jalankan perintah berikut secara berurutan:
 
 ```powershell
 git clone https://github.com/xrodwell/senat-polines.git
@@ -24,9 +24,7 @@ php artisan key:generate
 php artisan serve
 ```
 
-`./run.sh` dan sintaks Bash `mkdir -p`/`cp` bukan instruksi untuk PowerShell; gunakan `New-Item` dan `Copy-Item` seperti di atas. Jangan timpa `.env` atau buat ulang kunci aplikasi pada instalasi yang sudah digunakan.
-
-### Linux/macOS (Bash)
+### Linux / macOS (Bash)
 
 ```bash
 git clone https://github.com/xrodwell/senat-polines.git
@@ -37,44 +35,27 @@ npm run build
 mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 cp .env.example .env
 php artisan key:generate
-./run.sh
+php artisan serve
 ```
 
-Pastikan `storage/` dan `bootstrap/cache/` dapat ditulis oleh proses PHP. Sebagai alternatif `./run.sh`, jalankan `php artisan serve`.
+Buka peramban di:
+- **Portal Publik**: `http://127.0.0.1:8000`
+- **Portal Anggota**: `http://127.0.0.1:8000/portal/dashboard`
+- **Panel Admin Sekretariat**: `http://127.0.0.1:8000/admin`
 
-Buka http://127.0.0.1:8000. Pratinjau panel admin ada di http://127.0.0.1:8000/admin.
+## Arsitektur & Interoperabilitas
 
-## Data, Interoperabilitas API, dan Frontend
-
-Web ini mendukung arsitektur **Hybrid Interoperabilitas**:
-1. **REST API Backend**: Menarik data langsung dari endpoint API `Backend-Senat-Polines` (Komisi, Berita, Regulasi). Konfigurasi URL di `.env`:
+Sistem mendukung arsitektur **Hybrid Interoperabilitas**:
+1. **REST API Backend**: Menghubungkan endpoint API `Backend-Senat-Polines` untuk data komisi, berita, dan regulasi via konfigurasi `.env`:
    ```env
    SENAT_BACKEND_API_URL=http://127.0.0.1:8001/api
    ```
-2. **Graceful Fallback**: Jika backend API offline atau tidak diaktifkan, sistem otomatis beralih (*fallback*) ke dataset lokal di `storage/mock/*.json` tanpa menimbulkan error.
-3. **Frontend**: Memakai Vite 8, Tailwind CSS v4 (`@tailwindcss/vite`), dan Livewire 4 (Alpine dibundel Livewire). Aset dibangun lewat `npm run build` ke `public/build`; tidak ada lagi Tailwind/Alpine CDN.
+2. **Mock Fallback**: Jika backend API belum dijalankan, sistem otomatis menggunakan repositori mock berbasis JSON di `storage/mock/*.json` tanpa hambatan.
+3. **Panel Admin Terpusat**: Panel `/admin` mengintegrasikan seluruh operasional sekretariat (sidang, kuorum, voting, risalah) dan publikasi web (berita, regulasi, arsip, aspirasi).
 
-### Menjalankan Backend API (Opsional untuk Interoperabilitas)
-Jika ingin menguji penarikan data dinamis dari Backend API:
-```bash
-# 1. Clone repository backend
-git clone https://github.com/UlfanNayakaDipta/Backend-Senat-Polines.git
-cd Backend-Senat-Polines
+## Pengujian
 
-# 2. Setup dependensi dan env
-composer install
-cp .env.example .env
-touch database/database.sqlite
-# Set DB_CONNECTION=sqlite di .env
-php artisan key:generate
-php artisan migrate --seed
-
-# 3. Jalankan server API di port 8001
-php artisan serve --port=8001
-```
-
-## Test
-
+Menjalankan test suite:
 ```bash
 ./vendor/bin/phpunit
 ```
