@@ -193,65 +193,6 @@
     </div>
 </section>
 
-{{-- ==================== LIMA FITUR UNGGULAN (dipertahankan dari beranda sebelumnya) ==================== --}}
-<section class="pt-[68px]">
-    <div class="senat-shell">
-        <div class="max-w-[760px]">
-            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Peta Produk</p>
-            <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
-                Lima Fitur Unggulan SENAT
-            </h2>
-            <p class="mt-3 text-[13px] leading-relaxed text-senat-body">
-                Modul inti sistem informasi Senat: dari penjaringan aspirasi, sidang digital, hingga transparansi kinerja
-                dan anggaran lembaga.
-            </p>
-        </div>
-
-        <div class="mt-[31px] grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            @forelse ($features as $feature)
-                <article class="flex flex-col rounded-[14px] border border-[#d9e3f0] bg-white p-[22px]">
-                    <div class="flex items-start gap-3">
-                        <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] bg-senat-hero text-[12px] font-bold text-white tabular-nums">
-                            {{ $feature['code'] }}
-                        </span>
-                        <div class="min-w-0">
-                            <h3 class="text-[14px] font-bold leading-snug text-senat-ink">{{ $feature['title'] }}</h3>
-                            <p class="mt-1 text-[10px] font-bold uppercase leading-[1.2] tracking-[0.03em] text-senat-link">
-                                {{ $feature['subtitle'] }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <ul class="mt-4 flex-1 space-y-[10px]">
-                        @foreach ($feature['points'] as $point)
-                            <li class="text-[11px] leading-[1.45] text-senat-body">
-                                <span class="font-bold text-senat-ink">{{ $point['label'] }}</span> — {{ $point['detail'] }}
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    @if (! empty($feature['flow']))
-                        <div class="mt-4 flex flex-wrap items-center gap-[6px] border-t border-senat-line pt-[14px]">
-                            @foreach ($feature['flow'] as $stage)
-                                <span class="inline-flex items-center rounded-full border border-senat-badgeLine bg-senat-badgeBg px-[9px] py-[3px] text-[10px] font-bold uppercase tracking-[0.04em] text-senat-link">
-                                    {{ $stage }}
-                                </span>
-                                @if (! $loop->last)
-                                    <span class="text-[10px] text-senat-muted" aria-hidden="true">›</span>
-                                @endif
-                            @endforeach
-                        </div>
-                    @endif
-                </article>
-            @empty
-                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center md:col-span-2 lg:col-span-3">
-                    <p class="text-[13px] text-senat-muted">Data fitur unggulan belum dimuat.</p>
-                </div>
-            @endforelse
-        </div>
-    </div>
-</section>
-
 {{-- ==================== LIMA KOMISI SENAT (2013:57 → 2013:88) ==================== --}}
 <section class="pb-[50px] pt-[68px]">
     <div class="senat-shell">

@@ -49,11 +49,13 @@ class AdminPreviewTest extends TestCase
             ->assertSet('active', 'Dashboard Rapat');
     }
 
-    public function test_public_home_renders_admin_link_and_livewire_scripts(): void
+    public function test_public_home_renders_livewire_scripts(): void
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Panel Admin')
+            ->assertDontSee('Panel Admin')
+            ->assertDontSee('Peta Produk')
+            ->assertDontSee('Lima Fitur Unggulan SENAT')
             ->assertSee('livewire.js')
             ->assertSee('senatChatWidget()')
             ->assertSee('style="opacity:0;visibility:hidden;pointer-events:none;"', false);

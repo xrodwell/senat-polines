@@ -80,11 +80,6 @@
         </nav>
 
         <div class="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap lg:ml-4 lg:gap-2 xl:gap-3">
-            <a href="{{ route('admin.preview') }}"
-               class="senat-tap hidden h-9 items-center gap-1.5 rounded-md bg-senat-primary px-3 text-[11.5px] font-semibold text-white shadow-sm transition-colors hover:bg-senat-primaryHover sm:inline-flex">
-                <span class="inline-block h-2 w-2 rounded-full bg-emerald-400"></span>
-                Panel Admin
-            </a>
             <a href="{{ route('portal.login') }}"
                class="senat-tap hidden h-9 items-center gap-1.5 rounded-md border border-senat-border bg-[#f8fafc] px-3 text-[11.5px] font-semibold text-senat-primary transition-colors hover:border-senat-primary xl:inline-flex">
                 <x-senat.icon name="lock" class="h-[14px] w-[14px]" />
@@ -166,11 +161,6 @@
             </nav>
 
             <div class="shrink-0 space-y-2 border-t border-senat-line p-4">
-                <a href="{{ route('admin.preview') }}"
-                   class="senat-tap flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-senat-primary text-[13px] font-bold text-white shadow-sm">
-                    <span class="inline-block h-2 w-2 rounded-full bg-emerald-400"></span>
-                    Masuk Panel Admin (Sekretariat)
-                </a>
                 <a href="{{ route('public.aspirations') }}"
                    class="senat-tap flex min-h-[48px] w-full items-center justify-center rounded-lg border border-senat-border bg-white text-[13px] font-bold text-senat-primary">
                     Sampaikan Aspirasi
