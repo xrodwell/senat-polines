@@ -71,6 +71,16 @@ class AdminPreviewTest extends TestCase
             ->assertSet('active', 'Dashboard Rapat');
     }
 
+    public function test_sidebar_links_render_correct_routes_and_parameters(): void
+    {
+        $response = $this->get('/admin');
+
+        $response->assertOk();
+        $response->assertSee('/admin?tab=Dashboard%20Rapat', false);
+        $response->assertSee('/admin?tab=Jadwal%20%26%20Agenda%20Sidang', false);
+        $response->assertSee('/admin?tab=Presensi%20%26%20Verifikasi%20QR', false);
+    }
+
     public function test_unknown_screen_is_ignored(): void
     {
         Livewire::test(AdminPreview::class)

@@ -66,14 +66,13 @@
                                     $isActive = ($active === $item);
                                     $itemSlug = \Illuminate\Support\Str::slug($item);
                                 @endphp
-                                <button type="button"
-                                        wire:key="menu-{{ $itemSlug }}"
-                                        wire:click="select('{{ $itemSlug }}')"
-                                        @if ($isActive) aria-current="page" @endif
-                                        class="senat-tap flex min-h-[40px] w-full items-center gap-[11px] rounded-[9px] px-[12px] text-left transition-colors {{ $isActive ? 'bg-[#eef4fb] ring-1 ring-senat-badgeLine' : 'hover:bg-senat-surface' }}">
+                                <a href="{{ route('admin.preview', ['tab' => $item]) }}"
+                                   wire:key="menu-link-{{ $itemSlug }}"
+                                   @if ($isActive) aria-current="page" @endif
+                                   class="senat-tap flex min-h-[40px] w-full items-center gap-[11px] rounded-[9px] px-[12px] text-left transition-colors {{ $isActive ? 'bg-[#eef4fb] ring-1 ring-senat-badgeLine' : 'hover:bg-senat-surface' }}">
                                     <span class="h-2 w-2 shrink-0 rounded-full {{ $isActive ? 'bg-senat-link' : 'bg-slate-300' }}"></span>
                                     <span class="truncate text-[12.5px] {{ $isActive ? 'font-semibold text-senat-primary' : 'font-medium text-senat-ink' }}">{{ $item }}</span>
-                                </button>
+                                </a>
                             @endforeach
                         </div>
                     </div>
@@ -148,15 +147,15 @@
                         <h2 class="text-[18px] font-bold text-senat-ink">Aksi Cepat</h2>
                         <div class="mt-4 space-y-3">
                             @foreach ($aksiCepat as $aksi)
-                                <button type="button" wire:click="select(@js($aksi['action']))"
-                                        class="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left transition-colors {{ $aksi['accent'] ? 'bg-senat-badgeBg' : 'border border-senat-sidebarLine bg-white hover:border-senat-badgeLine' }}">
+                                <a href="{{ route('admin.preview', ['tab' => $aksi['action']]) }}"
+                                   class="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left transition-colors {{ $aksi['accent'] ? 'bg-senat-badgeBg' : 'border border-senat-sidebarLine bg-white hover:border-senat-badgeLine' }}">
                                     <x-senat.icon :name="$aksi['icon']" class="h-4 w-4 shrink-0 {{ $aksi['accent'] ? 'text-senat-link' : 'text-senat-muted' }}" />
                                     <span class="min-w-0 flex-1">
                                         <span class="block text-[14px] font-semibold text-senat-ink">{{ $aksi['title'] }}</span>
                                         <span class="mt-0.5 block truncate text-[11px] text-senat-body">{{ $aksi['desc'] }}</span>
                                     </span>
                                     <span class="text-[20px] font-bold leading-none text-senat-link" aria-hidden="true">›</span>
-                                </button>
+                                </a>
                             @endforeach
                         </div>
                     </section>
@@ -187,10 +186,10 @@
                 <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                     <div class="flex items-center justify-between">
                         <h2 class="text-[18px] font-bold text-senat-ink">Agenda Sidang Terjadwal</h2>
-                        <button type="button" wire:click="select('Jadwal & Agenda Sidang')"
-                                class="text-[12px] font-semibold text-senat-link hover:underline">
+                        <a href="{{ route('admin.preview', ['tab' => 'Jadwal & Agenda Sidang']) }}"
+                           class="text-[12px] font-semibold text-senat-link hover:underline">
                             Kelola Jadwal →
-                        </button>
+                        </a>
                     </div>
                     @if (empty($meetings))
                         <x-senat.empty class="mt-4" title="Belum ada agenda sidang"
@@ -212,8 +211,8 @@
                                     </div>
                                     <div class="mt-4 flex items-center justify-between border-t border-senat-sidebarLine pt-3 text-[11px]">
                                         <span class="font-medium text-senat-body">Hadir: {{ $meeting['present_count'] }}/{{ $meeting['total_invited'] }}</span>
-                                        <button type="button" wire:click="select('Presensi & Verifikasi QR')"
-                                                class="font-semibold text-senat-link hover:underline">Presensi ›</button>
+                                        <a href="{{ route('admin.preview', ['tab' => 'Presensi & Verifikasi QR']) }}"
+                                           class="font-semibold text-senat-link hover:underline">Presensi ›</a>
                                     </div>
                                 </article>
                             @endforeach

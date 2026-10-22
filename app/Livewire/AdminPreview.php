@@ -69,6 +69,10 @@ class AdminPreview extends Component
     {
         // Query param 'tab' is automatically bound to $active via #[Url].
         // If tab is provided but invalid, fallback to Dashboard Rapat.
+        if (isset(self::MENU_KEYS[$this->active])) {
+            $this->active = self::MENU_KEYS[$this->active];
+        }
+
         $allowed = ['Dashboard', 'Dashboard Rapat', ...array_merge(...array_values(self::GROUPS))];
         if (! in_array($this->active, $allowed, true)) {
             $this->active = 'Dashboard Rapat';
