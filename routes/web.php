@@ -60,15 +60,15 @@ Route::prefix('portal')->group(function (): void {
     Route::get('/attendance', [PortalController::class, 'memberAttendance'])->name('portal.attendance');
     Route::get('/session', [PortalController::class, 'adminMeetingSession'])->name('portal.session');
 
-    // 13 — Sekretariat
+    // 13 — Sekretariat (dialihkan ke /admin sesuai arsitektur panel terpadu)
     Route::prefix('sekretariat')->group(function (): void {
-        Route::get('/dashboard', [PortalController::class, 'secretariatDashboard'])->name('portal.secretariat.dashboard');
-        Route::get('/sidang', [PortalController::class, 'secretariatSessions'])->name('portal.secretariat.sessions');
-        Route::get('/presensi', [PortalController::class, 'secretariatAttendance'])->name('portal.secretariat.attendance');
-        Route::get('/notulensi', [PortalController::class, 'secretariatMinutes'])->name('portal.secretariat.minutes');
-        Route::get('/e-voting', [PortalController::class, 'secretariatVoting'])->name('portal.secretariat.voting');
-        Route::get('/aspirasi', [PortalController::class, 'secretariatAspirations'])->name('portal.secretariat.aspirations');
-        Route::get('/publikasi', [PortalController::class, 'secretariatPublications'])->name('portal.secretariat.publications');
+        Route::get('/dashboard', fn () => redirect()->route('admin.preview', ['tab' => 'Dashboard Rapat']))->name('portal.secretariat.dashboard');
+        Route::get('/sidang', fn () => redirect()->route('admin.preview', ['tab' => 'Jadwal & Agenda Sidang']))->name('portal.secretariat.sessions');
+        Route::get('/presensi', fn () => redirect()->route('admin.preview', ['tab' => 'Presensi & Verifikasi QR']))->name('portal.secretariat.attendance');
+        Route::get('/notulensi', fn () => redirect()->route('admin.preview', ['tab' => 'Risalah & Notulensi Sidang']))->name('portal.secretariat.minutes');
+        Route::get('/e-voting', fn () => redirect()->route('admin.preview', ['tab' => 'E-Voting & Pengambilan Keputusan']))->name('portal.secretariat.voting');
+        Route::get('/aspirasi', fn () => redirect()->route('admin.preview', ['tab' => 'Pusat Aspirasi & Tindak Lanjut']))->name('portal.secretariat.aspirations');
+        Route::get('/publikasi', fn () => redirect()->route('admin.preview', ['tab' => 'Manajemen Berita & Siaran Pers']))->name('portal.secretariat.publications');
     });
 });
 

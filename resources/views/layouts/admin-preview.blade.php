@@ -12,6 +12,8 @@
 
     @vite(['resources/css/app.css'])
     @livewireStyles
+
+    @include('components.senat.styles')
 </head>
 <body class="min-h-screen bg-senat-surface font-sans text-senat-body antialiased">
     {{ $slot ?? '' }}

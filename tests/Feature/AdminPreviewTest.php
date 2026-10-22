@@ -20,6 +20,25 @@ class AdminPreviewTest extends TestCase
             ->assertDontSee('Super Admin');
     }
 
+    public function test_secretariat_portal_redirects_to_admin_preview(): void
+    {
+        $this->get('/portal/sekretariat/dashboard')->assertRedirect('/admin?tab=Dashboard%20Rapat');
+        $this->get('/portal/sekretariat/sidang')->assertRedirect('/admin?tab=Jadwal%20%26%20Agenda%20Sidang');
+        $this->get('/portal/sekretariat/presensi')->assertRedirect('/admin?tab=Presensi%20%26%20Verifikasi%20QR');
+        $this->get('/portal/sekretariat/notulensi')->assertRedirect('/admin?tab=Risalah%20%26%20Notulensi%20Sidang');
+        $this->get('/portal/sekretariat/e-voting')->assertRedirect('/admin?tab=E-Voting%20%26%20Pengambilan%20Keputusan');
+        $this->get('/portal/sekretariat/aspirasi')->assertRedirect('/admin?tab=Pusat%20Aspirasi%20%26%20Tindak%20Lanjut');
+        $this->get('/portal/sekretariat/publikasi')->assertRedirect('/admin?tab=Manajemen%20Berita%20%26%20Siaran%20Pers');
+    }
+
+    public function test_admin_mount_respects_query_tab(): void
+    {
+        Livewire::withQueryParams(['tab' => 'E-Voting & Pengambilan Keputusan'])
+            ->test(AdminPreview::class)
+            ->assertSet('active', 'E-Voting & Pengambilan Keputusan')
+            ->assertSee('Pemungutan Suara · Sidang Pleno Akreditasi Program Studi');
+    }
+
     public function test_sidebar_has_exactly_two_groups_and_all_screens(): void
     {
         $groups = AdminPreview::GROUPS;
@@ -39,7 +58,7 @@ class AdminPreviewTest extends TestCase
             ->assertSet('active', 'Dashboard Rapat')
             ->call('select', 'Kuorum & Kehadiran Anggota')
             ->assertSet('active', 'Kuorum & Kehadiran Anggota')
-            ->assertSee('Status Validasi Kuorum Sidang');
+            ->assertSee('Status Kuorum Sidang Pleno PLN-892');
     }
 
     public function test_unknown_screen_is_ignored(): void

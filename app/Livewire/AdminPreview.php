@@ -46,6 +46,14 @@ class AdminPreview extends Component
     public string $formStatus = '';
     public string $flashMessage = '';
 
+    public function mount(): void
+    {
+        $tab = request()->query('tab');
+        if ($tab) {
+            $this->select($tab);
+        }
+    }
+
     public function select(string $screen): void
     {
         $allowed = ['Dashboard', 'Dashboard Rapat', ...array_merge(...array_values(self::GROUPS))];
@@ -61,6 +69,31 @@ class AdminPreview extends Component
     public function saveAction(string $entity): void
     {
         $this->flashMessage = "Data {$entity} berhasil diperbarui (tersimpan di state lokal). Siap disambungkan ke API backend.";
+    }
+
+    public function chipState(string $val): string
+    {
+        if (str_contains($val, 'Pleno') || str_contains($val, 'Ditindaklanjuti')) {
+            return 'warning';
+        }
+        if (str_contains($val, 'Komisi') || str_contains($val, 'Sedang')) {
+            return 'info';
+        }
+        if (str_contains($val, 'Selesai') || str_contains($val, 'Disahkan')) {
+            return 'success';
+        }
+        return 'neutral';
+    }
+
+    public function chipLabel(string $val): string
+    {
+        if (str_contains($val, 'Pleno')) {
+            return 'Pleno';
+        }
+        if (str_contains($val, 'Komisi')) {
+            return 'Komisi';
+        }
+        return $val;
     }
 
     public function render(
@@ -93,11 +126,42 @@ class AdminPreview extends Component
             'total_committees' => count($committees),
         ];
 
+        $notulenItem = collect($archives)->where('category', 'Notulen Sidang')->first();
+        $aspirasiItem = collect($aspirations)->where('status', 'Sedang Ditelaah')->first();
+        $regDraft = collect($regulations)->where('status', 'Draf')->first();
+
+        $antrean = collect([
+            $notulenItem ? [
+                'tone' => 'bg-[#a95100]',
+                'title' => 'Verifikasi notulen pleno',
+                'meta' => $notulenItem['title'],
+            ] : null,
+            $aspirasiItem ? [
+                'tone' => 'bg-[#5131b4]',
+                'title' => 'Penetapan status aspirasi',
+                'meta' => $aspirasiItem['ticket_code'].' · '.$aspirasiItem['subject'],
+            ] : null,
+            $regDraft ? [
+                'tone' => 'bg-[#155ead]',
+                'title' => 'Validasi status hukum draf',
+                'meta' => $regDraft['nomor'].' · '.$regDraft['title'],
+            ] : null,
+        ])->filter()->values();
+
+        $aksiCepat = [
+            ['action' => 'Jadwal & Agenda Sidang', 'icon' => 'calendar', 'title' => 'Buat Sidang', 'desc' => 'Atur jenis, waktu, lokasi, dan peserta', 'accent' => true],
+            ['action' => 'Risalah & Notulensi Sidang', 'icon' => 'file-text', 'title' => 'Susun Notulensi', 'desc' => 'Catat pembahasan, keputusan, action items', 'accent' => false],
+            ['action' => 'E-Voting & Pengambilan Keputusan', 'icon' => 'check', 'title' => 'Gelar Voting', 'desc' => 'Buka voting dan pantau kuorum', 'accent' => false],
+        ];
+
         return view('livewire.admin-preview', [
             'meetings' => $meetings,
             'activeMeeting' => $activeMeeting,
             'aspirations' => $aspirations,
             'archives' => $archives,
+            'notulenItem' => $notulenItem,
+            'antrean' => $antrean,
+            'aksiCepat' => $aksiCepat,
             'regulations' => $regulations,
             'posts' => $posts,
             'committees' => $committees,
