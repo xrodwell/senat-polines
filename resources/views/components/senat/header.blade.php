@@ -42,27 +42,27 @@
         <a href="{{ route('public.home') }}" class="senat-tap flex shrink-0 items-center gap-3">
             <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Politeknik Negeri Semarang"
                  class="h-9 w-9 rounded-md object-contain lg:h-[38px] lg:w-[38px]">
-            <span class="leading-none">
+            <span class="leading-none whitespace-nowrap">
                 <span class="block text-[13px] font-bold text-[#0f172a]">SENAT AKADEMIK</span>
                 <span class="mt-1 hidden text-[10px] font-medium text-senat-muted sm:block">Politeknik Negeri Semarang</span>
             </span>
         </a>
 
         {{-- Desktop nav (≥1024) --}}
-        <nav class="ml-auto hidden items-center lg:flex xl:ml-[142px]" aria-label="Navigasi utama">
+        <nav class="ml-auto hidden items-center whitespace-nowrap lg:flex" aria-label="Navigasi utama">
             @foreach ($navItems as $item)
                 @php $hasChildren = count($item['children']) > 0 && Route::has($item['children'][0]['route']); @endphp
                 @if (! $hasChildren)
                     <a href="{{ route($item['route']) }}"
-                       class="senat-tap flex items-center px-4 py-2 text-[12px] font-medium transition-colors {{ request()->routeIs($item['route']) ? 'text-senat-primary' : 'text-senat-muted hover:text-senat-primary' }}">
+                       class="senat-tap flex items-center px-3 py-2 text-[12px] font-medium transition-colors whitespace-nowrap {{ request()->routeIs($item['route']) ? 'text-senat-primary' : 'text-senat-muted hover:text-senat-primary' }}">
                         {{ $item['label'] }}
                     </a>
                 @else
                     <div class="relative" x-data="{ sub: false }" @mouseenter="sub = true" @mouseleave="sub = false">
                         <button type="button" @click="sub = !sub" :aria-expanded="sub.toString()"
-                                class="senat-tap flex items-center gap-1 px-4 py-2 text-[12px] font-medium text-senat-muted transition-colors hover:text-senat-primary">
+                                class="senat-tap flex items-center gap-1 px-3 py-2 text-[12px] font-medium text-senat-muted transition-colors whitespace-nowrap hover:text-senat-primary">
                             {{ $item['label'] }}
-                            <x-senat.icon name="chevron-down" class="h-3 w-3" />
+                            <x-senat.icon name="chevron-down" class="h-3 w-3 shrink-0" />
                         </button>
                         <div x-cloak x-show="sub" x-transition.opacity
                              class="absolute left-0 top-full z-50 w-[250px] overflow-hidden rounded-lg border border-senat-line bg-white shadow-lg">
@@ -79,19 +79,19 @@
             @endforeach
         </nav>
 
-        <div class="ml-auto flex shrink-0 items-center gap-2 lg:ml-6 lg:gap-3">
+        <div class="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap lg:ml-4 lg:gap-2 xl:gap-3">
             <a href="{{ route('admin.preview') }}"
                class="senat-tap hidden h-9 items-center gap-1.5 rounded-md bg-senat-primary px-3 text-[11.5px] font-semibold text-white shadow-sm transition-colors hover:bg-senat-primaryHover sm:inline-flex">
                 <span class="inline-block h-2 w-2 rounded-full bg-emerald-400"></span>
                 Panel Admin
             </a>
             <a href="{{ route('portal.login') }}"
-               class="senat-tap hidden h-9 items-center gap-1.5 rounded-md border border-senat-border bg-[#f8fafc] px-4 text-[11.5px] font-semibold text-senat-primary transition-colors hover:border-senat-primary md:inline-flex">
+               class="senat-tap hidden h-9 items-center gap-1.5 rounded-md border border-senat-border bg-[#f8fafc] px-3 text-[11.5px] font-semibold text-senat-primary transition-colors hover:border-senat-primary xl:inline-flex">
                 <x-senat.icon name="lock" class="h-[14px] w-[14px]" />
                 Masuk Portal
             </a>
             <a href="{{ route('public.aspirations') }}"
-               class="senat-tap hidden h-9 items-center rounded-md bg-senat-primary px-5 text-[12px] font-bold text-white transition-colors hover:bg-senat-primaryHover md:inline-flex">
+               class="senat-tap hidden h-9 items-center rounded-md bg-senat-primary px-4 text-[11.5px] font-bold text-white transition-colors hover:bg-senat-primaryHover sm:inline-flex">
                 Sampaikan Aspirasi
             </a>
 

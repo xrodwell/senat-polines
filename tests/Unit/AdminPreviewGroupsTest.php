@@ -11,24 +11,21 @@ class AdminPreviewGroupsTest extends TestCase
     {
         $this->assertSame([
             'Dashboard Rapat',
-            'Jadwal & Buat Rapat',
-            'Agenda',
-            'Presensi & QR',
-            'Kuorum',
-            'Notulensi & Tindak Lanjut',
-            'E-Voting',
-        ], AdminPreview::GROUPS['Bagian Rapat']);
+            'Jadwal & Agenda Sidang',
+            'Presensi & Verifikasi QR',
+            'Kuorum & Kehadiran Anggota',
+            'Risalah & Notulensi Sidang',
+            'E-Voting & Pengambilan Keputusan',
+        ], AdminPreview::GROUPS['Manajemen Persidangan & Rapat']);
 
         $this->assertSame([
-            'Beranda, Hero & Informasi',
-            'Profil, Tugas & Struktur',
-            'Komisi & Direktori Anggota',
-            'Berita & Warta',
-            'Produk Hukum',
-            'Arsip & Laporan',
-            'Aspirasi, Tanggapan & Tracker',
-            'Media & Dokumen',
-            'Pengaturan Konten Publik',
-        ], AdminPreview::GROUPS['Bagian Urus Website']);
+            'Pengaturan Informasi & Hero',
+            'Profil, Tupoksi & Struktur',
+            'Direktori Komisi & Anggota',
+            'Manajemen Berita & Siaran Pers',
+            'Katalog Regulasi & Produk Hukum',
+            'Repositori Arsip & Dokumen',
+            'Pusat Aspirasi & Tindak Lanjut',
+        ], AdminPreview::GROUPS['Manajemen Publikasi & Portal Web']);
     }
 }
