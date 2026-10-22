@@ -16,9 +16,26 @@ class AdminPreview extends Component
 {
     /**
      * Sidebar IA — PRD 5. Dua kelompok kerja saja.
+     * Menggunakan slug ID agar aman dari karakter HTML entity (&).
      *
      * @var array<string, list<string>>
      */
+     public const MENU_KEYS = [
+         'dashboard-rapat' => 'Dashboard Rapat',
+         'jadwal-agenda-sidang' => 'Jadwal & Agenda Sidang',
+         'presensi-verifikasi-qr' => 'Presensi & Verifikasi QR',
+         'kuorum-kehadiran-anggota' => 'Kuorum & Kehadiran Anggota',
+         'risalah-notulensi-sidang' => 'Risalah & Notulensi Sidang',
+         'evoting-pengambilan-keputusan' => 'E-Voting & Pengambilan Keputusan',
+         'pengaturan-informasi-hero' => 'Pengaturan Informasi & Hero',
+         'profil-tupoksi-struktur' => 'Profil, Tupoksi & Struktur',
+         'direktori-komisi-anggota' => 'Direktori Komisi & Anggota',
+         'manajemen-berita-siaran-pers' => 'Manajemen Berita & Siaran Pers',
+         'katalog-regulasi-produk-hukum' => 'Katalog Regulasi & Produk Hukum',
+         'repositori-arsip-dokumen' => 'Repositori Arsip & Dokumen',
+         'pusat-aspirasi-tindak-lanjut' => 'Pusat Aspirasi & Tindak Lanjut',
+     ];
+
     public const GROUPS = [
         'Manajemen Persidangan & Rapat' => [
             'Dashboard Rapat',
@@ -60,6 +77,11 @@ class AdminPreview extends Component
 
     public function select(string $screen): void
     {
+        // Mendukung pemanggilan via slug key maupun nama langsung
+        if (isset(self::MENU_KEYS[$screen])) {
+            $screen = self::MENU_KEYS[$screen];
+        }
+
         $allowed = ['Dashboard', 'Dashboard Rapat', ...array_merge(...array_values(self::GROUPS))];
 
         if (! in_array($screen, $allowed, true)) {

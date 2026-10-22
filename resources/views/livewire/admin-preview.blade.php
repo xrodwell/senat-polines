@@ -62,10 +62,13 @@
                         </p>
                         <div class="space-y-[4px]">
                             @foreach ($items as $item)
-                                @php $isActive = ($active === $item); @endphp
+                                @php
+                                    $isActive = ($active === $item);
+                                    $itemSlug = \Illuminate\Support\Str::slug($item);
+                                @endphp
                                 <button type="button"
-                                        wire:key="menu-{{ \Illuminate\Support\Str::slug($item) }}"
-                                        wire:click="select('{{ $item }}')"
+                                        wire:key="menu-{{ $itemSlug }}"
+                                        wire:click="select('{{ $itemSlug }}')"
                                         @if ($isActive) aria-current="page" @endif
                                         class="senat-tap flex min-h-[40px] w-full items-center gap-[11px] rounded-[9px] px-[12px] text-left transition-colors {{ $isActive ? 'bg-[#eef4fb] ring-1 ring-senat-badgeLine' : 'hover:bg-senat-surface' }}">
                                     <span class="h-2 w-2 shrink-0 rounded-full {{ $isActive ? 'bg-senat-link' : 'bg-slate-300' }}"></span>
