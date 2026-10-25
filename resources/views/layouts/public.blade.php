@@ -30,6 +30,7 @@
     @include('components.senat.footer')
 
     @include('components.senat.chat-widget')
+    @include('components.senat.role-switcher')
 
     @livewireScripts
     @stack('scripts')

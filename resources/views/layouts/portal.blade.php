@@ -163,6 +163,8 @@
     {{-- Bottom navigation (mobile, 2352:1335) --}}
     @include('components.senat.bottom-nav', ['items' => $bottomNav])
 
+    @include('components.senat.role-switcher')
+
     @livewireScripts
     @stack('scripts')
 </body>
