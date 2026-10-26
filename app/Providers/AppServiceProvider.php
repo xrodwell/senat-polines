@@ -13,6 +13,7 @@ use App\Contracts\RegulationRepositoryInterface;
 use App\Repositories\Api\ApiChatbotRepository;
 use App\Repositories\Api\ApiCommitteeRepository;
 use App\Repositories\Api\ApiPostRepository;
+use App\Repositories\Api\ApiMeetingRepository;
 use App\Repositories\Api\ApiRegulationRepository;
 use App\Repositories\Mock\JsonArchiveRepository;
 use App\Repositories\Mock\JsonAspirationRepository;
@@ -28,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(PostRepositoryInterface::class, ApiPostRepository::class);
-        $this->app->bind(MeetingRepositoryInterface::class, JsonMeetingRepository::class);
+        $this->app->bind(MeetingRepositoryInterface::class, ApiMeetingRepository::class);
         $this->app->bind(RegulationRepositoryInterface::class, ApiRegulationRepository::class);
         $this->app->bind(CommitteeRepositoryInterface::class, ApiCommitteeRepository::class);
         $this->app->bind(FeatureRepositoryInterface::class, JsonFeatureRepository::class);

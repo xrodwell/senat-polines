@@ -55,6 +55,9 @@ Route::prefix('portal')->group(function (): void {
     Route::get('/aspirasi', [PortalController::class, 'aspirations'])->name('portal.aspirations');
     Route::get('/dokumen', [PortalController::class, 'documents'])->name('portal.documents');
     Route::get('/profil', [PortalController::class, 'profile'])->name('portal.profile');
+    Route::post('/presensi/submit', [PortalController::class, 'submitPresensi'])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+        ->name('portal.presensi.submit');
 
     // Layar operasional lama (dipertahankan)
     Route::get('/attendance', [PortalController::class, 'memberAttendance'])->name('portal.attendance');
