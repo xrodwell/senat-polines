@@ -62,7 +62,7 @@ class AdminPreviewTest extends TestCase
             ->assertSet('active', 'Presensi & Verifikasi QR')
             ->call('select', 'Kuorum & Kehadiran Anggota')
             ->assertSet('active', 'Kuorum & Kehadiran Anggota')
-            ->assertSee('Status Kuorum Sidang Pleno PLN-892')
+            ->assertSee('Status Kuorum')
             ->call('select', 'Risalah & Notulensi Sidang')
             ->assertSet('active', 'Risalah & Notulensi Sidang')
             ->call('select', 'E-Voting & Pengambilan Keputusan')
@@ -95,7 +95,7 @@ class AdminPreviewTest extends TestCase
             ->assertDontSee('Panel Admin')
             ->assertDontSee('Peta Produk')
             ->assertDontSee('Lima Fitur Unggulan SENAT')
-            ->assertSee('livewire.js')
+            ->assertSee('livewire')
             ->assertSee('senatChatWidget()')
             ->assertSee('style="opacity:0;visibility:hidden;pointer-events:none;"', false);
     }

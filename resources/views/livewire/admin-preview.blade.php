@@ -1079,65 +1079,142 @@
             {{-- 6. SCREEN: E-VOTING & PENGAMBILAN KEPUTUSAN (Figma 13E) --}}
             @elseif ($active === 'E-Voting & Pengambilan Keputusan')
                 <div wire:key="screen-evoting-keputusan" class="grid gap-5 xl:grid-cols-[682px_minmax(0,1fr)]">
-                    <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]"
-                             x-data="{ status: 'Dibuka' }">
-                        <x-senat.badge state="success" x-show="status === 'Dibuka'">Dibuka</x-senat.badge>
-                        <x-senat.badge state="neutral" x-cloak x-show="status !== 'Dibuka'">Draft</x-senat.badge>
+                    <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                        @if ($votingStatus === 'dibuka')
+                            <x-senat.badge state="success">Dibuka</x-senat.badge>
+                        @elseif ($votingStatus === 'ditutup')
+                            <x-senat.badge state="danger">Ditutup</x-senat.badge>
+                        @else
+                            <x-senat.badge state="neutral">Draft</x-senat.badge>
+                        @endif
 
                         <h2 class="mt-4 text-[20px] font-bold leading-snug text-senat-ink">
-                            Pemungutan Suara · Sidang Pleno Akreditasi Program Studi
+                            {{ $votingTitle }}
                         </h2>
                         <p class="mt-2 text-[13px] leading-snug text-senat-body">
-                            Sidang Pleno · PLN-892 · {{ date('d M Y') }}
+                            Sidang Pleno · {{ $votingMeetingCode }} · {{ $votingDate }}
                         </p>
 
                         <div class="mt-5 grid gap-3 sm:grid-cols-3">
                             <div class="rounded-[12px] bg-[#eaf8f0] px-4 py-3.5">
                                 <p class="text-[14px] font-semibold text-senat-ink">Setuju</p>
-                                <p class="mt-1.5 text-[12px] text-senat-body">24 suara (85.7%)</p>
+                                <p class="mt-1.5 text-[12px] text-senat-body">
+                                    {{ $votingStats['Setuju']['suara'] ?? 0 }} suara ({{ $votingStats['Setuju']['persentase'] ?? 0 }}%)
+                                </p>
                             </div>
                             <div class="rounded-[12px] bg-[#fdecef] px-4 py-3.5">
                                 <p class="text-[14px] font-semibold text-senat-ink">Tidak Setuju</p>
-                                <p class="mt-1.5 text-[12px] text-senat-body">2 suara (7.1%)</p>
+                                <p class="mt-1.5 text-[12px] text-senat-body">
+                                    {{ $votingStats['Tidak Setuju']['suara'] ?? ($votingStats['Tolak']['suara'] ?? 0) }} suara ({{ $votingStats['Tidak Setuju']['persentase'] ?? ($votingStats['Tolak']['persentase'] ?? 0) }}%)
+                                </p>
                             </div>
                             <div class="rounded-[12px] bg-senat-badgeBg px-4 py-3.5">
                                 <p class="text-[14px] font-semibold text-senat-ink">Abstain</p>
-                                <p class="mt-1.5 text-[12px] text-senat-body">2 suara (7.1%)</p>
+                                <p class="mt-1.5 text-[12px] text-senat-body">
+                                    {{ $votingStats['Abstain']['suara'] ?? 0 }} suara ({{ $votingStats['Abstain']['persentase'] ?? 0 }}%)
+                                </p>
                             </div>
                         </div>
 
                         <div class="mt-6 flex flex-wrap items-center gap-3">
-                            <x-senat.button variant="secondary" type="button" wire:click="saveAction('Simpan Sesi Voting')">Simpan Rekap</x-senat.button>
-                            <x-senat.button variant="primary" type="button" @click="status = status === 'Dibuka' ? 'Tutup' : 'Dibuka'" wire:click="saveAction('Status Voting Diperbarui')">
-                                <span x-text="status === 'Dibuka' ? 'Kunci & Tutup Voting' : 'Buka Voting'"></span>
+                            <x-senat.button variant="secondary" type="button" wire:click="simpanSesiVoting">Simpan Rekap</x-senat.button>
+                            <x-senat.button variant="primary" type="button" wire:click="toggleVotingStatus">
+                                <span>{{ $votingStatus === 'dibuka' ? 'Kunci & Tutup Voting' : 'Buka Voting' }}</span>
                             </x-senat.button>
+                            <x-senat.button variant="secondary" type="button"
+                                            onclick="document.getElementById('modal-voting-baru').style.display='flex'">Gelar Voting Baru</x-senat.button>
+                            <x-senat.button variant="secondary" type="button" wire:click="refreshVotingData">Muat Ulang</x-senat.button>
                         </div>
                     </section>
 
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                         <h2 class="text-[18px] font-bold text-senat-ink">Rekap Suara Masuk</h2>
-                        <p class="mt-1.5 text-[12px] text-senat-body">Total suara: 28 / 34 anggota</p>
+                        <p class="mt-1.5 text-[12px] text-senat-body">Total suara: {{ $votingStats['kuorum'] ?? (($votingStats['total_suara'] ?? 28) . ' / 34 anggota') }}</p>
 
                         <ul class="mt-5 space-y-3">
                             <li class="flex items-center gap-3 rounded-[10px] bg-senat-surface px-4 py-3.5">
                                 <span class="h-[10px] w-[10px] shrink-0 rounded-[5px] bg-[#116a3c]"></span>
                                 <span class="min-w-0 flex-1 text-[13px] font-medium text-senat-ink">Setuju</span>
-                                <span class="text-[20px] font-bold leading-none text-[#116a3c]">24</span>
+                                <span class="text-[20px] font-bold leading-none text-[#116a3c]">{{ $votingStats['Setuju']['suara'] ?? 0 }}</span>
                             </li>
                             <li class="flex items-center gap-3 rounded-[10px] bg-senat-surface px-4 py-3.5">
                                 <span class="h-[10px] w-[10px] shrink-0 rounded-[5px] bg-[#b4233b]"></span>
                                 <span class="min-w-0 flex-1 text-[13px] font-medium text-senat-ink">Tidak Setuju</span>
-                                <span class="text-[20px] font-bold leading-none text-[#b4233b]">2</span>
+                                <span class="text-[20px] font-bold leading-none text-[#b4233b]">{{ $votingStats['Tidak Setuju']['suara'] ?? ($votingStats['Tolak']['suara'] ?? 0) }}</span>
                             </li>
                             <li class="flex items-center gap-3 rounded-[10px] bg-senat-surface px-4 py-3.5">
                                 <span class="h-[10px] w-[10px] shrink-0 rounded-[5px] bg-[#155ead]"></span>
                                 <span class="min-w-0 flex-1 text-[13px] font-medium text-senat-ink">Abstain</span>
-                                <span class="text-[20px] font-bold leading-none text-[#155ead]">2</span>
+                                <span class="text-[20px] font-bold leading-none text-[#155ead]">{{ $votingStats['Abstain']['suara'] ?? 0 }}</span>
                             </li>
                         </ul>
 
                         <x-senat.button variant="secondary" size="sm" class="mt-5" type="button" wire:click="saveAction('Cetak Berita Acara Voting')">Cetak Berita Acara</x-senat.button>
                     </section>
+
+                    {{-- Modal Form Gelar Voting Baru — handler native, tidak bergantung Livewire/Alpine --}}
+                    <div id="modal-voting-baru" style="display:none"
+                         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4"
+                         onclick="if (event.target === this) this.style.display='none'">
+                            <div class="w-full max-w-lg rounded-2xl border border-senat-sidebarLine bg-white p-6 shadow-2xl space-y-4">
+                                <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-3">
+                                    <div>
+                                        <h3 class="text-[17px] font-bold text-senat-ink">Gelar Sesi Voting Baru</h3>
+                                        <p class="text-[12px] text-senat-body">Inisialisasi pemungutan suara sidang untuk anggota Senat</p>
+                                    </div>
+                                    <button type="button" onclick="document.getElementById('modal-voting-baru').style.display='none'" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" aria-label="Tutup">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-[12px] font-semibold text-senat-ink mb-1">Agenda Sidang / Rapat</label>
+                                        <select wire:model="newVotingMeetingId" class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink focus:border-senat-link focus:outline-none">
+                                            @forelse ($availableMeetings as $meeting)
+                                                <option value="{{ $meeting['id_rapat'] ?? 1 }}">{{ $meeting['nama_agenda'] ?? 'Sidang Pleno Senat' }}</option>
+                                            @empty
+                                                <option value="1">Sidang Pleno Penetapan Standar Akademik &amp; Kurikulum</option>
+                                            @endforelse
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[12px] font-semibold text-senat-ink mb-1">Pokok Putusan / Judul Voting <span class="text-rose-500">*</span></label>
+                                        <input type="text" id="input-voting-judul" wire:model="newVotingTitle" placeholder="Misal: Persetujuan Pengesahan Pedoman Akademik 2026/2027"
+                                               class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink placeholder-slate-400 focus:border-senat-link focus:outline-none">
+                                        @error('newVotingTitle') <p class="mt-1 text-[11px] text-rose-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[12px] font-semibold text-senat-ink mb-1">Penjelasan Draf / Keterangan Putusan</label>
+                                        <textarea wire:model="newVotingDescription" rows="3" placeholder="Uraikan materi atau pokok keputusan yang dimusyawarahkan..."
+                                                  class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink placeholder-slate-400 focus:border-senat-link focus:outline-none"></textarea>
+                                    </div>
+
+                                    <div class="rounded-[10px] bg-senat-surface p-3.5 text-[12px] text-senat-body">
+                                        <p class="font-semibold text-senat-ink">Ketentuan Bilik Suara:</p>
+                                        <p class="mt-1 text-[11.5px] leading-relaxed text-senat-body">Sesi voting akan otomatis dibuat dengan status <strong>DIBUKA</strong> dan menyediakan 3 opsi standar persidangan: <strong>Setuju</strong>, <strong>Tidak Setuju</strong>, dan <strong>Abstain</strong>.</p>
+                                    </div>
+
+                                    <div class="flex items-center justify-end gap-3 pt-2 border-t border-senat-sidebarLine">
+                                        @if ($flashMessage)
+                                            <p class="mr-auto text-[11.5px] font-medium text-rose-700">{{ $flashMessage }}</p>
+                                        @endif
+                                        <button type="button" onclick="document.getElementById('modal-voting-baru').style.display='none'" class="inline-flex items-center justify-center rounded-md border border-senat-border bg-[#f8fafc] px-4 py-2 text-[12px] font-semibold text-senat-primary hover:border-senat-primary transition">
+                                            Batal
+                                        </button>
+                                        <button type="button"
+                                                onclick="var t=document.getElementById('input-voting-judul'); if(!t.value.trim()){t.focus();return;} document.getElementById('modal-voting-baru').style.display='none';"
+                                                wire:click="deployNewVoting" class="inline-flex items-center justify-center rounded-md bg-senat-primary px-5 py-2 text-[12px] font-bold text-white transition hover:bg-senat-primaryHover">
+                                            Buka Sesi Voting
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
                 </div>
 
             {{-- 7. SCREEN: Pengaturan Informasi & Hero --}}
@@ -1726,5 +1803,4 @@
         </div>
     </main>
 </div>
-
 </div>{{-- /root komponen Livewire --}}

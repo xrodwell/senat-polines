@@ -52,6 +52,7 @@ Route::prefix('portal')->group(function (): void {
     Route::get('/agenda', [PortalController::class, 'agenda'])->name('portal.agenda');
     Route::get('/notulensi', [PortalController::class, 'minutes'])->name('portal.minutes');
     Route::get('/e-voting', [PortalController::class, 'voting'])->name('portal.voting');
+    Route::post('/e-voting/vote', [PortalController::class, 'submitVote'])->name('portal.voting.submit');
     Route::get('/aspirasi', [PortalController::class, 'aspirations'])->name('portal.aspirations');
     Route::get('/dokumen', [PortalController::class, 'documents'])->name('portal.documents');
     Route::get('/profil', [PortalController::class, 'profile'])->name('portal.profile');
