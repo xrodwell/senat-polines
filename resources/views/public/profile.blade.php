@@ -125,121 +125,120 @@
                     <div class="flex flex-col items-center">
                         <div class="w-px h-6 bg-slate-300"></div>
                         <span class="text-[10px] font-mono font-bold uppercase tracking-widest bg-slate-200 text-slate-600 px-3 py-0.5 rounded-full">
-                            Membawahi 5 Komisi Tetap
+                            Membawahi {{ count($committees) }} Komisi Tetap
                         </span>
                         <div class="w-px h-6 bg-slate-300"></div>
                     </div>
                 </div>
 
-                {{-- Tingkat 2: Grid 5 Komisi Tetap Fungsional --}}
+                {{-- Tingkat 2: Grid Komisi Tetap Fungsional (Dinamis dari API) --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    
-                    {{-- Komisi I --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI I</span>
-                            <span class="text-xs text-slate-400 tabular-nums">8 Anggota</span>
+                    @forelse ($committees as $committee)
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                                <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">{{ strtoupper($committee['code'] ?? '') }}</span>
+                                <span class="text-xs text-slate-400 tabular-nums">{{ $committee['members_count'] ?? 0 }} Anggota</span>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-900 leading-snug">{{ $committee['name'] ?? '-' }}</h4>
+                            <p class="text-xs text-slate-500 font-medium mt-1">Ketua: {{ $committee['lead'] ?? '-' }}</p>
+                            <div class="mt-3 pt-3 border-t border-slate-100">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
+                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $committee['tupoksi'] ?? '-' }}</p>
+                            </div>
                         </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Pendidikan &amp; Pengajaran</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Prof. Dr. Ir. Budi Rahardjo, M.T.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Kurikulum vokasi, keselarasan MBKM industri, dan evaluasi PBM antarjurusan.</p>
+                    @empty
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-sm text-slate-500">Data komisi belum tersedia.</p>
                         </div>
-                    </div>
-
-                    {{-- Komisi II --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI II</span>
-                            <span class="text-xs text-slate-400 tabular-nums">7 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Penelitian &amp; Pengabdian</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Dr. Eng. Tri Handayani, S.T., M.Kom.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Hilirisasi riset terapan, perolehan paten vokasi, dan integrasi pengabdian P3M.</p>
-                        </div>
-                    </div>
-
-                    {{-- Komisi III --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI III</span>
-                            <span class="text-xs text-slate-400 tabular-nums">6 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Kelembagaan &amp; SDM</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Drs. Joko Prasetyo, M.M., Ak.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Pertimbangan pembukaan prodi baru, kelayakan lab, dan formasi pendidik.</p>
-                        </div>
-                    </div>
-
-                    {{-- Komisi IV --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI IV</span>
-                            <span class="text-xs text-slate-400 tabular-nums">8 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Kemahasiswaan &amp; Alumni</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Ir. Hendro Wijaya, M.Sc.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Pedoman ormawa, etika kemahasiswaan, dan sinergi jejaring alumni Polines.</p>
-                        </div>
-                    </div>
-
-                    {{-- Komisi V --}}
-                    <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all md:col-span-2 lg:col-span-1">
-                        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">KOMISI V</span>
-                            <span class="text-xs text-slate-400 tabular-nums">5 Anggota</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900 leading-snug">Bidang Penegakan Etika &amp; Tata Tertib</h4>
-                        <p class="text-xs text-slate-500 font-medium mt-1">Ketua: Dr. Siti Aminah, S.H., M.Hum.</p>
-                        <div class="mt-3 pt-3 border-t border-slate-100">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Integritas akademik, penyelesaian sengketa etika, dan rekomendasi sanksi senat.</p>
-                        </div>
-                    </div>
-
+                    @endforelse
                 </div>
 
             </div>
         </div>
     </section>
 
-    {{-- ================= RINCIAN TUGAS POKOK & FUNGSI ================= --}}
+    {{-- ================= RINCIAN TUGAS POKOK & DIREKTORI ANGGOTA ================= --}}
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div class="mb-8">
-            <p class="text-xs font-bold uppercase tracking-[0.15em] text-polines-orange mb-1.5">Tugas Pokok &amp; Fungsi</p>
-            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Rincian Tupoksi Komisi Fungsional</h2>
+            <p class="text-xs font-bold uppercase tracking-[0.15em] text-polines-orange mb-1.5">Tugas Pokok &amp; Susunan Anggota</p>
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Direktori Komisi &amp; Anggota Fungsional</h2>
+            <p class="text-sm text-slate-500 mt-1">Rincian tugas pokok serta susunan pengurus dan anggota pada masing-masing komisi.</p>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-6">
             @forelse ($committees as $committee)
-                <article class="rounded-xl border border-slate-200/80 bg-white p-6 hover:border-slate-300 transition-all duration-150">
-                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <article class="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:border-slate-300 transition-all duration-150">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <div class="flex items-center gap-2.5">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-blue-50 text-polines-navy">
-                                {{ $committee['code'] }}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold font-mono bg-blue-50 text-polines-navy border border-blue-100">
+                                {{ $committee['code'] ?? 'KOM' }}
                             </span>
-                            <h3 class="text-base font-bold text-slate-900">{{ $committee['name'] }}</h3>
+                            <h3 class="text-lg font-bold text-slate-900">{{ $committee['name'] ?? '-' }}</h3>
                         </div>
-                        <span class="text-xs font-semibold text-slate-500 tabular-nums">
-                            {{ $committee['members_count'] }} Anggota Komisi
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 tabular-nums">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            {{ $committee['members_count'] ?? count($committee['members'] ?? []) }} Anggota Komisi
                         </span>
                     </div>
 
-                    <p class="text-xs font-medium text-slate-600 mb-2">
-                        <span class="text-slate-400">Ketua Komisi:</span> {{ $committee['lead'] }}
-                    </p>
+                    <div class="bg-slate-50/80 rounded-xl p-4 mb-5 border border-slate-100">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ketua Komisi:</span>
+                            <span class="text-xs font-bold text-slate-800">{{ $committee['lead'] ?? 'Belum ditentukan' }}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            <span class="font-semibold text-slate-500">Tupoksi:</span> {{ $committee['tupoksi'] ?? '-' }}
+                        </p>
+                    </div>
 
-                    <p class="text-sm text-slate-700 leading-relaxed">{{ $committee['tupoksi'] }}</p>
+                    {{-- Susunan Anggota Komisi --}}
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                            <span>Susunan Anggota</span>
+                            <span class="flex-1 h-px bg-slate-100"></span>
+                        </h4>
+
+                        @if (!empty($committee['members']) && count($committee['members']) > 0)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                @foreach ($committee['members'] as $member)
+                                    <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200/70 bg-white hover:border-polines-blue/40 hover:shadow-xs transition-all">
+                                        {{-- Avatar / Inisial --}}
+                                        <div class="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 text-polines-navy font-bold text-xs flex items-center justify-center shrink-0">
+                                            @if (!empty($member['foto_profil']))
+                                                <img src="{{ $member['foto_profil'] }}" alt="{{ $member['nama'] ?? 'Anggota' }}" class="w-full h-full rounded-full object-cover">
+                                            @else
+                                                {{ strtoupper(substr($member['nama'] ?? 'A', 0, 1)) }}
+                                            @endif
+                                        </div>
+
+                                        {{-- Info Anggota --}}
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-xs font-bold text-slate-800 truncate" title="{{ $member['nama'] ?? '-' }}">
+                                                {{ $member['nama'] ?? '-' }}
+                                            </p>
+                                            <div class="flex items-center gap-2 mt-0.5">
+                                                <span class="text-[10px] font-mono text-slate-400">
+                                                    {{ $member['nim_nip'] ?? '-' }}
+                                                </span>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold {{ strtolower($member['jabatan'] ?? '') === 'ketua' ? 'bg-amber-100 text-amber-800' : (strtolower($member['jabatan'] ?? '') === 'sekretaris' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600') }}">
+                                                    {{ $member['jabatan'] ?? 'Anggota' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-xs text-slate-400 italic">Belum ada daftar anggota yang terdaftar untuk komisi ini.</p>
+                        @endif
+                    </div>
                 </article>
             @empty
-                <p class="text-sm text-slate-500">Data komisi belum dimuat.</p>
+                <div class="p-8 text-center bg-white rounded-xl border border-slate-200">
+                    <p class="text-sm text-slate-500">Data komisi belum dimuat.</p>
+                </div>
             @endforelse
         </div>
     </section>
