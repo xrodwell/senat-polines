@@ -7,8 +7,10 @@ use App\Contracts\AspirationRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Contracts\VotingRepositoryInterface;
 use App\Support\SenatDirectory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -20,6 +22,7 @@ class PortalController extends Controller
         private ArchiveRepositoryInterface $archives,
         private RegulationRepositoryInterface $regulations,
         private PostRepositoryInterface $posts,
+        private VotingRepositoryInterface $votings,
     ) {}
 
     /** @return array<string, mixed> */
@@ -103,7 +106,33 @@ class PortalController extends Controller
         return view('portal.voting', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
+            'activeVoting' => $this->votings->getActive(),
         ]);
+    }
+
+    /** Submit Suara E-Voting */
+    public function submitVote(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'id_voting' => ['required', 'integer'],
+            'id_opsi' => ['required', 'integer'],
+        ]);
+
+        try {
+            $result = $this->votings->castVote(
+                (int) $validated['id_voting'],
+                (int) $validated['id_opsi'],
+                auth()->id() ?? 1
+            );
+
+            if (isset($result['success']) && ! $result['success']) {
+                return back()->with('error', $result['message'] ?? 'Gagal mengirim suara.');
+            }
+
+            return back()->with('success', $result['message'] ?? 'Suara Anda berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 
     /** 12E — Aspirasi & RUU Kampus */
