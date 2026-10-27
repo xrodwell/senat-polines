@@ -8,6 +8,8 @@ use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use App\Support\SenatDirectory;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PortalController extends Controller
@@ -57,10 +59,33 @@ class PortalController extends Controller
     /** 12B — Agenda & Presensi */
     public function agenda(): View
     {
+        $userId = auth()->id() ?: session('auth_user_id', 6);
+        $userNama = session('auth_user_name', 'Dr. Sukamto, S.Kom., M.T.');
+
         return view('portal.agenda', [
+            'activeSession' => $this->meetings->getActiveSession(),
+            'currentMember' => [
+                'id' => $userId,
+                'name' => $userNama,
+                'nip' => '19700001',
+            ],
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
         ]);
+    }
+
+    /** Submit Presensi Anggota (QR Scan atau Kode Sesi) */
+    public function submitPresensi(Request $request): JsonResponse
+    {
+        $userId = $request->input('id_user') ?: (auth()->id() ?: session('auth_user_id', 6));
+        $tokenQr = $request->input('token_qr');
+        $sessionCode = $request->input('kode_sesi');
+        $meetingId = $request->input('id_rapat');
+
+        $result = $this->meetings->submitPresensi((int) $userId, $tokenQr, $sessionCode, $meetingId ? (int) $meetingId : null);
+
+        $status = ($result['success'] ?? false) ? 200 : 422;
+        return response()->json($result, $status);
     }
 
     /** 12C — Notulensi & Risalah */
