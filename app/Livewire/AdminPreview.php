@@ -11,6 +11,7 @@ use App\Contracts\RegulationRepositoryInterface;
 use App\Repositories\Api\ApiMeetingRepository;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -76,6 +77,55 @@ class AdminPreview extends Component
     public string $sekretarisNama = 'Andi Setyawan, S.E., M.M.';
     public string $sekretarisNip = '197405191999031001';
 
+    // State Risalah & Notulensi Sidang (Backend API Integration)
+    public array $notulensiList = [];
+    public array $rapatList = [];
+    public array $userList = [];
+    public ?int $selectedNotulensiId = null;
+    public ?int $notulensiRapatId = null;
+    public ?int $notulensiUserId = 1;
+    public string $notulensiIsi = '';
+    public string $notulensiFile = '';
+    public string $notulensiStatus = 'draf';
+    public string $notulensiSearch = '';
+    public string $notulensiFilterStatus = 'all';
+    public ?int $viewingNotulensiId = null;
+    public bool $isFormOpen = false;
+
+    // State Katalog Regulasi & Produk Hukum (Backend API Integration)
+    public array $regulasiList = [];
+    public array $periodeList = [];
+    public bool $isRegulasiFormOpen = false;
+    public ?int $regulasiId = null;
+    public string $regulasiNomor = '';
+    public string $regulasiJudul = '';
+    public string $regulasiKategori = 'Peraturan Senat';
+    public string $regulasiTahap = 'Draf';
+    public ?int $regulasiPeriodeId = null;
+    public string $regulasiFile = '';
+    public string $regulasiTanggal = '';
+    public string $regulasiSearch = '';
+    public string $regulasiFilterKategori = 'all';
+    public string $regulasiFilterTahap = 'all';
+    public ?int $viewingRegulasiId = null;
+
+    public const REGULASI_KATEGORI = [
+        'Peraturan Senat',
+        'Peraturan Direktur',
+        'SK Pertimbangan',
+        'Rancangan Peraturan',
+        'Standar & Pedoman',
+        'SOP Akademik',
+    ];
+
+    public const REGULASI_TAHAP = [
+        'Draf',
+        'Pembahasan',
+        'Harmonisasi',
+        'Disahkan',
+        'Ditolak',
+    ];
+
     // State Presensi QR & Kuorum Live
     public ?int $activeMeetingId = null;
     public array $liveMeeting = [];
@@ -100,6 +150,9 @@ class AdminPreview extends Component
         }
 
         $this->loadLiveAttendanceData($meetingsRepo);
+
+        $this->loadNotulensiData();
+        $this->loadRegulasiData();
     }
 
     public function select(string $screen): void
@@ -297,6 +350,208 @@ class AdminPreview extends Component
         $this->flashMessage = "Data {$entity} berhasil diperbarui (tersimpan di state lokal). Siap disambungkan ke API backend.";
     }
 
+    public function getBackendUrl(): string
+    {
+        $url = env('SENAT_BACKEND_API_URL') ?: env('BACKEND_API_URL') ?: 'http://127.0.0.1:8001/api';
+
+        return rtrim($url, '/');
+    }
+
+    public function loadNotulensiData(): void
+    {
+        $base = $this->getBackendUrl();
+        try {
+            $res = Http::timeout(4)->get("{$base}/notulensi", ['all' => 1]);
+            if ($res->successful()) {
+                $data = $res->json();
+                $this->notulensiList = is_array($data) ? (isset($data['data']) ? $data['data'] : $data) : [];
+            }
+        } catch (\Throwable $e) {}
+
+        try {
+            $resRapat = Http::timeout(4)->get("{$base}/rapat", ['all' => 1]);
+            if ($resRapat->successful()) {
+                $dataRapat = $resRapat->json();
+                $this->rapatList = is_array($dataRapat) ? (isset($dataRapat['data']) ? $dataRapat['data'] : $dataRapat) : [];
+                if (! $this->notulensiRapatId && ! empty($this->rapatList)) {
+                    $this->notulensiRapatId = $this->rapatList[0]['id_rapat'] ?? null;
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        try {
+            $resUser = Http::timeout(4)->get("{$base}/user", ['all' => 1]);
+            if ($resUser->successful()) {
+                $dataUser = $resUser->json();
+                $this->userList = is_array($dataUser) ? (isset($dataUser['data']) ? $dataUser['data'] : $dataUser) : [];
+            }
+        } catch (\Throwable $e) {}
+
+        if (empty($this->rapatList)) {
+            $this->rapatList = [
+                ['id_rapat' => 1, 'nama_agenda' => 'Sidang Pleno Khusus Penetapan Draft OTK Senat 2026', 'tempat' => 'Ruang Sidang Utama', 'tanggal' => '2026-10-09'],
+                ['id_rapat' => 2, 'nama_agenda' => 'Rapat Koordinasi Komisi I: Penyelarasan Kurikulum MBKM', 'tempat' => 'Ruang Rapat Senat', 'tanggal' => '2026-10-16'],
+                ['id_rapat' => 3, 'nama_agenda' => 'Sidang Pleno Evaluasi Akreditasi Prodi Teknik', 'tempat' => 'Ruang Sidang Utama', 'tanggal' => '2026-10-24'],
+            ];
+            $this->notulensiRapatId = 1;
+        }
+
+        if (empty($this->userList)) {
+            $this->userList = [
+                ['id_user' => 1, 'nama' => 'Administrator Senat', 'nim_nip' => '198001012005011001'],
+                ['id_user' => 2, 'nama' => 'Dr. Sukamto, S.Kom., M.T.', 'nim_nip' => '196803121993031002'],
+                ['id_user' => 3, 'nama' => 'Andi Setyawan, S.E., M.M.', 'nim_nip' => '197405191999031001'],
+            ];
+        }
+    }
+
+    public function openNotulensiForm(): void
+    {
+        $this->isFormOpen = true;
+    }
+
+    public function closeNotulensiForm(): void
+    {
+        $this->isFormOpen = false;
+        $this->resetNotulensiForm();
+    }
+
+    public function resetNotulensiForm(): void
+    {
+        $this->selectedNotulensiId = null;
+        $this->notulensiRapatId = $this->rapatList[0]['id_rapat'] ?? null;
+        $this->notulensiUserId = $this->userList[0]['id_user'] ?? 1;
+        $this->notulensiIsi = '';
+        $this->notulensiFile = '';
+        $this->notulensiStatus = 'draf';
+    }
+
+    public function editNotulensi(int $id): void
+    {
+        $item = collect($this->notulensiList)->firstWhere('id_notulensi', $id);
+        if ($item) {
+            $this->selectedNotulensiId = $id;
+            $this->notulensiRapatId = $item['id_rapat'] ?? null;
+            $this->notulensiUserId = $item['id_user'] ?? 1;
+            $this->notulensiIsi = $item['isi_notulensi'] ?? '';
+            $this->notulensiFile = $item['file_risalah'] ?? '';
+            $this->notulensiStatus = strtolower($item['status'] ?? 'draf');
+            $this->isFormOpen = true;
+        }
+    }
+
+    public function saveNotulensi(): void
+    {
+        if (empty(trim($this->notulensiIsi))) {
+            $this->flashMessage = 'Peringatan: Jalannya pembahasan dan isi notulensi tidak boleh kosong!';
+            return;
+        }
+
+        if (! $this->notulensiRapatId) {
+            $this->flashMessage = 'Peringatan: Silakan pilih sidang/rapat terkait!';
+            return;
+        }
+
+        $base = $this->getBackendUrl();
+        $payload = [
+            'id_rapat' => (int) $this->notulensiRapatId,
+            'id_user' => (int) ($this->notulensiUserId ?: 1),
+            'isi_notulensi' => $this->notulensiIsi,
+            'file_risalah' => $this->notulensiFile ?: null,
+            'status' => $this->notulensiStatus ?: 'draf',
+        ];
+
+        try {
+            if ($this->selectedNotulensiId) {
+                $res = Http::timeout(5)->put("{$base}/notulensi/{$this->selectedNotulensiId}", $payload);
+                if ($res->successful()) {
+                    $this->flashMessage = 'Berhasil! Notulensi & Risalah sidang berhasil diperbarui di database Backend.';
+                } else {
+                    $this->flashMessage = 'Gagal menyimpan: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
+                }
+            } else {
+                $res = Http::timeout(5)->post("{$base}/notulensi", $payload);
+                if ($res->successful()) {
+                    $this->flashMessage = 'Berhasil! Notulensi & Risalah sidang baru sukses disimpan ke database Backend.';
+                } else {
+                    $this->flashMessage = 'Gagal membuat notulensi: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
+                }
+            }
+            $this->loadNotulensiData();
+            $this->closeNotulensiForm();
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
+        }
+    }
+
+    public function deleteNotulensi(int $id): void
+    {
+        $base = $this->getBackendUrl();
+        try {
+            $res = Http::timeout(5)->delete("{$base}/notulensi/{$id}");
+            if ($res->successful() || $res->status() === 204) {
+                $this->flashMessage = "Notulensi ID #{$id} berhasil dihapus dari database.";
+            } else {
+                $this->flashMessage = "Gagal menghapus: HTTP " . $res->status();
+            }
+            $this->loadNotulensiData();
+            if ($this->selectedNotulensiId === $id) {
+                $this->resetNotulensiForm();
+                $this->isFormOpen = false;
+            }
+            if ($this->viewingNotulensiId === $id) {
+                $this->viewingNotulensiId = null;
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
+        }
+    }
+
+    public function setNotulensiStatus(int $id, string $status): void
+    {
+        $base = $this->getBackendUrl();
+        try {
+            $res = Http::timeout(5)->put("{$base}/notulensi/{$id}", ['status' => $status]);
+            if ($res->successful()) {
+                $this->flashMessage = "Status risalah berhasil diubah menjadi: " . ucfirst($status);
+                $this->loadNotulensiData();
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Gagal memperbarui status: ' . $e->getMessage();
+        }
+    }
+
+    public function viewNotulensi(?int $id): void
+    {
+        $this->viewingNotulensiId = $id;
+    }
+
+    #[Computed]
+    public function filteredNotulensi(): array
+    {
+        return collect($this->notulensiList)
+            ->filter(function ($item) {
+                if ($this->notulensiFilterStatus !== 'all') {
+                    if (strtolower($item['status'] ?? 'draf') !== strtolower($this->notulensiFilterStatus)) {
+                        return false;
+                    }
+                }
+                if (! empty($this->notulensiSearch)) {
+                    $search = strtolower($this->notulensiSearch);
+                    $agenda = strtolower($item['rapat']['nama_agenda'] ?? '');
+                    $isi = strtolower($item['isi_notulensi'] ?? '');
+                    $tempat = strtolower($item['rapat']['tempat'] ?? '');
+                    $notulis = strtolower($item['user']['nama'] ?? '');
+                    if (! str_contains($agenda, $search) && ! str_contains($isi, $search) && ! str_contains($tempat, $search) && ! str_contains($notulis, $search)) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            ->values()
+            ->all();
+    }
+
     public function updatePimpinan(): void
     {
         try {
@@ -317,6 +572,212 @@ class AdminPreview extends Component
         } catch (\Throwable $e) {
             $this->flashMessage = 'Gagal menyimpan ke Backend: ' . $e->getMessage();
         }
+    }
+
+    /* ================= KATALOG REGULASI & PRODUK HUKUM ================= */
+
+    public function loadRegulasiData(): void
+    {
+        $base = $this->getBackendUrl();
+
+        try {
+            $res = Http::timeout(4)->get("{$base}/peraturan", ['all' => 1]);
+            if ($res->successful()) {
+                $data = $res->json();
+                $this->regulasiList = is_array($data) ? (isset($data['data']) ? $data['data'] : $data) : [];
+            }
+        } catch (\Throwable $e) {}
+
+        try {
+            $periode = Http::timeout(4)->get("{$base}/periode-senat", ['all' => 1]);
+            if ($periode->successful()) {
+                $dataP = $periode->json();
+                $this->periodeList = is_array($dataP) ? (isset($dataP['data']) ? $dataP['data'] : $dataP) : [];
+            }
+        } catch (\Throwable $e) {}
+
+        if (empty($this->periodeList)) {
+            $this->periodeList = [
+                ['id_periode_senat' => 1, 'nama_periode' => '2025/2026'],
+                ['id_periode_senat' => 2, 'nama_periode' => '2026-2029'],
+            ];
+        }
+
+        if (! $this->regulasiPeriodeId) {
+            $lastPeriode = end($this->periodeList);
+            $this->regulasiPeriodeId = $lastPeriode['id_periode_senat'] ?? 1;
+        }
+    }
+
+    public function openRegulasiForm(): void
+    {
+        $this->resetRegulasiForm();
+        $this->regulasiTanggal = now()->format('Y-m-d');
+        $this->isRegulasiFormOpen = true;
+    }
+
+    public function closeRegulasiForm(): void
+    {
+        $this->isRegulasiFormOpen = false;
+        $this->resetRegulasiForm();
+    }
+
+    public function resetRegulasiForm(): void
+    {
+        $this->regulasiId = null;
+        $this->regulasiNomor = '';
+        $this->regulasiJudul = '';
+        $this->regulasiKategori = 'Peraturan Senat';
+        $this->regulasiTahap = 'Draf';
+        $this->regulasiFile = '';
+        $this->regulasiTanggal = '';
+        if (empty($this->regulasiPeriodeId)) {
+            $this->regulasiPeriodeId = $this->periodeList[0]['id_periode_senat'] ?? 1;
+        }
+    }
+
+    public function editRegulasi(int $id): void
+    {
+        $item = collect($this->regulasiList)->firstWhere('id_peraturan', $id);
+        if (! $item) {
+            return;
+        }
+
+        $this->regulasiId = $id;
+        $this->regulasiNomor = $item['nomor_sk'] ?? '';
+        $this->regulasiJudul = $item['judul'] ?? '';
+        $this->regulasiKategori = $item['kategori'] ?? 'Peraturan Senat';
+        $this->regulasiTahap = $item['tahap_pembentukan'] ?? 'Draf';
+        $this->regulasiPeriodeId = $item['id_periode_senat'] ?? 1;
+        $this->regulasiFile = $item['file_dokumen'] ?? '';
+        $this->regulasiTanggal = ! empty($item['tanggal_terbit'])
+            ? substr((string) $item['tanggal_terbit'], 0, 10)
+            : now()->format('Y-m-d');
+        $this->isRegulasiFormOpen = true;
+    }
+
+    public function saveRegulasi(): void
+    {
+        if (trim($this->regulasiNomor) === '' || trim($this->regulasiJudul) === '') {
+            $this->flashMessage = 'Peringatan: Nomor dokumen dan judul regulasi wajib diisi!';
+            return;
+        }
+
+        if (! $this->regulasiPeriodeId) {
+            $this->flashMessage = 'Peringatan: Periode senat wajib dipilih!';
+            return;
+        }
+
+        $base = $this->getBackendUrl();
+        $payload = [
+            'id_periode_senat' => (int) $this->regulasiPeriodeId,
+            'nomor_sk' => $this->regulasiNomor,
+            'judul' => $this->regulasiJudul,
+            'kategori' => $this->regulasiKategori,
+            'tahap_pembentukan' => $this->regulasiTahap,
+            'file_dokumen' => $this->regulasiFile ?: null,
+            'tanggal_terbit' => $this->regulasiTanggal ?: now()->format('Y-m-d'),
+        ];
+
+        try {
+            if ($this->regulasiId) {
+                $res = Http::timeout(6)->put("{$base}/peraturan/{$this->regulasiId}", $payload);
+                $this->flashMessage = $res->successful()
+                    ? 'Berhasil! Produk hukum berhasil diperbarui di database Backend.'
+                    : 'Gagal memperbarui: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
+            } else {
+                $res = Http::timeout(6)->post("{$base}/peraturan", $payload);
+                $this->flashMessage = $res->successful()
+                    ? 'Berhasil! Produk hukum baru sukses ditambahkan ke database Backend.'
+                    : 'Gagal menambahkan: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
+            }
+
+            $this->loadRegulasiData();
+            $this->closeRegulasiForm();
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
+        }
+    }
+
+    public function deleteRegulasi(int $id): void
+    {
+        $base = $this->getBackendUrl();
+        try {
+            $res = Http::timeout(6)->delete("{$base}/peraturan/{$id}");
+            $this->flashMessage = ($res->successful() || $res->status() === 204)
+                ? "Produk hukum ID #{$id} berhasil dihapus dari database."
+                : 'Gagal menghapus: HTTP ' . $res->status();
+            $this->loadRegulasiData();
+            if ($this->viewingRegulasiId === $id) {
+                $this->viewingRegulasiId = null;
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
+        }
+    }
+
+    public function setRegulasiTahap(int $id, string $tahap): void
+    {
+        $base = $this->getBackendUrl();
+        try {
+            $res = Http::timeout(6)->put("{$base}/peraturan/{$id}", ['tahap_pembentukan' => $tahap]);
+            if ($res->successful()) {
+                $this->flashMessage = "Tahap produk hukum diubah menjadi: {$tahap}";
+                $this->loadRegulasiData();
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Gagal memperbarui tahap: ' . $e->getMessage();
+        }
+    }
+
+    public function viewRegulasi(?int $id): void
+    {
+        $this->viewingRegulasiId = $id;
+    }
+
+    #[Computed]
+    public function filteredRegulasi(): array
+    {
+        return collect($this->regulasiList)
+            ->filter(function ($item) {
+                if ($this->regulasiFilterKategori !== 'all'
+                    && ($item['kategori'] ?? '') !== $this->regulasiFilterKategori) {
+                    return false;
+                }
+
+                if ($this->regulasiFilterTahap !== 'all'
+                    && strtolower($item['tahap_pembentukan'] ?? '') !== strtolower($this->regulasiFilterTahap)) {
+                    return false;
+                }
+
+                if (! empty($this->regulasiSearch)) {
+                    $search = strtolower($this->regulasiSearch);
+                    $haystack = strtolower(
+                        ($item['judul'] ?? '') . ' ' .
+                        ($item['nomor_sk'] ?? '') . ' ' .
+                        ($item['kategori'] ?? '') . ' ' .
+                        ($item['tahap_pembentukan'] ?? '')
+                    );
+                    if (! str_contains($haystack, $search)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
+            ->values()
+            ->all();
+    }
+
+    public function regulasiStatistik(): array
+    {
+        $all = collect($this->regulasiList);
+        return [
+            'total' => $all->count(),
+            'disahkan' => $all->filter(fn ($r) => strtolower($r['tahap_pembentukan'] ?? '') === 'disahkan')->count(),
+            'proses' => $all->filter(fn ($r) => in_array(strtolower($r['tahap_pembentukan'] ?? ''), ['draf', 'pembahasan', 'harmonisasi'], true))->count(),
+            'kategori' => $all->pluck('kategori')->filter()->unique()->count(),
+        ];
     }
 
     public function chipState(string $val): string
