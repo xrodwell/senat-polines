@@ -8,6 +8,7 @@ use App\Contracts\CommitteeRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -65,6 +66,15 @@ class AdminPreview extends Component
     public string $formStatus = '';
     public string $flashMessage = '';
 
+    // Form Pimpinan Kolektif Senat (Tersambung Backend API)
+    public ?int $ketuaUserId = 1;
+    public string $ketuaNama = 'Dr. Sukamto, S.Kom., M.T.';
+    public string $ketuaNip = '196803121993031002';
+
+    public ?int $sekretarisUserId = 2;
+    public string $sekretarisNama = 'Andi Setyawan, S.E., M.M.';
+    public string $sekretarisNip = '197405191999031001';
+
     public function mount(): void
     {
         // Query param 'tab' is automatically bound to $active via #[Url].
@@ -99,6 +109,33 @@ class AdminPreview extends Component
     public function saveAction(string $entity): void
     {
         $this->flashMessage = "Data {$entity} berhasil diperbarui (tersimpan di state lokal). Siap disambungkan ke API backend.";
+    }
+
+    public function getBackendUrl(): string
+    {
+        return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
+    }
+
+    public function updatePimpinan(): void
+    {
+        try {
+            $base = $this->getBackendUrl();
+            if ($this->ketuaUserId) {
+                Http::timeout(5)->put("{$base}/user/{$this->ketuaUserId}", [
+                    'nama' => $this->ketuaNama,
+                    'nim_nip' => $this->ketuaNip,
+                ]);
+            }
+            if ($this->sekretarisUserId) {
+                Http::timeout(5)->put("{$base}/user/{$this->sekretarisUserId}", [
+                    'nama' => $this->sekretarisNama,
+                    'nim_nip' => $this->sekretarisNip,
+                ]);
+            }
+            $this->flashMessage = 'Berhasil! Data Ketua & Sekretaris Senat sukses disimpan ke database Backend!';
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Gagal menyimpan ke Backend: ' . $e->getMessage();
+        }
     }
 
     public function chipState(string $val): string
