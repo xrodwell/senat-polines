@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#003366">
     <title>@yield('title', 'Portal Internal Senat Akademik Polines')</title>
 
@@ -10,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 
     @include('components.senat.styles')
@@ -82,7 +83,8 @@
                         <a href="{{ route('portal.dashboard') }}" class="flex min-h-[44px] items-center border-b border-senat-line px-4 text-[13px] font-medium text-senat-ink hover:bg-senat-surface">Dashboard Anggota</a>
                         <a href="{{ route('portal.secretariat.dashboard') }}" class="flex min-h-[44px] items-center border-b border-senat-line px-4 text-[13px] font-medium text-senat-ink hover:bg-senat-surface">Dashboard Sekretariat</a>
                         <a href="{{ route('portal.attendance') }}" class="flex min-h-[44px] items-center border-b border-senat-line px-4 text-[13px] font-medium text-senat-ink hover:bg-senat-surface">Presensi Cepat (QR)</a>
-                        <a href="{{ route('public.home') }}" class="flex min-h-[44px] items-center px-4 text-[13px] font-medium text-senat-ink hover:bg-senat-surface">Keluar ke Portal Publik</a>
+                        <a href="{{ route('public.home') }}" class="flex min-h-[44px] items-center border-b border-senat-line px-4 text-[13px] font-medium text-senat-ink hover:bg-senat-surface">Portal Publik</a>
+                        <a href="{{ route('portal.logout') }}" class="flex min-h-[44px] items-center px-4 text-[13px] font-semibold text-red-600 hover:bg-red-50">Keluar (Logout)</a>
                     </div>
                 </div>
 
@@ -113,6 +115,13 @@
             </nav>
             <div class="mx-[23px] mt-6 h-px bg-senat-sidebarLine"></div>
             <p class="px-[23px] pt-4 text-[12px] text-senat-muted">Dukungan Sekretariat</p>
+            <div class="mt-3 px-[15px]">
+                <a href="{{ route('portal.logout') }}"
+                   class="senat-tap flex h-[42px] items-center gap-[11px] rounded-[9px] px-[13px] font-semibold text-[13px] text-rose-600 transition-colors hover:bg-rose-50">
+                    <svg class="h-4 w-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    <span>Keluar Akun</span>
+                </a>
+            </div>
         </aside>
 
         <main class="min-w-0 flex-1 px-5 pb-28 pt-6 lg:px-10 lg:pb-10 lg:pt-8">

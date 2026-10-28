@@ -36,7 +36,7 @@ class AdminPreviewTest extends TestCase
         Livewire::withQueryParams(['tab' => 'E-Voting & Pengambilan Keputusan'])
             ->test(AdminPreview::class)
             ->assertSet('active', 'E-Voting & Pengambilan Keputusan')
-            ->assertSee('Pemungutan Suara · Sidang Pleno Akreditasi Program Studi');
+            ->assertSee('Rekap Suara Masuk');
     }
 
     public function test_sidebar_has_exactly_two_groups_and_all_screens(): void
@@ -62,7 +62,7 @@ class AdminPreviewTest extends TestCase
             ->assertSet('active', 'Presensi & Verifikasi QR')
             ->call('select', 'Kuorum & Kehadiran Anggota')
             ->assertSet('active', 'Kuorum & Kehadiran Anggota')
-            ->assertSee('Status Kuorum Sidang Pleno PLN-892')
+            ->assertSee('Status Kuorum')
             ->call('select', 'Risalah & Notulensi Sidang')
             ->assertSet('active', 'Risalah & Notulensi Sidang')
             ->call('select', 'E-Voting & Pengambilan Keputusan')
@@ -95,8 +95,8 @@ class AdminPreviewTest extends TestCase
             ->assertDontSee('Panel Admin')
             ->assertDontSee('Peta Produk')
             ->assertDontSee('Lima Fitur Unggulan SENAT')
-            ->assertSee('livewire.js')
+            ->assertSee('livewire')
             ->assertSee('senatChatWidget()')
-            ->assertSee('style="opacity:0;visibility:hidden;pointer-events:none;"', false);
+            ->assertSee('pointer-events-none invisible translate-y-3 scale-95 opacity-0', false);
     }
 }

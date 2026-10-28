@@ -7,7 +7,9 @@ use App\Contracts\AspirationRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Contracts\VotingRepositoryInterface;
 use App\Support\SenatDirectory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -21,6 +23,7 @@ class PortalController extends Controller
         private ArchiveRepositoryInterface $archives,
         private RegulationRepositoryInterface $regulations,
         private PostRepositoryInterface $posts,
+        private VotingRepositoryInterface $votings,
     ) {}
 
     /** @return array<string, mixed> */
@@ -40,10 +43,74 @@ class PortalController extends Controller
         ];
     }
 
-    /** 11 — Login Portal Senat */
-    public function login(): View
+        /** 11 — Login Portal Senat */
+    public function login(): View|RedirectResponse
     {
+        if (session()->has('auth_user')) {
+            if (session('auth_user_role') === 'admin') {
+                return redirect()->route('admin.preview');
+            }
+            return redirect()->route('portal.dashboard');
+        }
+
         return view('portal.login');
+    }
+
+    /** Proses Autentikasi Login Portal */
+    public function authenticate(Request $request): RedirectResponse
+    {
+        $credentials = $request->validate([
+            'identifier' => 'required|string',
+            'password'   => 'required|string',
+        ], [
+            'identifier.required' => 'Email atau NIP/NIM wajib diisi.',
+            'password.required'   => 'Kata sandi wajib diisi.',
+        ]);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->post('http://127.0.0.1:8001/api/login', [
+                'identifier' => $credentials['identifier'],
+                'password'   => $credentials['password'],
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $user = $data['user'] ?? [];
+
+                // Simpan ke session Laravel frontend
+                session([
+                    'auth_token'     => $data['token'] ?? null,
+                    'auth_user'      => $user,
+                    'auth_user_id'   => $user['id_user'] ?? null,
+                    'auth_user_name' => $user['nama'] ?? 'Anggota Senat',
+                    'auth_user_role' => $user['role'] ?? 'anggota',
+                    'auth_user_nip'  => $user['nim_nip'] ?? '',
+                    'auth_user_email'=> $user['email'] ?? '',
+                ]);
+
+                // Redirect sesuai role
+                if (($user['role'] ?? '') === 'admin') {
+                    return redirect()->route('admin.preview')->with('success', 'Selamat datang, ' . ($user['nama'] ?? 'Admin') . '!');
+                }
+
+                return redirect()->route('portal.dashboard')->with('success', 'Selamat datang, ' . ($user['nama'] ?? 'Anggota Senat') . '!');
+            }
+
+            $errorMessage = $response->json('message') ?? 'NIP/Email atau kata sandi tidak valid.';
+            return back()->withInput($request->only('identifier'))->withErrors(['login' => $errorMessage]);
+        } catch (\Throwable $e) {
+            \Log::error('Portal login failed: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            return back()->withInput($request->only('identifier'))->withErrors(['login' => 'Gagal terhubung ke backend API (' . $e->getMessage() . '). Pastikan server backend aktif di port 8001.']);
+        }
+    }
+
+    /** Logout dari Portal */
+    public function logout(Request $request): RedirectResponse
+    {
+        session()->forget(['auth_token', 'auth_user', 'auth_user_id', 'auth_user_name', 'auth_user_role', 'auth_user_nip', 'auth_user_email']);
+        session()->flush();
+
+        return redirect()->route('portal.login')->with('info', 'Anda telah berhasil keluar dari akun.');
     }
 
     /** 12A — Dashboard Anggota · Ringkasan */
@@ -107,10 +174,33 @@ class PortalController extends Controller
     /** 12B — Agenda & Presensi */
     public function agenda(): View
     {
+        $userId = auth()->id() ?: session('auth_user_id', 6);
+        $userNama = session('auth_user_name', 'Dr. Sukamto, S.Kom., M.T.');
+
         return view('portal.agenda', [
+            'activeSession' => $this->meetings->getActiveSession(),
+            'currentMember' => [
+                'id' => $userId,
+                'name' => $userNama,
+                'nip' => '19700001',
+            ],
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
         ]);
+    }
+
+    /** Submit Presensi Anggota (QR Scan atau Kode Sesi) */
+    public function submitPresensi(Request $request): JsonResponse
+    {
+        $userId = $request->input('id_user') ?: (auth()->id() ?: session('auth_user_id', 6));
+        $tokenQr = $request->input('token_qr');
+        $sessionCode = $request->input('kode_sesi');
+        $meetingId = $request->input('id_rapat');
+
+        $result = $this->meetings->submitPresensi((int) $userId, $tokenQr, $sessionCode, $meetingId ? (int) $meetingId : null);
+
+        $status = ($result['success'] ?? false) ? 200 : 422;
+        return response()->json($result, $status);
     }
 
     /** 12C — Notulensi & Risalah */
@@ -128,7 +218,33 @@ class PortalController extends Controller
         return view('portal.voting', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
+            'activeVoting' => $this->votings->getActive(),
         ]);
+    }
+
+    /** Submit Suara E-Voting */
+    public function submitVote(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'id_voting' => ['required', 'integer'],
+            'id_opsi' => ['required', 'integer'],
+        ]);
+
+        try {
+            $result = $this->votings->castVote(
+                (int) $validated['id_voting'],
+                (int) $validated['id_opsi'],
+                auth()->id() ?? 1
+            );
+
+            if (isset($result['success']) && ! $result['success']) {
+                return back()->with('error', $result['message'] ?? 'Gagal mengirim suara.');
+            }
+
+            return back()->with('success', $result['message'] ?? 'Suara Anda berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 
     /** 12E — Aspirasi & RUU Kampus */
