@@ -129,6 +129,16 @@
                     </div>
                 </header>
 
+                @if ($flashMessage)
+                    <div class="mb-5 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800 shadow-sm" x-data="{ show: true }" x-show="show">
+                        <div class="flex items-center gap-2">
+                            <span>✅</span>
+                            <span>{{ $flashMessage }}</span>
+                        </div>
+                        <button type="button" @click="show = false" class="text-sm font-bold text-emerald-600 hover:text-emerald-900" aria-label="Tutup">&times;</button>
+                    </div>
+                @endif
+
             {{-- 1. SCREEN: Dashboard Rapat --}}
             @if ($active === 'Dashboard Rapat' || $active === 'Dashboard')
                 <div wire:key="screen-dashboard-rapat" class="space-y-6">
@@ -236,57 +246,121 @@
             @elseif ($active === 'Jadwal & Agenda Sidang')
                 <div wire:key="screen-jadwal-agenda" class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
-                        <h2 class="text-[18px] font-bold text-senat-ink">Buat Sidang Baru</h2>
-                        <p class="mt-1.5 text-[13px] text-senat-body">Gunakan jenis sidang sesuai ketentuan Senat.</p>
-
-                        <form class="mt-5 space-y-4" wire:submit.prevent="saveAction('Jadwal Sidang Baru')">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <label class="text-[12px] font-semibold text-senat-ink">Judul / agenda sidang</label>
-                                <input type="text" placeholder="Contoh: Sidang Pleno Penetapan Standar Kurikulum Vokasi"
+                                <h2 class="text-[18px] font-bold text-senat-ink">
+                                    {{ $editingMeetingId ? 'Sunting Sidang #' . $editingMeetingId : 'Buat Sidang Baru' }}
+                                </h2>
+                                <p class="mt-1.5 text-[13px] text-senat-body">Gunakan jenis sidang sesuai ketentuan Senat (tersambung Backend API).</p>
+                            </div>
+                            @if ($editingMeetingId)
+                                <span class="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-900">Mode Edit Aktif</span>
+                            @endif
+                        </div>
+
+                        <form class="mt-5 space-y-4" wire:submit.prevent="saveMeeting('Terjadwal')">
+                            <div>
+                                <label class="text-[12px] font-semibold text-senat-ink">Judul / agenda sidang <span class="text-rose-500">*</span></label>
+                                <input type="text" wire:model="meetingTitle" placeholder="Contoh: Sidang Pleno Penetapan Standar Kurikulum Vokasi" required
                                        class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                @error('meetingTitle') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label class="text-[12px] font-semibold text-senat-ink">Tanggal dan waktu</label>
-                                    <input type="datetime-local" value="{{ date('Y-m-d\TH:i') }}"
-                                           class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    <label class="text-[12px] font-semibold text-senat-ink">Jenis Sidang Senat <span class="text-rose-500">*</span></label>
+                                    <select wire:model="meetingJenisRapatId"
+                                            class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                        <option value="1">Rapat Pleno</option>
+                                        <option value="2">Rapat Komisi</option>
+                                        <option value="3">Rapat Koordinasi</option>
+                                    </select>
                                 </div>
                                 <div>
-                                    <label class="text-[12px] font-semibold text-senat-ink">Lokasi atau tautan hybrid</label>
-                                    <input type="text" value="Ruang Sidang Utama Gd. Direktorat"
+                                    <label class="text-[12px] font-semibold text-senat-ink">Tanggal dan waktu <span class="text-rose-500">*</span></label>
+                                    <input type="datetime-local" wire:model="meetingDateTime" required
                                            class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    @error('meetingDateTime') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="text-[12px] font-semibold text-senat-ink">Peserta dan undangan</label>
-                                <input type="text" value="Seluruh Anggota Senat (34 Orang)"
-                                       class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="text-[12px] font-semibold text-senat-ink">Lokasi atau tautan hybrid <span class="text-rose-500">*</span></label>
+                                    <input type="text" wire:model="meetingRoom" placeholder="Contoh: Ruang Sidang Utama Gd. Direktorat" required
+                                           class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    @error('meetingRoom') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label class="text-[12px] font-semibold text-senat-ink">Peserta dan undangan</label>
+                                    <input type="text" wire:model="meetingPeserta" placeholder="Contoh: Seluruh Anggota Senat (34 Orang)"
+                                           class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                </div>
                             </div>
 
                             <div class="flex flex-wrap items-center gap-3 pt-2">
-                                <x-senat.button variant="secondary" type="button" wire:click="saveAction('Draft Sidang')">Simpan sebagai Draft</x-senat.button>
-                                <x-senat.button variant="primary" type="submit">Buat Undangan</x-senat.button>
+                                <x-senat.button variant="secondary" type="button" wire:click="saveMeeting('Draft')">
+                                    Simpan sebagai Draft
+                                </x-senat.button>
+                                <x-senat.button variant="primary" type="submit">
+                                    {{ $editingMeetingId ? 'Perbarui Sidang' : 'Jadwalkan & Terbitkan' }}
+                                </x-senat.button>
+                                @if ($editingMeetingId)
+                                    <x-senat.button variant="secondary" type="button" wire:click="resetMeetingForm">
+                                        Batal Edit
+                                    </x-senat.button>
+                                @endif
                             </div>
                         </form>
                     </section>
 
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
-                        <h2 class="text-[18px] font-bold text-senat-ink">Sidang Terjadwal</h2>
-                        <ul class="mt-3 divide-y divide-senat-sidebarLine">
-                            @foreach ($meetings as $meeting)
+                        <div class="flex items-center justify-between gap-2 border-b border-senat-sidebarLine pb-3">
+                            <div>
+                                <h2 class="text-[18px] font-bold text-senat-ink">Sidang Terjadwal</h2>
+                                <p class="text-[11px] text-senat-muted">Data dinamis dari Backend API port 8001</p>
+                            </div>
+                            <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700">
+                                {{ count($meetings) }} Sidang
+                            </span>
+                        </div>
+                        <ul class="mt-3 divide-y divide-senat-sidebarLine max-h-[580px] overflow-y-auto pr-1">
+                            @forelse ($meetings as $meeting)
                                 <li class="py-4 first:pt-2">
-                                    <p class="text-[14px] font-semibold text-senat-ink">{{ $meeting['title'] }}</p>
-                                    <p class="mt-1 text-[12px] text-senat-body">
-                                        {{ \Illuminate\Support\Carbon::parse($meeting['date'])->format('d M') }} · {{ $meeting['time'] }}
-                                    </p>
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[14px] font-semibold text-senat-ink leading-snug">{{ $meeting['title'] }}</p>
+                                            <p class="mt-1 text-[12px] text-senat-body">
+                                                {{ \Illuminate\Support\Carbon::parse($meeting['date'])->format('d M Y') }} · {{ $meeting['time'] }}
+                                            </p>
+                                            <p class="mt-0.5 text-[11px] text-senat-muted flex items-center gap-1">
+                                                <span>📍</span> {{ $meeting['room'] }}
+                                            </p>
+                                        </div>
+                                    </div>
                                     <div class="mt-3 flex items-center justify-between gap-3">
-                                        <x-senat.badge :state="$this->chipState($meeting['type'])">{{ $this->chipLabel($meeting['type']) }}</x-senat.badge>
-                                        <x-senat.button variant="secondary" size="sm" type="button" wire:click="saveAction('Kelola Sidang {{ $meeting['session_code'] }}')">Kelola</x-senat.button>
+                                        <div class="flex items-center gap-2">
+                                            <x-senat.badge :state="$this->chipState($meeting['type'])">{{ $this->chipLabel($meeting['type']) }}</x-senat.badge>
+                                            <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider {{ in_array($meeting['status'], ['Terjadwal', 'dijadwalkan']) ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : ($meeting['status'] === 'Draft' ? 'bg-slate-100 text-slate-600' : 'bg-amber-50 text-amber-700 border border-amber-200') }}">
+                                                {{ $meeting['status'] }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <x-senat.button variant="secondary" size="sm" type="button" wire:click="editMeeting({{ $meeting['id'] }})">Kelola / Edit</x-senat.button>
+                                            <button type="button" wire:click="deleteMeeting({{ $meeting['id'] }})"
+                                                    onclick="return confirm('Hapus agenda sidang ini dari backend?') || event.stopImmediatePropagation()"
+                                                    class="rounded px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
+                                                Hapus
+                                            </button>
+                                        </div>
                                     </div>
                                 </li>
-                            @endforeach
+                            @empty
+                                <li class="py-6 text-center">
+                                    <p class="text-[13px] text-senat-muted">Belum ada sidang terjadwal di Backend API.</p>
+                                    <p class="mt-1 text-[11px] text-senat-muted">Gunakan form di sebelah kiri untuk menjadwalkan sidang baru.</p>
+                                </li>
+                            @endforelse
                         </ul>
                     </section>
                 </div>

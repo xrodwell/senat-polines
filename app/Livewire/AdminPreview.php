@@ -82,6 +82,12 @@ class AdminPreview extends Component
     public ?int $selectedAspirasiId = null;
     public string $tanggapanText = '';
 
+    public string $meetingTitle = '';
+    public int $meetingJenisRapatId = 1;
+    public string $meetingDateTime = '';
+    public string $meetingRoom = '';
+    public string $meetingPeserta = '';
+    public ?int $editingMeetingId = null;
     // State Risalah & Notulensi Sidang (Backend API Integration)
     public array $notulensiList = [];
     public array $rapatList = [];
@@ -167,6 +173,10 @@ class AdminPreview extends Component
 
     public function mount(MeetingRepositoryInterface $meetingsRepo): void
     {
+        if (empty($this->meetingDateTime)) {
+            $this->meetingDateTime = date('Y-m-d\T09:00');
+        }
+
         if (isset(self::MENU_KEYS[$this->active])) {
             $this->active = self::MENU_KEYS[$this->active];
         }
@@ -216,7 +226,12 @@ class AdminPreview extends Component
 
     public function getBackendUrl(): string
     {
-        return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
+        $url = env('SENAT_BACKEND_API_URL') ?: env('BACKEND_API_URL');
+        if (empty($url)) {
+            $url = 'http://127.0.0.1:8001/api';
+        }
+
+        return rtrim($url, '/');
     }
     /**
      * Polling / Refresh data presensi dan kuorum live
@@ -408,6 +423,111 @@ class AdminPreview extends Component
         } catch (\Throwable $e) {
             $this->flashMessage = 'Gagal menyimpan perubahan data pimpinan: ' . $e->getMessage();
         }
+    }
+
+    public function saveMeeting(string $status = 'Terjadwal'): void
+    {
+        $this->validate([
+            'meetingTitle' => 'required|string|max:255',
+            'meetingDateTime' => 'required',
+            'meetingRoom' => 'required|string|max:255',
+        ], [
+            'meetingTitle.required' => 'Judul / agenda sidang wajib diisi.',
+            'meetingDateTime.required' => 'Tanggal dan waktu sidang wajib diisi.',
+            'meetingRoom.required' => 'Lokasi atau tautan hybrid wajib diisi.',
+        ]);
+
+        try {
+            $base = $this->getBackendUrl();
+            $carbon = \Illuminate\Support\Carbon::parse($this->meetingDateTime);
+            $tanggal = $carbon->format('Y-m-d');
+            $waktu = $carbon->format('H:i');
+
+            $payload = [
+                'id_user' => $this->ketuaUserId ?? 1,
+                'id_jenis_rapat' => (int) $this->meetingJenisRapatId,
+                'nama_agenda' => $this->meetingTitle,
+                'tanggal' => $tanggal,
+                'waktu' => $waktu,
+                'tempat' => $this->meetingRoom,
+                'status' => $status,
+            ];
+
+            if ($this->editingMeetingId) {
+                $response = Http::timeout(5)->put("{$base}/rapat/{$this->editingMeetingId}", $payload);
+                if ($response->successful()) {
+                    $this->flashMessage = "Berhasil memperbarui sidang: {$this->meetingTitle} (Status: {$status}) ke Backend!";
+                    $this->resetMeetingForm();
+                } else {
+                    $this->flashMessage = 'Gagal memperbarui ke Backend: ' . ($response->json('message') ?? $response->body());
+                }
+            } else {
+                $response = Http::timeout(5)->post("{$base}/rapat", $payload);
+                if ($response->successful()) {
+                    $this->flashMessage = "Berhasil membuat jadwal sidang: {$this->meetingTitle} (Status: {$status}) di Backend!";
+                    $this->resetMeetingForm();
+                } else {
+                    $this->flashMessage = 'Gagal menyimpan ke Backend: ' . ($response->json('message') ?? $response->body());
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Gagal menghubungi Backend API: ' . $e->getMessage();
+        }
+    }
+
+    public function editMeeting(int $id): void
+    {
+        try {
+            $base = $this->getBackendUrl();
+            $response = Http::timeout(5)->get("{$base}/rapat/{$id}");
+            if ($response->successful()) {
+                $item = $response->json();
+                $item = $item['data'] ?? $item;
+
+                $this->editingMeetingId = $id;
+                $this->meetingTitle = $item['nama_agenda'] ?? '';
+                $this->meetingJenisRapatId = (int) ($item['id_jenis_rapat'] ?? 1);
+                $this->meetingRoom = $item['tempat'] ?? '';
+
+                $tgl = isset($item['tanggal']) ? substr($item['tanggal'], 0, 10) : date('Y-m-d');
+                $wkt = isset($item['waktu']) ? substr($item['waktu'], 0, 5) : '09:00';
+                $this->meetingDateTime = "{$tgl}T{$wkt}";
+
+                $this->flashMessage = "Mode sunting aktif untuk sidang #{$id}. Silakan perbarui isian di formulir.";
+            } else {
+                $this->flashMessage = "Gagal memuat detail sidang #{$id} dari Backend.";
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Gagal memuat sidang dari Backend: ' . $e->getMessage();
+        }
+    }
+
+    public function deleteMeeting(int $id): void
+    {
+        try {
+            $base = $this->getBackendUrl();
+            $response = Http::timeout(5)->delete("{$base}/rapat/{$id}");
+            if ($response->successful()) {
+                $this->flashMessage = "Sidang #{$id} berhasil dihapus dari database Backend!";
+                if ($this->editingMeetingId === $id) {
+                    $this->resetMeetingForm();
+                }
+            } else {
+                $this->flashMessage = "Gagal menghapus sidang #{$id} dari Backend.";
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Gagal menghapus ke Backend: ' . $e->getMessage();
+        }
+    }
+
+    public function resetMeetingForm(): void
+    {
+        $this->editingMeetingId = null;
+        $this->meetingTitle = '';
+        $this->meetingJenisRapatId = 1;
+        $this->meetingDateTime = date('Y-m-d\T09:00');
+        $this->meetingRoom = '';
+        $this->meetingPeserta = '';
     }
 
     public function loadVotingData(): void
@@ -1046,11 +1166,14 @@ class AdminPreview extends Component
         if (str_contains($val, 'Pleno') || str_contains($val, 'Ditindaklanjuti')) {
             return 'warning';
         }
-        if (str_contains($val, 'Komisi') || str_contains($val, 'Sedang')) {
+        if (str_contains($val, 'Komisi') || str_contains($val, 'Sedang') || str_contains($val, 'Penetapan')) {
             return 'info';
         }
-        if (str_contains($val, 'Selesai') || str_contains($val, 'Disahkan')) {
+        if (str_contains($val, 'Selesai') || str_contains($val, 'Disahkan') || str_contains($val, 'Keputusan')) {
             return 'success';
+        }
+        if (str_contains($val, 'Pertimbangan') || str_contains($val, 'Pimpinan') || str_contains($val, 'Terbuka')) {
+            return 'warning';
         }
         return 'neutral';
     }
@@ -1080,6 +1203,22 @@ class AdminPreview extends Component
         $regulations = $regulationsRepo->all();
         $posts = $postsRepo->all();
         $committees = $committeesRepo->all();
+
+        // Fetch Notulensi from Backend API
+        $notulensis = [];
+        try {
+            $base = $this->getBackendUrl();
+            $res = Http::timeout(3)->get("{$base}/notulensi");
+            if ($res->successful()) {
+                $notulensis = $res->json('data', []);
+            }
+        } catch (\Throwable) {
+            $notulensis = [];
+        }
+
+        if (empty($this->notulensiMeetingId) && !empty($meetings)) {
+            $this->notulensiMeetingId = (int) ($meetings[0]['id'] ?? 1);
+        }
 
         $activeMeeting = $meetingsRepo->getActiveSession() ?? ($meetings[0] ?? null);
         $totalInvited = (int) collect($meetings)->sum('total_invited');
@@ -1139,6 +1278,7 @@ class AdminPreview extends Component
             'aspirations' => $aspirations,
             'archives' => $archives,
             'notulenItem' => $notulenItem,
+            'notulensis' => $notulensis,
             'antrean' => $antrean,
             'aksiCepat' => $aksiCepat,
             'regulations' => $regulations,

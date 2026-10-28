@@ -97,6 +97,6 @@ class AdminPreviewTest extends TestCase
             ->assertDontSee('Lima Fitur Unggulan SENAT')
             ->assertSee('livewire')
             ->assertSee('senatChatWidget()')
-            ->assertSee('style="opacity:0;visibility:hidden;pointer-events:none;"', false);
+            ->assertSee('pointer-events-none invisible translate-y-3 scale-95 opacity-0', false);
     }
 }
