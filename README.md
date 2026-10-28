@@ -1,45 +1,61 @@
 # Portal Senat Akademik Politeknik Negeri Semarang (Polines)
 
-Web demo berbasis Laravel 11.
+Portal resmi Senat Akademik Politeknik Negeri Semarang berbasis Laravel 13 dan Tailwind CSS v4, dilengkapi pratinjau panel administrasi sekretariat dan manajemen rapat/publikasi berbasis Livewire 4.
 
-## Menjalankan secara lokal
+## Menjalankan secara Lokal
 
-Prasyarat: Git, PHP >=8.2 (sesuai batas versi di `composer.json`/`composer.lock`) beserta ekstensi yang disyaratkan dependensi Composer, termasuk dependensi pengembangan, dan Composer. Pastikan `git`, `php`, dan `composer` tersedia di PATH. `composer install` memeriksa persyaratan tersebut; aktifkan ekstensi yang dilaporkan kurang di `php.ini` PHP CLI, jangan gunakan `--ignore-platform-reqs`.
+Prasyarat: Git, PHP >=8.3, Composer, Node.js dan npm. Pastikan `git`, `php`, `composer`, `node`, dan `npm` tersedia di PATH lingkungan Anda.
+
+Frontend menggunakan Vite + Tailwind CSS v4, sehingga `npm install && npm run build` perlu dijalankan sebelum memulai server Laravel.
 
 ### Windows PowerShell
 
-Jalankan perintah berikut berurutan untuk clone baru; lanjutkan hanya jika perintah sebelumnya berhasil.
+Jalankan perintah berikut secara berurutan:
 
 ```powershell
 git clone https://github.com/xrodwell/senat-polines.git
 cd senat-polines
 composer install
+npm install
+npm run build
 New-Item -ItemType Directory -Force -Path storage/framework/cache/data, storage/framework/sessions, storage/framework/views, storage/logs, bootstrap/cache | Out-Null
 Copy-Item .env.example .env
 php artisan key:generate
 php artisan serve
 ```
 
-`./run.sh` dan sintaks Bash `mkdir -p`/`cp` bukan instruksi untuk PowerShell; gunakan `New-Item` dan `Copy-Item` seperti di atas. Jangan timpa `.env` atau buat ulang kunci aplikasi pada instalasi yang sudah digunakan.
-
-### Linux/macOS (Bash)
+### Linux / macOS (Bash)
 
 ```bash
 git clone https://github.com/xrodwell/senat-polines.git
 cd senat-polines
 composer install
+npm install
+npm run build
 mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
 cp .env.example .env
 php artisan key:generate
-./run.sh
+php artisan serve
 ```
 
-Pastikan `storage/` dan `bootstrap/cache/` dapat ditulis oleh proses PHP. Sebagai alternatif `./run.sh`, jalankan `php artisan serve`.
+Buka peramban di:
+- **Portal Publik**: `http://127.0.0.1:8000`
+- **Portal Anggota**: `http://127.0.0.1:8000/portal/dashboard`
+- **Panel Admin Sekretariat**: `http://127.0.0.1:8000/admin`
 
-Buka http://127.0.0.1:8000.
+## Arsitektur & Interoperabilitas
 
-## Data dan frontend
+Sistem mendukung arsitektur **Hybrid Interoperabilitas**:
+1. **REST API Backend**: Menghubungkan endpoint API `Backend-Senat-Polines` untuk data komisi, berita, dan regulasi via konfigurasi `.env`:
+   ```env
+   SENAT_BACKEND_API_URL=http://127.0.0.1:8001/api
+   ```
+2. **Mock Fallback**: Jika backend API belum dijalankan, sistem otomatis menggunakan repositori mock berbasis JSON di `storage/mock/*.json` tanpa hambatan.
+3. **Panel Admin Terpusat**: Panel `/admin` mengintegrasikan seluruh operasional sekretariat (sidang, kuorum, voting, risalah) dan publikasi web (berita, regulasi, arsip, aspirasi).
 
-Data demo dibaca dari `storage/mock/*.json`; database tidak diperlukan untuk menjalankan demo dengan konfigurasi `.env.example`.
+## Pengujian
 
-Frontend memakai Tailwind CSS dan Alpine.js melalui CDN, sehingga Node/npm maupun build aset tidak diperlukan untuk menjalankan web saat ini. Koneksi internet diperlukan untuk memuat aset CDN.
+Menjalankan test suite:
+```bash
+./vendor/bin/phpunit
+```

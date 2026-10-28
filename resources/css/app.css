@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@source "../views/**/*.blade.php";
+@source "../../app/Livewire/**/*.php";
+
+@theme {
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-portal: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+    --color-senat-hero: #003c75;
+    --color-senat-primary: #003366;
+    --color-senat-primaryHover: #002850;
+    --color-senat-link: #0963bd;
+    --color-senat-orange: #f37021;
+    --color-senat-orangeHover: #d95f14;
+    --color-senat-ink: #172133;
+    --color-senat-body: #52637d;
+    --color-senat-muted: #637082;
+    --color-senat-line: #e2e8ee;
+    --color-senat-surface: #f7f9fc;
+    --color-senat-sidebarLine: #d9e2ef;
+    --color-senat-sky: #8fc7ff;
+    --color-senat-skySoft: #cfe0ff;
+    --color-senat-badgeBg: #f2f9ff;
+    --color-senat-badgeLine: #8cb8e3;
+    --color-senat-border: #cbd5e1;
+
+    --color-polines-navy: #003366;
+    --color-polines-navyDark: #00284d;
+    --color-polines-blue: #0a66c2;
+    --color-polines-orange: #f37021;
+    --color-polines-orangeHover: #d95f14;
+}

@@ -1,0 +1,96 @@
+[
+  {
+    "id": 1,
+    "code": "01",
+    "slug": "smart-legislative-pipeline",
+    "title": "Smart Legislative Pipeline",
+    "subtitle": "Pengajuan & Pelacakan Aspirasi/RUU",
+    "points": [
+      {
+        "label": "Aspirasi Publik/Mahasiswa Real-Time",
+        "detail": "Platform pengaduan dan usulan kebijakan dengan sistem upvote dan kategorisasi (Akademik, Fasilitas, Kesejahteraan, dll.)."
+      },
+      {
+        "label": "Tracking Status Transparan",
+        "detail": "Progress pembuatan regulasi, naskah akademik, atau RUU kampus dapat dilacak secara visual seperti status pengiriman paket."
+      },
+      {
+        "label": "Komentar Publik (Public Hearing Digital)",
+        "detail": "Kolom tanggapan terbatas atau terbuka pada draf aturan sebelum disahkan, mewujudkan asas keterbukaan informasi."
+      }
+    ],
+    "flow": ["Draft", "Kajian", "Sidang Pleno", "Pengesahan"]
+  },
+  {
+    "id": 2,
+    "code": "02",
+    "slug": "interactive-plenary-e-voting",
+    "title": "Interactive Plenary & E-Voting",
+    "subtitle": "Sidang & Pemungutan Suara Digital",
+    "points": [
+      {
+        "label": "Secure E-Voting & Quorum Check",
+        "detail": "Sistem voting instan yang terenkripsi untuk pengesahan keputusan, pemilihan ketua, atau mosi tidak percaya, lengkap dengan grafik hasil voting secara langsung (live analytics)."
+      },
+      {
+        "label": "Notulensi Pintar (AI-Assisted Minutes)",
+        "detail": "Transkripsi otomatis dari rekaman suara sidang yang langsung merangkum poin keputusan dan tugas tindak lanjut (action items)."
+      }
+    ],
+    "flow": []
+  },
+  {
+    "id": 3,
+    "code": "03",
+    "slug": "senate-knowledge-hub",
+    "title": "Senate Knowledge Hub",
+    "subtitle": "Pusat Dokumen & Transparansi Hukum",
+    "points": [
+      {
+        "label": "Repositori Peraturan Pintar (Smart Search)",
+        "detail": "Arsip seluruh Ketetapan, SK, atau AD/ART dilengkapi mesin pencari berbasis kata kunci dan tag yang cepat."
+      },
+      {
+        "label": "Visualisasi Regulasi (Infografis Kebijakan)",
+        "detail": "Setiap aturan baru otomatis didampingi ringkasan visual atau infografis ramah Gen Z agar mudah dipahami konstituen."
+      }
+    ],
+    "flow": []
+  },
+  {
+    "id": 4,
+    "code": "04",
+    "slug": "legislator-performance-dashboard",
+    "title": "Legislator Performance & Transparency Dashboard",
+    "subtitle": "Akuntabilitas Anggota Senat",
+    "points": [
+      {
+        "label": "Profil Individu Anggota Senat",
+        "detail": "Halaman profil setiap anggota senat yang menampilkan rekam jejak kehadiran sidang, riwayat legislasi yang diusulkan, serta laporan pertanggungjawaban berkala."
+      },
+      {
+        "label": "Transparansi Anggaran",
+        "detail": "Menampilkan alokasi dana dan penggunaan anggaran lembaga senat secara terbuka kepada publik (open-budget)."
+      }
+    ],
+    "flow": []
+  },
+  {
+    "id": 5,
+    "code": "05",
+    "slug": "omnichannel-notification-ai-assistant",
+    "title": "Omnichannel Notification & AI Assistant",
+    "subtitle": "Kanal Informasi & Asisten Virtual",
+    "points": [
+      {
+        "label": "Push Notifikasi & Bot Integrasi",
+        "detail": "Terhubung langsung dengan WhatsApp, Telegram, atau aplikasi kampus untuk mengingatkan jadwal sidang, batas waktu aspirasi, atau pengumuman penting."
+      },
+      {
+        "label": "Tanya Jawab Pintar (FAQ Chatbot)",
+        "detail": "Asisten virtual yang siap menjawab pertanyaan seputar SOP pengajuan surat, jadwal sidang, atau isi peraturan yang berlaku selama 24/7."
+      }
+    ],
+    "flow": []
+  }
+]

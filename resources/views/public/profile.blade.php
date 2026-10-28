@@ -95,27 +95,36 @@
                             <span class="w-2.5 h-2.5 rounded-full bg-polines-orange"></span>
                             <h3 class="text-sm font-bold uppercase tracking-wider">Tingkat I &bull; Pimpinan Kolektif Senat</h3>
                         </div>
-                        <span class="text-xs font-mono text-blue-200 bg-white/10 px-3 py-1 rounded-md">Periode Jabatan 2024–2028</span>
+                        <span class="text-xs font-mono text-blue-200 bg-white/10 px-3 py-1 rounded-md">Periode Jabatan 2026–2029</span>
                     </div>
 
                     <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-100">
                         <div class="pt-4 md:pt-0 md:pr-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ketua Senat</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Prof. Ir. Supriyadi, M.T.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 196803121993031002</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">
+                                {{ $ketua['enrollment']['user']['nama'] ?? 'Dr. Sukamto, S.Kom., M.T.' }}
+                            </h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">
+                                NIP. {{ $ketua['enrollment']['user']['nim_nip'] ?? '197101172003121001' }}
+                            </p>
                             <p class="text-xs text-slate-600 mt-3 leading-relaxed">Penanggung jawab utama persidangan pleno dan representasi Senat ke Direktur &amp; Kemendiktisaintek.</p>
                         </div>
                         <div class="pt-4 md:pt-0 md:px-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sekretaris Senat</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Dr. Eng. Agus Subagio, S.T., M.T.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">NIP. 197405191999031001</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">
+                                {{ $sekretaris['enrollment']['user']['nama'] ?? 'Andi Setiawan, S.E., M.M.' }}
+                            </h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">
+                                NIP. {{ $sekretaris['enrollment']['user']['nim_nip'] ?? '197607202008011011' }}
+                            </p>
                             <p class="text-xs text-slate-600 mt-3 leading-relaxed">Pengelola persidangan, verifikasi risalah keputusan sidang pleno, dan pengelolaan arsip normatif.</p>
                         </div>
                         <div class="pt-4 md:pt-0 md:pl-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Badan Pekerja Harian (BPH)</span>
-                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Sekretariat Eksekutif Senat</h4>
-                            <p class="text-xs text-slate-500 mt-0.5">Gedung Direktorat Lantai 2</p>
-                            <p class="text-xs text-slate-600 mt-3 leading-relaxed">Penyusun rancangan agenda persidangan berkala, koordinasi antar-komisi, dan penyiapan berkas sidang.</p>
+                            <h4 class="text-base font-extrabold text-slate-900 mt-1">Andi Setiawan, S.E., M.M.</h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">Ketua BPH</p>
+                            <h4 class="text-sm font-bold text-slate-800 mt-2">Vinda Setya Kartika, S.T., M.T.</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Penyusun rancangan agenda persidangan berkala, koordinasi antar-komisi, dan penyiapan berkas sidang.</p>
                         </div>
                     </div>
                 </div>
@@ -131,19 +140,22 @@
                     </div>
                 </div>
 
-                {{-- Tingkat 2: Grid Komisi Tetap Fungsional (Dinamis dari API) --}}
+                {{-- Tingkat 2: Grid Komisi Tetap Fungsional (Dinamis dari API / Mock) --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     @forelse ($committees as $committee)
                         <div class="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs hover:border-polines-blue transition-all">
                             <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                                 <span class="text-xs font-mono font-extrabold text-polines-navy bg-blue-50 px-2 py-0.5 rounded">{{ strtoupper($committee['code'] ?? '') }}</span>
-                                <span class="text-xs text-slate-400 tabular-nums">{{ $committee['members_count'] ?? 0 }} Anggota</span>
+                                <span class="text-xs text-slate-400 tabular-nums">{{ $committee['members_count'] ?? count($committee['members'] ?? []) }} Anggota</span>
                             </div>
                             <h4 class="text-sm font-bold text-slate-900 leading-snug">{{ $committee['name'] ?? '-' }}</h4>
                             <p class="text-xs text-slate-500 font-medium mt-1">Ketua: {{ $committee['lead'] ?? '-' }}</p>
+                            @if (!empty($committee['secretary']))
+                                <p class="text-xs text-slate-500 font-medium">Sekretaris: {{ $committee['secretary'] }}</p>
+                            @endif
                             <div class="mt-3 pt-3 border-t border-slate-100">
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fokus Pengawasan:</span>
-                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $committee['tupoksi'] ?? '-' }}</p>
+                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $committee['focus'] ?? $committee['tupoksi'] ?? '-' }}</p>
                             </div>
                         </div>
                     @empty
@@ -152,7 +164,6 @@
                         </div>
                     @endforelse
                 </div>
-
             </div>
         </div>
     </section>
@@ -184,12 +195,20 @@
                     </div>
 
                     <div class="bg-slate-50/80 rounded-xl p-4 mb-5 border border-slate-100">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ketua Komisi:</span>
-                            <span class="text-xs font-bold text-slate-800">{{ $committee['lead'] ?? 'Belum ditentukan' }}</span>
+                        <div class="flex flex-wrap gap-x-6 gap-y-1 mb-1.5">
+                            <p class="text-xs font-medium text-slate-600">
+                                <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Ketua Komisi:</span>
+                                <span class="font-bold text-slate-800 ml-1">{{ $committee['lead'] ?? 'Belum ditentukan' }}</span>
+                            </p>
+                            @if (!empty($committee['secretary']))
+                                <p class="text-xs font-medium text-slate-600">
+                                    <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Sekretaris Komisi:</span>
+                                    <span class="font-bold text-slate-800 ml-1">{{ $committee['secretary'] }}</span>
+                                </p>
+                            @endif
                         </div>
                         <p class="text-xs text-slate-600 leading-relaxed">
-                            <span class="font-semibold text-slate-500">Tupoksi:</span> {{ $committee['tupoksi'] ?? '-' }}
+                            <span class="font-semibold text-slate-500">Tupoksi:</span> {{ $committee['tupoksi'] ?? $committee['focus'] ?? '-' }}
                         </p>
                     </div>
 
@@ -201,35 +220,40 @@
                         </h4>
 
                         @if (!empty($committee['members']) && count($committee['members']) > 0)
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                @foreach ($committee['members'] as $member)
-                                    <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200/70 bg-white hover:border-polines-blue/40 hover:shadow-xs transition-all">
-                                        {{-- Avatar / Inisial --}}
-                                        <div class="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 text-polines-navy font-bold text-xs flex items-center justify-center shrink-0">
-                                            @if (!empty($member['foto_profil']))
-                                                <img src="{{ $member['foto_profil'] }}" alt="{{ $member['nama'] ?? 'Anggota' }}" class="w-full h-full rounded-full object-cover">
-                                            @else
-                                                {{ strtoupper(substr($member['nama'] ?? 'A', 0, 1)) }}
-                                            @endif
-                                        </div>
-
-                                        {{-- Info Anggota --}}
-                                        <div class="min-w-0 flex-1">
-                                            <p class="text-xs font-bold text-slate-800 truncate" title="{{ $member['nama'] ?? '-' }}">
-                                                {{ $member['nama'] ?? '-' }}
-                                            </p>
-                                            <div class="flex items-center gap-2 mt-0.5">
-                                                <span class="text-[10px] font-mono text-slate-400">
-                                                    {{ $member['nim_nip'] ?? '-' }}
-                                                </span>
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold {{ strtolower($member['jabatan'] ?? '') === 'ketua' ? 'bg-amber-100 text-amber-800' : (strtolower($member['jabatan'] ?? '') === 'sekretaris' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600') }}">
-                                                    {{ $member['jabatan'] ?? 'Anggota' }}
-                                                </span>
+                            @if (is_array($committee['members'][0] ?? null))
+                                {{-- Format objek dari Backend API (nama, nim_nip, jabatan, foto_profil) --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    @foreach ($committee['members'] as $member)
+                                        <div class="flex items-center gap-3 p-3 rounded-xl border border-slate-200/70 bg-white hover:border-polines-blue/40 hover:shadow-xs transition-all">
+                                            <div class="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 text-polines-navy font-bold text-xs flex items-center justify-center shrink-0">
+                                                @if (!empty($member['foto_profil']))
+                                                    <img src="{{ $member['foto_profil'] }}" alt="{{ $member['nama'] ?? 'Anggota' }}" class="w-full h-full rounded-full object-cover">
+                                                @else
+                                                    {{ strtoupper(substr($member['nama'] ?? 'A', 0, 1)) }}
+                                                @endif
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-xs font-bold text-slate-800 truncate" title="{{ $member['nama'] ?? '-' }}">
+                                                    {{ $member['nama'] ?? '-' }}
+                                                </p>
+                                                <div class="flex items-center gap-2 mt-0.5">
+                                                    <span class="text-[10px] font-mono text-slate-400">
+                                                        {{ $member['nim_nip'] ?? '-' }}
+                                                    </span>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold {{ strtolower($member['jabatan'] ?? '') === 'ketua' ? 'bg-amber-100 text-amber-800' : (strtolower($member['jabatan'] ?? '') === 'sekretaris' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600') }}">
+                                                        {{ $member['jabatan'] ?? 'Anggota' }}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                {{-- Format string daftar nama dari Mock JSON --}}
+                                <div class="mt-2 pt-2 border-t border-slate-100">
+                                    <p class="text-xs text-slate-600 leading-relaxed">{!! implode(' &nbsp;&bull;&nbsp; ', array_map(fn($m) => '<span class="font-medium text-slate-700">' . e($m) . '</span>', $committee['members'])) !!}</p>
+                                </div>
+                            @endif
                         @else
                             <p class="text-xs text-slate-400 italic">Belum ada daftar anggota yang terdaftar untuk komisi ini.</p>
                         @endif

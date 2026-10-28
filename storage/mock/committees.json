@@ -2,41 +2,81 @@
   {
     "id": 1,
     "code": "KOM-I",
-    "name": "Komisi I — Bidang Pendidikan & Pengajaran",
-    "lead": "Prof. Dr. Ir. Budi Rahardjo, M.T.",
-    "tupoksi": "Merumuskan norma kebijakan kurikulum vokasi, evaluasi pelaksanaan proses belajar mengajar, serta pengawasan mutu akademik antarjurusan.",
-    "members_count": 8
+    "name": "Komisi Pendidikan dan Pengajaran",
+    "lead": "Tri Yudantoro, S.Kom., M.Kom.",
+    "secretary": "Anis Roihatin, S.T., M.T.",
+    "members_count": 7,
+    "members": [
+      "Prof. Dr. Ir. Dwiana Hendrawati, S.T., M.T.",
+      "Yusmar Ardhi Hidayat, S.E., M.Si., Ph.D.",
+      "Resi Yudaningsih, S.E., M.Si., Akt.",
+      "Dr. Bagus Yunianto W., S.E., S.Kom., M.M.",
+      "Nanang Adie Setyawan, S.E., M.M."
+    ],
+    "focus": "Kebijakan & norma akademik, penjaminan mutu pembelajaran, kebebasan akademik, pembukaan prodi, serta gelar dan penghargaan akademik.",
+    "tupoksi": "Merumuskan kebijakan serta norma akademik dalam penyelenggaraan pendidikan dan pembelajaran; melakukan pengawasan terhadap penerapan kebijakan akademik dan pelaksanaan penjaminan mutu pendidikan; memberikan pertimbangan dan rekomendasi dalam penyelenggaraan pendidikan dan proses pembelajaran; memberikan pertimbangan pelaksanaan kebebasan akademik, kebebasan mimbar akademik, dan otonomi keilmuan; memberikan pertimbangan kepada Direktur dalam pembukaan dan penutupan jurusan serta program studi; serta memberikan pertimbangan atas pemberian dan/atau pencabutan gelar dan penghargaan akademik."
   },
   {
     "id": 2,
     "code": "KOM-II",
-    "name": "Komisi II — Bidang Penelitian & Pengabdian Masyarakat",
-    "lead": "Dr. Eng. Tri Handayani, S.T., M.Kom.",
-    "tupoksi": "Memberikan pertimbangan arah riset hilirisasi vokasi, paten teknologi terapan, dan pengabdian masyarakat berbasis kemitraan industri.",
-    "members_count": 7
+    "name": "Komisi Penelitian dan Pengabdian kepada Masyarakat",
+    "lead": "Dr. Jumi, S.Kom., M.Kom.",
+    "secretary": "Fajar Surya Herlambang, S.T., M.T.",
+    "members_count": 6,
+    "members": [
+      "Yusnan Badruzzaman, S.T., M.Eng.",
+      "Mohammad Hasanudin, S.E., M.Si.",
+      "Vinda Setya Kartika, S.T., M.T.",
+      "Ir. Teguh Mulyo Wicaksono, S.Pd., M.Eng."
+    ],
+    "focus": "Tata cara penyelenggaraan penelitian, pelaksanaan pengabdian kepada masyarakat, dan pengawasannya.",
+    "tupoksi": "Memberikan pertimbangan dalam penyusunan ketentuan mengenai tata cara penyelenggaraan penelitian; memberikan pertimbangan dalam penyusunan ketentuan mengenai tata cara pelaksanaan pengabdian kepada masyarakat; dan melakukan pengawasan terhadap penyelenggaraan penelitian dan pengabdian kepada masyarakat."
   },
   {
     "id": 3,
     "code": "KOM-III",
-    "name": "Komisi III — Bidang Kelembagaan & Sumber Daya",
-    "lead": "Drs. Joko Prasetyo, M.M., Ak.",
-    "tupoksi": "Pengawasan kelayakan pembukaan program studi sarjana terapan baru, efisiensi pemanfaatan fasilitas lab, dan formasi pendidik.",
-    "members_count": 6
+    "name": "Komisi Kelembagaan dan Sumber Daya Manusia",
+    "lead": "Ir. Riles Melvy Wattimena, M.T., IPP.",
+    "secretary": "Iwan Budiyono, S.E., M.Si.Ak",
+    "members_count": 6,
+    "members": [
+      "Sahid, S.T., M.T.",
+      "Dedi Budi Setyawan, S.T., M.T.",
+      "Dr. Muhammad Anif, S.T., M.Eng.",
+      "Septian Yudha Kusuma, S.E., M.Si.Ak"
+    ],
+    "focus": "Pengembangan organisasi jurusan/prodi, karier dosen & tenaga kependidikan, kode etik sivitas akademika, dan kenaikan jabatan akademik.",
+    "tupoksi": "Memberikan pertimbangan dalam penyusunan kebijakan pengembangan organisasi pada tingkat jurusan dan program studi; pengembangan sumber daya manusia yang mencakup penjaminan mutu serta pengembangan karier dosen dan tenaga kependidikan; norma dan kode etik sivitas akademika; kebijakan penilaian prestasi akademik, karier, dan pengembangan dosen; kualifikasi dan persyaratan dosen untuk jabatan tugas tambahan serta tenaga kependidikan yang beralih tugas menjadi dosen; kebijakan dosen tidak tetap dan dosen praktisi/industri; pedoman kenaikan jabatan akademik; kode etik dan pedoman benturan kepentingan anggota Senat; penilaian dosen berprestasi; serta mengoordinasikan penyusunan rancangan perubahan Organisasi dan Tata Kerja Senat."
   },
   {
     "id": 4,
     "code": "KOM-IV",
-    "name": "Komisi IV — Bidang Kemahasiswaan & Alumni",
-    "lead": "Ir. Hendro Wijaya, M.Sc.",
-    "tupoksi": "Penelaahan regulasi pembinaan minat bakat, etika organisasi kemahasiswaan, dan penguatan jejaring kerja sama ikatan alumni Polines.",
-    "members_count": 8
+    "name": "Komisi Pengembangan dan Kerja Sama",
+    "lead": "Dr. Ir. FX Arif Wahyudianto, S.T., M.T., IPM.",
+    "secretary": "Alvianita Gunawan Putri, S.E., M.Acc., Ak., CA., CPA., ASEAN CPA.",
+    "members_count": 6,
+    "members": [
+      "Prof. Dr. Ir. Kurnianingsih, S.T., M.T.",
+      "Ir. Abdul Syukur Fauzi, S.T., M.T.",
+      "Leily Fatmawati, S.T., M.T.",
+      "Iman Mujiarto, S.T., M.T."
+    ],
+    "focus": "Kerja sama akademik & nonakademik dengan DUDI, perguruan tinggi lain, dan lembaga pelatihan/sertifikasi profesi.",
+    "tupoksi": "Memberikan pertimbangan dan rekomendasi dalam kebijakan perencanaan, pengembangan, dan pelaksanaan kerja sama akademik dan nonakademik dengan pemangku kepentingan dalam negeri maupun luar negeri — termasuk dunia usaha, dunia industri, perguruan tinggi lain, dan lembaga pelatihan/sertifikasi profesi — untuk mendukung pendidikan, penelitian, pengabdian kepada masyarakat, serta pengembangan dosen, tenaga kependidikan, dan mahasiswa; memberikan pertimbangan dan rekomendasi dalam kebijakan penataan, pemantauan, dan penilaian hasil kerja sama berpedoman pada prinsip kerja sama dalam Statuta; dan memastikan setiap kerja sama dituangkan dalam nota kesepahaman dan/atau perjanjian kerja sama sesuai ketentuan peraturan perundang-undangan."
   },
   {
     "id": 5,
     "code": "KOM-V",
-    "name": "Komisi V — Bidang Penegakan Etika & Tata Tertib",
-    "lead": "Dr. Siti Aminah, S.H., M.Hum.",
-    "tupoksi": "Menegakkan kepatuhan kode etik civitas akademika, memeriksa dugaan pelanggaran integritas, dan memberi rekomendasi sanksi senat.",
-    "members_count": 5
+    "name": "Komisi Etik",
+    "lead": "Drs. Suroso, M.Sc.",
+    "secretary": "Achmad Zaenuddin, S.E., M.Si.",
+    "members_count": 5,
+    "members": [
+      "Dr. Garup Lambang Goro, S.T., M.T.",
+      "Andi Setiawan, S.E., M.M.",
+      "Dr. Sukamto, S.Kom., M.T."
+    ],
+    "focus": "Kode etik dosen & mahasiswa, pengawasan norma akademik, dan rekomendasi sanksi kepada Direktur.",
+    "tupoksi": "Memberikan pertimbangan dalam penyusunan ketentuan mengenai kode etik dosen, kode etik mahasiswa, dan etika akademik beserta sanksinya; melakukan pengawasan terhadap pelaksanaan norma akademik dan kode etik sivitas akademika; serta memberikan pertimbangan dan rekomendasi dalam penjatuhan sanksi terhadap pelanggaran norma, etika, dan peraturan akademik oleh sivitas akademika kepada Direktur. Ketentuan mengenai keanggotaan, kepemimpinan, dan tata kerja Komisi Etik diatur dengan Peraturan Senat tersendiri."
   }
 ]

@@ -1,129 +1,292 @@
 @extends('layouts.public')
 
-@section('title', 'Pelacak Status Aspirasi — Senat Akademik Polines')
+@section('title', 'Pelacak Status Aspirasi — Senat Akademik Politeknik Negeri Semarang')
+@section('description', 'Pantau transparansi penanganan aduan dan masukan Anda melalui nomor registrasi tiket resmi Senat Akademik Politeknik Negeri Semarang.')
 
 @section('content')
-<div class="bg-polines-navy text-white py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p class="text-xs font-bold uppercase tracking-[0.2em] text-blue-300 mb-2">Tracking &amp; Verifikasi</p>
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Pelacak Status Aspirasi Akademik</h1>
-        <p class="mt-3 text-base text-blue-100/90 max-w-2xl">
-            Pantau transparansi penanganan aduan dan masukan Anda melalui nomor registrasi tiket resmi.
-        </p>
-    </div>
-</div>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    {{-- Form Input Tiket --}}
-    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm mb-8">
-        <form action="{{ route('public.aspirations.track') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
-            <div class="flex-1">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">Masukkan Kode Tiket Aspirasi</label>
-                <input type="text" name="ticket" value="{{ $ticket ?? '' }}" placeholder="Contoh: ASP-POLINES-2026-0042" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:border-polines-blue focus:ring-1 focus:ring-polines-blue outline-none transition-all font-mono tabular-nums">
-            </div>
-            <div class="sm:self-end">
-                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-polines-navy hover:bg-polines-navyDark text-white px-6 py-2.5 text-sm font-semibold transition-colors">
-                    Cek Progres
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </button>
-            </div>
-        </form>
-    </div>
+    @php
+        // Figma 2020:2 + 2350:1303 — PelacakTiketInline (Ready | Loading | Found | Not found)
+        $asp = $aspiration ?? [
+            'ticket_code' => $ticket ?: 'ASP-POLINES-2026-0042',
+            'sender_category' => 'Mahasiswa',
+            'jurusan' => 'Teknik Elektro (D4 TRK)',
+            'committee_target' => 'Komisi Pendidikan dan Pengajaran',
+            'subject' => 'Usulan Penambahan Jam Praktikum Mandiri di Laboratorium',
+            'description' => 'Data rinci aspirasi belum tersedia pada pratinjau ini.',
+            'status' => 'Sedang Ditelaah',
+            'submitted_at' => '-',
+            'response' => 'Menunggu pembaruan dari Sekretariat Senat.',
+        ];
 
-    @if ($ticket)
-        @if ($aspiration)
-            {{-- Hasil Tracking Ditemukan --}}
-            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-8">
-                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-6">
-                    <div>
-                        <span class="text-xs font-semibold text-slate-400">Nomor Registrasi Tiket</span>
-                        <h2 class="text-2xl font-mono font-extrabold text-polines-navy tabular-nums">{{ $aspiration['ticket_code'] }}</h2>
+        // State awal ditentukan oleh server (rute /aspirasi/track dan /aspirasi/track/{ticket})
+        $initialState = $ticket && $aspiration ? 'found' : ($ticket ? 'notfound' : 'ready');
+
+        // Empat tahap disposisi (timeline status)
+        $timeline = [
+            ['title' => 'Tiket Diterima', 'detail' => 'Sekretariat mencatat aspirasi dan menerbitkan nomor registrasi tiket.'],
+            ['title' => 'Verifikasi', 'detail' => 'Kelengkapan data dan identitas pengirim diperiksa oleh Sekretariat.'],
+            ['title' => 'Telaah Komisi', 'detail' => 'Aspirasi diteruskan ke komisi tujuan untuk telaah substansi.'],
+            ['title' => 'Tindak Lanjut', 'detail' => 'Rekomendasi dan tanggapan resmi disampaikan kepada pengirim.'],
+        ];
+
+        $statusText = $asp['status'] ?? '';
+        $stage = str_contains($statusText, 'Ditindaklanjuti') ? 3
+            : (str_contains($statusText, 'Telaah') || str_contains($statusText, 'Ditelaah') ? 3 : 2);
+        $progress = (int) round($stage / 4 * 100);
+
+        $statusOk = str_contains($statusText, 'Ditindaklanjuti');
+        $badgeClass = $statusOk
+            ? 'border-[#86efac] bg-[#f0fdf4] text-[#166534]'
+            : 'border-[#fcd34d] bg-[#fffbeb] text-[#92400e]';
+        $badgeDot = $statusOk ? 'bg-[#16a34a]' : 'bg-[#f59e0b]';
+
+        $steps = [
+            ['no' => '01', 'title' => 'Kirim aspirasi melalui formulir Kanal Aspirasi.', 'detail' => 'Status diperbarui oleh Sekretariat Senat sesuai proses musyawarah.'],
+            ['no' => '02', 'title' => 'Simpan nomor registrasi tiket yang muncul setelah pengiriman.', 'detail' => 'Nomor registrasi menjadi kunci pelacakan tahapan disposisi.'],
+            ['no' => '03', 'title' => 'Masukkan kode tiket untuk melihat tahapan disposisi dan tindak lanjut.', 'detail' => 'Pembaruan status tercatat pada riwayat penanganan komisi.'],
+        ];
+    @endphp
+
+    {{-- ============ HERO — Figma 2020:16 ============ --}}
+    <section class="bg-senat-hero">
+        <div class="senat-shell py-12 lg:py-[56px]">
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-sky">
+                Tracking &amp; Verifikasi
+            </p>
+            <h1 class="mt-5 max-w-[820px] text-[30px] font-bold leading-[1.1] text-white sm:text-[39px]">
+                Pelacak Status Aspirasi Akademik
+            </h1>
+            <p class="mt-4 max-w-[760px] text-[14px] leading-[1.4] text-[#d1e3ff]">
+                Pantau transparansi penanganan aduan dan masukan Anda melalui nomor registrasi tiket resmi.
+            </p>
+        </div>
+    </section>
+
+    {{-- ============ SEARCH CARD / PELACAK TIKET — Figma 2020:20 + 2350:1303 ============ --}}
+    <section class="senat-shell pt-14">
+        <div class="mx-auto max-w-[1008px]">
+            <div class="rounded-2xl border border-[#d9e3f0] bg-white p-6 shadow-[0px_3px_8px_0px_rgba(13,26,41,0.04)] sm:p-8"
+                 x-data="{
+                     state: @js($initialState),
+                     query: @js($ticket ?? ''),
+                     submit() {
+                         if (! this.query.trim()) { this.state = 'ready'; return; }
+                         this.state = 'loading';
+                         window.setTimeout(() => this.$refs.form.submit(), 650);
+                     }
+                 }">
+
+                <form x-ref="form" action="{{ route('public.aspirations.track') }}" method="GET"
+                      @submit.prevent="submit">
+                    <label for="ticket-input" class="block text-[10px] font-bold uppercase tracking-[0.08em] text-senat-body">
+                        Masukkan kode tiket aspirasi
+                    </label>
+
+                    <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+                        <input id="ticket-input" name="ticket" type="text" x-model="query"
+                               autocomplete="off" spellcheck="false"
+                               placeholder="Contoh: ASP-POLINES-2026-0042"
+                               class="h-[46px] flex-1 rounded-lg border border-[#9fb3c8] bg-white px-3.5 font-mono text-[12px] text-senat-ink placeholder:font-sans placeholder:text-[#667085] focus:border-[#155ead] focus:outline-none focus:ring-1 focus:ring-[#155ead]">
+
+                        <button type="submit"
+                                :class="state === 'found'
+                                    ? 'bg-white border border-[#9fb3c8] text-[#155ead]'
+                                    : 'bg-[#155ead] text-white hover:bg-[#124e91]'"
+                                class="inline-flex h-[38px] w-full items-center justify-center rounded-lg text-[12px] font-semibold transition-colors duration-150 sm:w-[232px] sm:shrink-0 sm:self-center">
+                            <span x-text="state === 'notfound' ? 'Cek lagi'
+                                        : (state === 'found' ? 'Periksa ulang'
+                                        : (state === 'loading' ? 'Memeriksa…' : 'Cek Progres'))"></span>
+                        </button>
                     </div>
-                    <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold {{ $aspiration['status'] === 'Ditindaklanjuti Komisi' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
-                        <span class="w-2 h-2 rounded-full {{ $aspiration['status'] === 'Ditindaklanjuti Komisi' ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
-                        {{ $aspiration['status'] }}
-                    </span>
-                </div>
+                </form>
 
-                {{-- Visual Progress Stepper --}}
-                <div class="py-2">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6">Tahapan Disposisi &amp; Musyawarah</p>
-                    <div class="relative flex flex-col md:flex-row justify-between gap-6">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">✓</div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">Tiket Diterima</p>
-                                <p class="text-[11px] text-slate-400 tabular-nums">14 Sep 2026</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">✓</div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">Disposisi Komisi</p>
-                                <p class="text-[11px] text-slate-400">Komisi I Senat</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full {{ $aspiration['status'] === 'Ditindaklanjuti Komisi' ? 'bg-emerald-500 text-white' : 'bg-polines-navy text-white animate-pulse' }} flex items-center justify-center font-bold text-xs shrink-0">
-                                {{ $aspiration['status'] === 'Ditindaklanjuti Komisi' ? '✓' : '3' }}
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">Rapat Pleno / Komisi</p>
-                                <p class="text-[11px] text-slate-400">Penelaahan naskah</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full {{ $aspiration['status'] === 'Ditindaklanjuti Komisi' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center font-bold text-xs shrink-0">
-                                {{ $aspiration['status'] === 'Ditindaklanjuti Komisi' ? '✓' : '4' }}
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">Rekomendasi / SK</p>
-                                <p class="text-[11px] text-slate-400">Penyampaian ke Direktur</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Detail Aspirasi & Tanggapan Resmi --}}
-                <div class="space-y-6 pt-4 border-t border-slate-100">
-                    <div>
-                        <span class="text-xs font-semibold text-slate-400">Pokok Bahasan</span>
-                        <h3 class="text-lg font-bold text-slate-900 mt-1">{{ $aspiration['subject'] }}</h3>
-                        <p class="text-sm text-slate-600 mt-2 leading-relaxed">{{ $aspiration['description'] }}</p>
-                    </div>
-
-                    <div class="rounded-xl border border-blue-200/80 bg-blue-50/50 p-5">
-                        <div class="flex items-center gap-2 mb-2">
-                            <svg class="w-5 h-5 text-polines-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-polines-navy">Tanggapan &amp; Rekomendasi Resmi Senat</h4>
-                        </div>
-                        <p class="text-sm text-slate-700 leading-relaxed">{{ $aspiration['response'] }}</p>
-                    </div>
-                </div>
-            </div>
-        @else
-            {{-- Tiket Tidak Ditemukan --}}
-            <div class="bg-white rounded-2xl border border-rose-200/80 p-8 text-center shadow-sm">
-                <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-bold text-slate-900">Tiket Tidak Ditemukan</h3>
-                <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-                    Nomor tiket <span class="font-mono font-bold text-slate-800">{{ $ticket }}</span> tidak terdaftar dalam pangkalan data aspirasi Senat Akademik.
+                {{-- Petunjuk (Ready | Loading) --}}
+                <p x-show="state === 'ready'"
+                   class="mt-4 text-[11px] font-normal text-[#667085]">
+                    Masukkan nomor registrasi untuk melihat tahapan disposisi dan tindak lanjut.
                 </p>
-                <div class="mt-6">
-                    <a href="{{ route('public.aspirations') }}" class="text-sm font-semibold text-polines-blue hover:underline">
-                        ← Kembali ke formulir aspirasi
-                    </a>
+                <p x-show="state === 'loading'" x-cloak
+                   class="mt-4 text-[12px] font-medium text-[#155ead]">
+                    ◌&nbsp; Memeriksa nomor registrasi dan pembaruan terakhir…
+                </p>
+
+                {{-- STATE: TIKET DITEMUKAN — Figma 2350:1289 + data $aspiration --}}
+                <div x-show="state === 'found'" x-cloak class="mt-8">
+                    <div class="mx-auto max-w-[767px] rounded-xl border border-[#d9e2ef] bg-white p-5">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#116a3c]">Tiket Ditemukan</p>
+                        <p class="mt-1 font-mono text-[18px] font-bold tracking-wide text-[#13233a] tabular-nums">
+                            {{ $asp['ticket_code'] }}
+                        </p>
+                        <p class="mt-1 text-[13px] font-semibold text-[#155ead]">
+                            Tahap saat ini: {{ $timeline[$stage - 1]['title'] }}
+                        </p>
+                        <p class="mt-2 max-w-[650px] text-[12px] leading-relaxed text-[#4b5565]">
+                            Aspirasi telah diverifikasi Sekretariat dan diteruskan untuk telaah substansi oleh komisi tujuan.
+                        </p>
+                        <p class="mt-3 text-[11px] text-[#667085]">
+                            Pembaruan terakhir: {{ $asp['submitted_at'] }}{{ $asp['submitted_at'] !== '-' ? ' WIB' : '' }}
+                        </p>
+                        <div class="mt-3 h-[5px] w-full max-w-[620px] overflow-hidden rounded-[3px] bg-[#eaf3fe]">
+                            <div class="h-full rounded-[3px] bg-[#155ead]" style="width: {{ $progress }}%"></div>
+                        </div>
+                    </div>
+
+                    {{-- Detail aspirasi lengkap + timeline status --}}
+                    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        <div class="rounded-xl border border-[#d9e2ef] bg-white p-6 lg:col-span-2">
+                            <h3 class="text-[13px] font-bold uppercase tracking-[0.06em] text-senat-ink">
+                                Rincian Aspirasi
+                            </h3>
+
+                            <dl class="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+                                <div>
+                                    <dt class="text-[10px] font-semibold uppercase tracking-[0.06em] text-senat-muted">Kategori Pengirim</dt>
+                                    <dd class="mt-1 text-[12px] font-medium text-senat-ink">{{ $asp['sender_category'] }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[10px] font-semibold uppercase tracking-[0.06em] text-senat-muted">Unit/Program Studi</dt>
+                                    <dd class="mt-1 text-[12px] font-medium text-senat-ink">{{ $asp['jurusan'] }}</dd>
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <dt class="text-[10px] font-semibold uppercase tracking-[0.06em] text-senat-muted">Komisi Tujuan</dt>
+                                    <dd class="mt-1 text-[12px] font-medium text-senat-ink">{{ $asp['committee_target'] }}</dd>
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <dt class="text-[10px] font-semibold uppercase tracking-[0.06em] text-senat-muted">Judul Aspirasi</dt>
+                                    <dd class="mt-1 text-[13px] font-bold leading-snug text-senat-ink">{{ $asp['subject'] }}</dd>
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <dt class="text-[10px] font-semibold uppercase tracking-[0.06em] text-senat-muted">Uraian</dt>
+                                    <dd class="mt-1 text-[12px] leading-relaxed text-senat-body">{{ $asp['description'] }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[10px] font-semibold uppercase tracking-[0.06em] text-senat-muted">Status</dt>
+                                    <dd class="mt-1.5">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em] {{ $badgeClass }}">
+                                            <span class="h-1.5 w-1.5 rounded-full {{ $badgeDot }}" aria-hidden="true"></span>
+                                            {{ $asp['status'] }}
+                                        </span>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-[10px] font-semibold uppercase tracking-[0.06em] text-senat-muted">Waktu Pengajuan</dt>
+                                    <dd class="mt-1 text-[12px] font-medium text-senat-ink tabular-nums">{{ $asp['submitted_at'] }}</dd>
+                                </div>
+                            </dl>
+
+                            <div class="mt-6 rounded-xl border border-[#a6c4e5] bg-senat-badgeBg p-5">
+                                <h4 class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-primary">
+                                    Tanggapan &amp; Rekomendasi Resmi Senat
+                                </h4>
+                                <p class="mt-2 text-[12px] leading-relaxed text-senat-body">{{ $asp['response'] }}</p>
+                            </div>
+                        </div>
+
+                        {{-- Timeline status --}}
+                        <div class="rounded-xl border border-[#d9e2ef] bg-white p-6">
+                            <h3 class="text-[13px] font-bold uppercase tracking-[0.06em] text-senat-ink">
+                                Timeline Status
+                            </h3>
+                            <ol class="mt-5 space-y-5">
+                                @foreach ($timeline as $i => $item)
+                                    @php
+                                        $n = $i + 1;
+                                        $isDone = $n < $stage;
+                                        $isCurrent = $n === $stage;
+                                        $dot = $isDone
+                                            ? 'bg-[#116a3c] text-white'
+                                            : ($isCurrent ? 'bg-[#155ead] text-white' : 'border border-senat-line bg-senat-surface text-senat-muted');
+                                    @endphp
+                                    <li class="flex gap-3">
+                                        <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold {{ $dot }}">
+                                            {{ $isDone ? '✓' : $n }}
+                                        </span>
+                                        <div class="min-w-0">
+                                            <p class="text-[12px] font-bold {{ $isCurrent ? 'text-[#155ead]' : 'text-senat-ink' }}">
+                                                {{ $item['title'] }}
+                                            </p>
+                                            <p class="mt-0.5 text-[11px] leading-snug text-senat-body">{{ $item['detail'] }}</p>
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- STATE: TIKET TIDAK DITEMUKAN — Figma 2350:1299 --}}
+                <div x-show="state === 'notfound'" x-cloak
+                     class="mt-8 rounded-[10px] border border-[#f7c8c3] bg-[#fff7f6] p-4">
+                    <div class="flex gap-3">
+                        <span class="text-[14px] font-bold leading-none text-[#b4233b]" aria-hidden="true"><x-senat.icon name="warning" class="h-[18px] w-[18px]" /></span>
+                        <div>
+                            <p class="text-[13px] font-semibold text-[#13233a]">Kode tiket tidak ditemukan</p>
+                            <p class="mt-1 text-[11px] leading-relaxed text-[#4b5565]">
+                                Periksa kembali format nomor registrasi atau kirim aspirasi melalui kanal resmi.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Pratinjau 4 state (simulasi Alpine) — Figma 2350:1303 --}}
+                <div class="mt-8 flex flex-wrap items-center gap-2 border-t border-senat-line pt-5">
+                    <span class="mr-1 text-[10px] font-bold uppercase tracking-[0.08em] text-senat-muted">Pratinjau status</span>
+                    @foreach ([['ready', 'Form siap'], ['loading', 'Loading'], ['found', 'Ditemukan'], ['notfound', 'Tidak ditemukan']] as [$key, $label])
+                        <button type="button" @click="state = '{{ $key }}'"
+                                :class="state === '{{ $key }}' ? 'bg-senat-primary text-white' : 'border border-senat-border bg-white text-senat-body hover:border-senat-primary'"
+                                class="inline-flex h-8 items-center rounded-lg px-3 text-[11px] font-semibold transition-colors">
+                            {{ $label }}
+                        </button>
+                    @endforeach
                 </div>
             </div>
-        @endif
-    @endif
-</div>
+        </div>
+    </section>
+
+    {{-- ============ CARA MELACAK ASPIRASI — Figma 2020:26 ============ --}}
+    <section class="senat-shell pt-16">
+        <div class="mx-auto max-w-[1008px]">
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-orange">
+                Cara Melacak Aspirasi
+            </p>
+            <h2 class="mt-4 max-w-[760px] text-[22px] font-bold leading-[1.15] text-senat-ink sm:text-[26px]">
+                Masukkan kode yang diterima setelah aspirasi dikirim
+            </h2>
+
+            <ol class="mt-8 space-y-6">
+                @foreach ($steps as $step)
+                    <li class="flex gap-4">
+                        <span class="mt-0.5 inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-senat-hero text-[12px] font-bold text-white tabular-nums">
+                            {{ $step['no'] }}
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-[14px] font-bold leading-[1.2] text-senat-ink">{{ $step['title'] }}</p>
+                            <p class="mt-1 text-[11px] leading-[1.2] text-senat-body">{{ $step['detail'] }}</p>
+                        </div>
+                    </li>
+                @endforeach
+            </ol>
+        </div>
+    </section>
+
+    {{-- ============ HELP CARD — Figma 2020:40 ============ --}}
+    <section class="senat-shell py-16">
+        <div class="mx-auto max-w-[1008px] rounded-[15px] border border-[#adc9e5] bg-senat-badgeBg p-6 sm:p-8">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div class="max-w-[700px]">
+                    <h3 class="text-[16px] font-bold leading-[1.1] text-[#003c75]">Belum memiliki nomor tiket?</h3>
+                    <p class="mt-3 text-[12px] leading-[1.4] text-senat-body">
+                        Sampaikan aspirasi Anda melalui kanal resmi. Nomor registrasi otomatis dikirim setelah formulir berhasil diproses.
+                    </p>
+                </div>
+                <a href="{{ route('public.aspirations') }}"
+                   class="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-[#a6c4e5] bg-white px-5 text-[11px] font-bold text-senat-link transition-colors duration-150 hover:border-senat-link lg:w-[244px] lg:shrink-0">
+                    Buka Kanal Aspirasi
+                    <span aria-hidden="true">›</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
 @endsection

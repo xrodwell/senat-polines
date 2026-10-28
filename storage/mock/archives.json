@@ -1,18 +1,34 @@
 [
   {
     "id": 1,
-    "title": "Laporan Pertanggungjawaban (LPJ) Kinerja Tahunan Senat Akademik Polines Tahun Sidang 2025/2026",
+    "title": "Draft OTK Senat 2026 — Final (Fix)",
     "year": 2026,
-    "category": "Laporan Tahunan",
-    "file_size": "8.5 MB",
+    "category": "Dokumen Organisasi",
+    "file_size": "1.1 MB",
     "download_url": "#"
   },
   {
     "id": 2,
-    "title": "Risalah Lengkap Musyawarah Tahunan Penetapan Rencana Strategis (Renstra) Polines 2025–2029",
-    "year": 2025,
-    "category": "Risalah Sidang",
-    "file_size": "5.2 MB",
+    "title": "Struktur Organisasi Senat Politeknik Negeri Semarang Periode 2026–2029",
+    "year": 2026,
+    "category": "Struktur Organisasi",
+    "file_size": "48 KB",
+    "download_url": "#"
+  },
+  {
+    "id": 3,
+    "title": "Notulen Rapat Pleno Khusus Senat — Peraturan Direktur tentang Penyelenggaraan Pendidikan Polines 2026",
+    "year": 2026,
+    "category": "Notulen Sidang",
+    "file_size": "620 KB",
+    "download_url": "#"
+  },
+  {
+    "id": 4,
+    "title": "Daftar Fitur Unggulan SENAT (Acuan Pengembangan Produk)",
+    "year": 2026,
+    "category": "Dokumen Produk",
+    "file_size": "32 KB",
     "download_url": "#"
   }
 ]
