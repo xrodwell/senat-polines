@@ -166,6 +166,9 @@ class AdminPreview extends Component
         'kuorum' => '28 / 34 anggota',
     ];
 
+    // Riwayat seluruh sesi E-Voting Persidangan
+    public array $votingHistory = [];
+
     // Form Modal Gelar Voting Baru
     public bool $showNewVotingModal = false;
     public string $newVotingTitle = '';
@@ -1111,78 +1114,179 @@ class AdminPreview extends Component
                 $items = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
 
                 if (is_array($items) && !empty($items)) {
+                    $this->votingHistory = $this->normalizeVotingHistory($items);
+
                     $active = null;
-                    foreach ($items as $item) {
-                        if (is_array($item) && in_array(strtolower($item['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
+                    foreach ($this->votingHistory as $item) {
+                        if (in_array($item['status'], ['dibuka', 'aktif', 'active', 'open'], true)) {
                             $active = $item;
                             break;
                         }
                     }
 
-                    $v = $active ?? $items[0];
-                    if (is_array($v)) {
-                        $this->votingId = $v['id_voting'] ?? $v['id'] ?? $this->votingId;
-                        $this->votingTitle = $v['judul_voting'] ?? $v['judul'] ?? $this->votingTitle;
-                        $this->votingStatus = strtolower($v['status'] ?? $this->votingStatus);
-                        if (!empty($v['rapat']['kode'])) {
-                            $this->votingMeetingCode = $v['rapat']['kode'];
-                        }
-                        if (!empty($v['waktu_mulai'])) {
-                            $this->votingDate = date('d M Y', strtotime($v['waktu_mulai']));
-                        }
-
-                        $totalSuara = (int) ($v['total_suara'] ?? 0);
-                        $rekapList = $v['hasil_rekap'] ?? null;
-
-                        if (!empty($rekapList) && is_array($rekapList)) {
-                            $newStats = [
-                                'total_suara' => $totalSuara,
-                                'kuorum' => "{$totalSuara} / 34 anggota",
-                            ];
-
-                            foreach ($rekapList as $r) {
-                                $nama = $r['nama_opsi'] ?? '';
-                                $newStats[$nama] = [
-                                    'suara' => (int) ($r['jumlah_suara'] ?? 0),
-                                    'persentase' => (float) ($r['persentase'] ?? 0),
-                                ];
-                                if ($nama === 'Tidak Setuju') {
-                                    $newStats['Tolak'] = $newStats[$nama];
-                                }
-                            }
-                            $this->votingStats = array_merge($this->votingStats, $newStats);
-                        } else {
-                            $opsiRaw = $v['opsi_votings'] ?? $v['opsiVotings'] ?? $v['opsi'] ?? [];
-                            if (!empty($opsiRaw) && is_array($opsiRaw)) {
-                                $newStats = [
-                                    'total_suara' => $totalSuara,
-                                    'kuorum' => "{$totalSuara} / 34 anggota",
-                                ];
-
-                                foreach ($opsiRaw as $opt) {
-                                    $namaOpsi = $opt['nama_opsi'] ?? $opt['label'] ?? '';
-                                    $suara = (int) ($opt['jumlah_suara'] ?? $opt['suara_votings_count'] ?? $opt['total'] ?? 0);
-                                    $persen = $totalSuara > 0 ? round(($suara / $totalSuara) * 100, 1) : 0;
-                                    if (isset($opt['persentase'])) {
-                                        $persen = (float) $opt['persentase'];
-                                    }
-                                    $newStats[$namaOpsi] = [
-                                        'suara' => $suara,
-                                        'persentase' => $persen,
-                                    ];
-                                    if ($namaOpsi === 'Tidak Setuju') {
-                                        $newStats['Tolak'] = $newStats[$namaOpsi];
-                                    }
-                                }
-                                $this->votingStats = array_merge($this->votingStats, $newStats);
-                            }
-                        }
-                    }
+                    $this->applyVotingSession($active ?? $this->votingHistory[0]);
                 }
             }
         } catch (\Throwable $e) {
             // Backend offline, fallback state already set
         }
+
+        if (empty($this->votingHistory)) {
+            $mockFile = storage_path('mock/votings.json');
+            if (is_file($mockFile)) {
+                $decoded = json_decode((string) file_get_contents($mockFile), true);
+                if (is_array($decoded)) {
+                    $this->votingHistory = $this->normalizeVotingHistory($decoded);
+                }
+            }
+        }
+    }
+
+    /**
+     * Normalisasi daftar voting agar seragam untuk riwayat sesi.
+     *
+     * @param  array<int, mixed>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeVotingHistory(array $items): array
+    {
+        $history = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $id = $item['id_voting'] ?? $item['id'] ?? null;
+            $rapat = $item['rapat'] ?? [];
+            $judul = $item['judul_voting'] ?? $item['judul'] ?? 'Sesi Voting Senat';
+
+            $history[] = array_merge($item, [
+                'id_voting' => (int) ($id ?? 0),
+                'id' => (int) ($id ?? 0),
+                'judul_voting' => $judul,
+                'judul' => $judul,
+                'status' => strtolower((string) ($item['status'] ?? 'ditutup')),
+                'total_suara' => (int) ($item['total_suara'] ?? $item['suara_votings_count'] ?? 0),
+                'rapat' => is_array($rapat) ? $rapat : [],
+                'waktu_mulai' => $item['waktu_mulai'] ?? null,
+            ]);
+        }
+
+        return $history;
+    }
+
+    /**
+     * Terapkan data satu sesi voting ke kartu monitor utama.
+     */
+    private function applyVotingSession(array $v): void
+    {
+        $this->votingId = (int) ($v['id_voting'] ?? $v['id'] ?? $this->votingId ?? 0);
+        $this->votingTitle = (string) ($v['judul_voting'] ?? $v['judul'] ?? $this->votingTitle);
+        $this->votingStatus = strtolower((string) ($v['status'] ?? $this->votingStatus));
+
+        $rapat = is_array($v['rapat'] ?? null) ? $v['rapat'] : [];
+        if (! empty($rapat['kode'])) {
+            $this->votingMeetingCode = $rapat['kode'];
+        } elseif (! empty($rapat['session_code'])) {
+            $this->votingMeetingCode = $rapat['session_code'];
+        }
+
+        if (! empty($v['waktu_mulai'])) {
+            $this->votingDate = date('d M Y', strtotime((string) $v['waktu_mulai']));
+        }
+
+        $totalSuara = (int) ($v['total_suara'] ?? $v['suara_votings_count'] ?? 0);
+        $newStats = [
+            'Setuju' => ['suara' => 0, 'persentase' => 0],
+            'Tidak Setuju' => ['suara' => 0, 'persentase' => 0],
+            'Tolak' => ['suara' => 0, 'persentase' => 0],
+            'Abstain' => ['suara' => 0, 'persentase' => 0],
+            'total_suara' => $totalSuara,
+            'kuorum' => "{$totalSuara} / 34 anggota",
+        ];
+
+        $rekapList = $v['hasil_rekap'] ?? null;
+        if (is_array($rekapList) && ! empty($rekapList)) {
+            if (array_is_list($rekapList)) {
+                foreach ($rekapList as $r) {
+                    if (! is_array($r)) {
+                        continue;
+                    }
+                    $nama = $r['nama_opsi'] ?? $r['label'] ?? '';
+                    if ($nama === '') {
+                        continue;
+                    }
+                    $newStats[$nama] = [
+                        'suara' => (int) ($r['jumlah_suara'] ?? $r['total'] ?? 0),
+                        'persentase' => (float) ($r['persentase'] ?? 0),
+                    ];
+                }
+            } else {
+                foreach ($rekapList as $nama => $nilai) {
+                    if (is_array($nilai)) {
+                        $newStats[$nama] = [
+                            'suara' => (int) ($nilai['jumlah_suara'] ?? $nilai['total'] ?? 0),
+                            'persentase' => (float) ($nilai['persentase'] ?? 0),
+                        ];
+                    } else {
+                        $suara = (int) $nilai;
+                        $newStats[$nama] = [
+                            'suara' => $suara,
+                            'persentase' => $totalSuara > 0 ? round(($suara / $totalSuara) * 100, 1) : 0,
+                        ];
+                    }
+                }
+            }
+        } else {
+            $opsiRaw = $v['opsi_votings'] ?? $v['opsiVotings'] ?? $v['opsi'] ?? [];
+            if (is_array($opsiRaw)) {
+                foreach ($opsiRaw as $opt) {
+                    if (! is_array($opt)) {
+                        continue;
+                    }
+                    $namaOpsi = $opt['nama_opsi'] ?? $opt['label'] ?? '';
+                    if ($namaOpsi === '') {
+                        continue;
+                    }
+                    $suara = (int) ($opt['jumlah_suara'] ?? $opt['suara_votings_count'] ?? $opt['total'] ?? 0);
+                    $persen = $totalSuara > 0 ? round(($suara / $totalSuara) * 100, 1) : 0;
+                    if (isset($opt['persentase'])) {
+                        $persen = (float) $opt['persentase'];
+                    }
+                    $newStats[$namaOpsi] = [
+                        'suara' => $suara,
+                        'persentase' => $persen,
+                    ];
+                }
+            }
+        }
+
+        if (isset($newStats['Tidak Setuju'])) {
+            $newStats['Tolak'] = $newStats['Tidak Setuju'];
+        }
+
+        $this->votingStats = array_merge($this->votingStats, $newStats);
+    }
+
+    public function selectVotingSession(int $id): void
+    {
+        $session = null;
+        foreach ($this->votingHistory as $item) {
+            if ((int) ($item['id_voting'] ?? $item['id'] ?? 0) === $id) {
+                $session = $item;
+                break;
+            }
+        }
+
+        if (! $session) {
+            $this->flashMessage = "Sesi voting #{$id} tidak ditemukan pada riwayat.";
+            return;
+        }
+
+        $this->applyVotingSession($session);
+        $this->refreshVotingData();
+        $this->flashMessage = "Sesi voting '{$this->votingTitle}' berhasil ditampilkan pada kartu monitor utama.";
     }
 
     public function toggleVotingStatus(): void
@@ -1209,6 +1313,12 @@ class AdminPreview extends Component
             $this->flashMessage = ($target === 'dibuka')
                 ? 'Sesi pemungutan suara resmi dibuka untuk seluruh anggota Senat.'
                 : 'Sesi pemungutan suara resmi ditutup dan dikunci.';
+        }
+
+        foreach ($this->votingHistory as $index => $item) {
+            if ((int) ($item['id_voting'] ?? $item['id'] ?? 0) === (int) $this->votingId) {
+                $this->votingHistory[$index]['status'] = $target;
+            }
         }
     }
 
@@ -1284,7 +1394,17 @@ class AdminPreview extends Component
 
     public function refreshVotingData(): void
     {
+        $selectedId = $this->votingId;
         $this->loadVotingData();
+
+        if ($selectedId) {
+            foreach ($this->votingHistory as $item) {
+                if ((int) ($item['id_voting'] ?? $item['id'] ?? 0) === (int) $selectedId) {
+                    $this->applyVotingSession($item);
+                    break;
+                }
+            }
+        }
 
         if ($this->votingId) {
             try {
