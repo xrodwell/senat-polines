@@ -14,6 +14,8 @@ use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Str;
 
 class AdminPreview extends Component
 {
@@ -170,6 +172,18 @@ class AdminPreview extends Component
     public string $newVotingDescription = '';
     public ?int $newVotingMeetingId = 1;
     public array $availableMeetings = [];
+    // Multi-Meeting & History State
+    public ?int $selectedMeetingId = null;
+    public string $meetingFilterTab = 'semua'; // semua, berlangsung, terjadwal, selesai
+    // Form Buat Sidang Baru & Pemilihan Dosen
+    public string $newMeetingTitle = '';
+    public string $newMeetingType = 'Sidang Pleno';
+    public string $newMeetingDate = '';
+    public string $newMeetingTime = '09:00 - 12:30 WIB';
+    public string $newMeetingRoom = 'Ruang Sidang Utama Lantai 2 Gd. Direktorat';
+    public array $allLecturers = [];
+    public array $selectedLecturerIds = [];
+    public string $lecturerSearch = '';
 
     public function mount(MeetingRepositoryInterface $meetingsRepo): void
     {
@@ -186,6 +200,7 @@ class AdminPreview extends Component
             $this->active = 'Dashboard Rapat';
         }
 
+        $this->loadLecturersMaster();
         $this->loadLiveAttendanceData($meetingsRepo);
 
         $this->loadNotulensiData();
@@ -242,22 +257,206 @@ class AdminPreview extends Component
         $this->loadLiveAttendanceData($repo, true);
     }
 
+    public function selectMeeting(int|string $meetingId): void
+    {
+        $meetingId = (int) $meetingId;
+        $this->selectedMeetingId = $meetingId;
+        $repo = app(MeetingRepositoryInterface::class);
+        $this->loadLiveAttendanceData($repo, true);
+        $this->flashMessage = "Berhasil memuat data agenda: " . ($this->liveMeeting['title'] ?? $this->liveMeeting['nama_agenda'] ?? 'Sidang Terpilih');
+    }
+
+    public function manageMeeting(int|string $meetingId, string $targetTab = 'Presensi & Verifikasi QR'): void
+    {
+        $this->selectMeeting($meetingId);
+        $this->active = $targetTab;
+    }
+
+    public function selectAllLecturers(): void
+    {
+        $this->selectedLecturerIds = array_column($this->allLecturers, 'id_user');
+    }
+
+    public function selectCommitteeLecturers(string $komisi): void
+    {
+        $this->selectedLecturerIds = array_values(array_map(
+            fn($item) => $item['id_user'],
+            array_filter($this->allLecturers, fn($item) => str_contains($item['komisi'] ?? '', $komisi) || str_contains($item['role'] ?? '', $komisi))
+        ));
+    }
+
+    public function clearSelectedLecturers(): void
+    {
+        $this->selectedLecturerIds = [];
+    }
+
+    public function toggleLecturer(int $userId): void
+    {
+        if (in_array($userId, $this->selectedLecturerIds, true)) {
+            $this->selectedLecturerIds = array_values(array_diff($this->selectedLecturerIds, [$userId]));
+        } else {
+            $this->selectedLecturerIds[] = $userId;
+        }
+    }
+
+    public function getFilteredLecturersProperty(): array
+    {
+        if (empty($this->lecturerSearch)) {
+            return $this->allLecturers;
+        }
+
+        $q = strtolower(trim($this->lecturerSearch));
+        return array_values(array_filter($this->allLecturers, function ($u) use ($q) {
+            return str_contains(strtolower($u['nama'] ?? ''), $q)
+                || str_contains(strtolower($u['nim_nip'] ?? ''), $q)
+                || str_contains(strtolower($u['komisi'] ?? ''), $q);
+        }));
+    }
+
+    public function loadLecturersMaster(): void
+    {
+        $base = $this->getBackendUrl();
+        try {
+            $res = Http::timeout(2)->get("{$base}/user");
+            if ($res->successful()) {
+                $payload = $res->json('data') ?? $res->json();
+                $items = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
+                if (is_array($items) && !empty($items)) {
+                    $komisiPresets = ['Pimpinan Senat', 'Komisi I', 'Komisi II', 'Komisi III', 'Komisi IV', 'Komisi V'];
+                    $this->allLecturers = array_map(function ($u, $idx) use ($komisiPresets) {
+                        $kom = $u['komisi'] ?? null;
+                        if (!$kom && !empty($u['enrollments']) && is_array($u['enrollments'])) {
+                            $kom = $u['enrollments'][0]['komisi']['nama_komisi'] ?? ($u['enrollments'][0]['jabatan_komisi'] ?? null);
+                        }
+                        if (!$kom || $kom === 'anggota' || $kom === 'Komisi Senat') {
+                            $kom = $komisiPresets[$idx % count($komisiPresets)];
+                        }
+                        return [
+                            'id_user' => $u['id_user'] ?? ($idx + 1),
+                            'nama' => $u['nama'] ?? 'Anggota Senat',
+                            'nim_nip' => $u['nim_nip'] ?? '-',
+                            'komisi' => $kom,
+                            'role' => $u['role'] ?? 'anggota',
+                        ];
+                    }, $items, array_keys($items));
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        if (empty($this->allLecturers)) {
+            $this->allLecturers = $this->getDefaultLecturersList();
+        }
+
+        if (empty($this->selectedLecturerIds)) {
+            $this->selectedLecturerIds = array_column($this->allLecturers, 'id_user');
+        }
+
+        if (empty($this->newMeetingDate)) {
+            $this->newMeetingDate = date('Y-m-d', strtotime('+3 days'));
+        }
+    }
+
+    public function createNewMeeting(): void
+    {
+        if (empty(trim($this->newMeetingTitle))) {
+            $this->flashMessage = 'Peringatan: Judul/agenda sidang tidak boleh kosong!';
+            return;
+        }
+
+        if (empty($this->selectedLecturerIds)) {
+            $this->flashMessage = 'Peringatan: Silakan pilih minimal 1 dosen/anggota senat yang diundang ke rapat!';
+            return;
+        }
+
+        $base = $this->getBackendUrl();
+        $newId = rand(100, 999);
+
+        try {
+            $payload = [
+                'id_user' => 1,
+                'id_jenis_rapat' => str_contains($this->newMeetingType, 'Komisi') ? 2 : 1,
+                'nama_agenda' => $this->newMeetingTitle,
+                'tanggal' => $this->newMeetingDate ?: date('Y-m-d', strtotime('+3 days')),
+                'waktu' => substr($this->newMeetingTime, 0, 5),
+                'tempat' => $this->newMeetingRoom,
+                'status' => 'Terjadwal',
+                'invited_user_ids' => $this->selectedLecturerIds,
+            ];
+
+            $res = Http::timeout(3)->post("{$base}/rapat", $payload);
+            if ($res->successful()) {
+                $responseData = $res->json('data') ?? [];
+                $newId = $responseData['id_rapat'] ?? $newId;
+            }
+        } catch (\Throwable $e) {}
+
+        $newMeetingItem = [
+            'id' => $newId,
+            'title' => $this->newMeetingTitle,
+            'type' => $this->newMeetingType,
+            'date' => $this->newMeetingDate ?: date('Y-m-d', strtotime('+3 days')),
+            'time' => $this->newMeetingTime,
+            'room' => $this->newMeetingRoom,
+            'status' => 'Terjadwal',
+            'session_code' => 'PLN-' . rand(100, 999),
+            'qr_token' => 'token-qr-' . uniqid(),
+            'total_invited' => count($this->selectedLecturerIds),
+            'present_count' => 0,
+            'is_presensi_open' => false,
+            'is_kuorum_locked' => false,
+        ];
+
+        array_unshift($this->availableMeetings, $newMeetingItem);
+
+        $count = count($this->selectedLecturerIds);
+        $createdTitle = $this->newMeetingTitle;
+
+        $this->newMeetingTitle = '';
+        $this->newMeetingDate = date('Y-m-d', strtotime('+3 days'));
+        $this->selectAllLecturers();
+
+        $this->selectMeeting($newId);
+        $this->flashMessage = "Agenda Sidang '{$createdTitle}' berhasil dijadwalkan dengan {$count} dosen diundang.";
+    }
+
     public function loadLiveAttendanceData(MeetingRepositoryInterface $meetingsRepo, bool $force = false): void
     {
-        $activeSession = $meetingsRepo->getActiveSession($force);
-        if ($activeSession && isset($activeSession['id'])) {
-            $this->activeMeetingId = (int) $activeSession['id'];
-            $this->liveMeeting = $activeSession;
-            $this->qrToken = $activeSession['qr_token'] ?? '';
-            $this->sessionCode = $activeSession['session_code'] ?? 'PLN-892';
-            $this->isPresensiOpen = (bool) ($activeSession['is_presensi_open'] ?? true);
-            $this->isKuorumLocked = (bool) ($activeSession['is_kuorum_locked'] ?? false);
+        $repoMeetings = $meetingsRepo->all();
+        $existingIds = array_filter(array_map(fn($m) => $m['id'] ?? ($m['id_rapat'] ?? null), $repoMeetings));
+        $customMeetings = array_filter($this->availableMeetings, fn($m) => !empty($m['id']) && !in_array($m['id'], $existingIds, true));
+        $all = array_values(array_merge($customMeetings, $repoMeetings));
+        $this->availableMeetings = $all;
+
+        $targetSession = null;
+        if ($this->selectedMeetingId) {
+            foreach ($all as $m) {
+                if ((int) ($m['id'] ?? 0) === $this->selectedMeetingId) {
+                    $targetSession = $m;
+                    break;
+                }
+            }
+        }
+
+        if (!$targetSession) {
+            $targetSession = $meetingsRepo->getActiveSession($force) ?? ($all[0] ?? null);
+            if ($targetSession) {
+                $this->selectedMeetingId = (int) ($targetSession['id'] ?? 1);
+            }
+        }
+
+        if ($targetSession && isset($targetSession['id'])) {
+            $this->activeMeetingId = (int) $targetSession['id'];
+            $this->liveMeeting = $targetSession;
+            $this->qrToken = $targetSession['qr_token'] ?? ('token-qr-' . $this->activeMeetingId);
+            $this->sessionCode = $targetSession['session_code'] ?? ('PLN-' . str_pad((string)$this->activeMeetingId, 3, '0', STR_PAD_LEFT));
+            $this->isPresensiOpen = (bool) ($targetSession['is_presensi_open'] ?? ($targetSession['status'] === 'Sedang Berlangsung'));
+            $this->isKuorumLocked = (bool) ($targetSession['is_kuorum_locked'] ?? false);
 
             if ($meetingsRepo instanceof ApiMeetingRepository) {
                 $liveData = $meetingsRepo->getLiveAttendance($this->activeMeetingId, $force);
-                if ($liveData) {
-                    $this->liveAnggota = $liveData['anggota'] ?? [];
-                    $this->liveKuorum = $liveData['kuorum'] ?? ($activeSession['kuorum'] ?? []);
+                if ($liveData && !empty($liveData['anggota'])) {
+                    $this->liveAnggota = $liveData['anggota'];
+                    $this->liveKuorum = $liveData['kuorum'] ?? ($targetSession['kuorum'] ?? []);
                     $this->isPresensiOpen = (bool) ($liveData['is_presensi_open'] ?? $this->isPresensiOpen);
                     $this->isKuorumLocked = (bool) ($liveData['is_kuorum_locked'] ?? $this->isKuorumLocked);
                     $this->qrToken = $liveData['token_qr'] ?? $this->qrToken;
@@ -266,21 +465,114 @@ class AdminPreview extends Component
                 }
             }
 
-            // Fallback kuorum mock
+            // Fallback anggota filter based on meeting type/komisi
+            $type = $targetSession['type'] ?? ($targetSession['jenis_rapat'] ?? '');
+            $invitedLecturers = $this->allLecturers;
+            if (!empty($targetSession['invited_user_ids'])) {
+                $invitedIds = $targetSession['invited_user_ids'];
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => in_array($u['id_user'], $invitedIds)));
+            } else
+            if (str_contains($type, 'Komisi I')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi I') || str_contains($u['role'] ?? '', 'Ketua')));
+            } elseif (str_contains($type, 'Komisi II')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi II')));
+            } elseif (str_contains($type, 'Komisi III')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi III')));
+            } elseif (str_contains($type, 'Komisi V')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi V')));
+            }
+
+            $totalInvited = count($invitedLecturers);
+            $presentRatio = ($targetSession['status'] === 'Sedang Berlangsung') ? 0.7 : (($targetSession['status'] === 'Selesai') ? 0.85 : 0.0);
+            $hadirCount = (int) round($totalInvited * $presentRatio);
+            $izinCount = ($presentRatio > 0) ? min(2, max(0, $totalInvited - $hadirCount)) : 0;
+
+            $this->liveAnggota = [];
+            foreach ($invitedLecturers as $idx => $l) {
+                $st = 'menunggu';
+                $waktu = null;
+                $metode = '-';
+                if ($idx < $hadirCount) {
+                    $st = 'hadir';
+                    $waktu = '09:' . str_pad((string)(15 + $idx * 2), 2, '0', STR_PAD_LEFT) . ':00';
+                    $metode = ($idx % 2 === 0) ? 'qr_scan' : 'token_input';
+                } elseif ($idx < ($hadirCount + $izinCount)) {
+                    $st = 'izin';
+                    $metode = 'manual_admin';
+                }
+
+                $this->liveAnggota[] = [
+                    'id_undangan' => $idx + 1,
+                    'id_user' => $l['id_user'],
+                    'nama' => $l['nama'],
+                    'nim_nip' => $l['nim_nip'],
+                    'role' => $l['role'] ?? 'anggota',
+                    'status_kehadiran' => $st,
+                    'waktu_presensi' => $waktu,
+                    'metode_presensi' => $metode,
+                    'is_edited_by_admin' => false,
+                    'catatan_admin' => $st === 'izin' ? 'Dispensasi tugas institusi' : null,
+                ];
+            }
+
+            $ambangKuorum = (int) ceil(($totalInvited * 2) / 3);
+            $persen = $totalInvited > 0 ? round(($hadirCount / $totalInvited) * 100, 1) : 0;
+            $isKuorum = $hadirCount >= $ambangKuorum;
+
             $this->liveKuorum = [
-                'total_invited' => $activeSession['total_invited'] ?? 34,
-                'present_count' => $activeSession['present_count'] ?? 23,
-                'izin_count' => 3,
+                'total_invited' => $totalInvited,
+                'present_count' => $hadirCount,
+                'izin_count' => $izinCount,
                 'tidak_hadir_count' => 0,
-                'menunggu_count' => 8,
-                'ambang_kuorum' => 23,
-                'present_percentage' => 67.6,
-                'is_kuorum' => true,
-                'status_kuorum_label' => 'Kuorum Terpenuhi',
+                'menunggu_count' => max(0, $totalInvited - ($hadirCount + $izinCount)),
+                'ambang_kuorum' => $ambangKuorum,
+                'present_percentage' => $persen,
+                'is_kuorum' => $isKuorum,
+                'status_kuorum_label' => $isKuorum ? 'Kuorum Terpenuhi' : 'Belum Memenuhi Kuorum',
                 'is_presensi_open' => $this->isPresensiOpen,
                 'is_kuorum_locked' => $this->isKuorumLocked,
             ];
         }
+    }
+
+    public function getDefaultLecturersList(): array
+    {
+        return [
+            ['id_user' => 1, 'nama' => 'Prof. Dr. Totok Prasetyo, B.Eng., M.T., IPU', 'nim_nip' => '196705101992031003', 'komisi' => 'Pimpinan Senat', 'role' => 'Ketua Senat'],
+            ['id_user' => 2, 'nama' => 'Dr. Kurnianingsih, S.T., M.T.', 'nim_nip' => '197906152003122001', 'komisi' => 'Pimpinan Senat', 'role' => 'Sekretaris Senat'],
+            ['id_user' => 3, 'nama' => 'Tri Yudantoro, S.Kom., M.Kom.', 'nim_nip' => '197103251999031002', 'komisi' => 'Komisi I', 'role' => 'Ketua Komisi I'],
+            ['id_user' => 4, 'nama' => 'Anis Roihatin, S.T., M.T.', 'nim_nip' => '197304121998022001', 'komisi' => 'Komisi I', 'role' => 'Sekretaris Komisi I'],
+            ['id_user' => 5, 'nama' => 'Prof. Dr. Ir. Dwiana Hendrawati, S.T., M.T.', 'nim_nip' => '196508241990032001', 'komisi' => 'Komisi I', 'role' => 'Anggota'],
+            ['id_user' => 6, 'nama' => 'Yusmar Ardhi Hidayat, S.E., M.Si., Ph.D.', 'nim_nip' => '197607182002121001', 'komisi' => 'Komisi I', 'role' => 'Anggota'],
+            ['id_user' => 7, 'nama' => 'Resi Yudaningsih, S.E., M.Si., Akt.', 'nim_nip' => '197802112005012002', 'komisi' => 'Komisi I', 'role' => 'Anggota'],
+            ['id_user' => 8, 'nama' => 'Dr. Bagus Yunianto W., S.E., S.Kom., M.M.', 'nim_nip' => '197206191997021001', 'komisi' => 'Komisi I', 'role' => 'Anggota'],
+            ['id_user' => 9, 'nama' => 'Nanang Adie Setyawan, S.E., M.M.', 'nim_nip' => '198109052006041002', 'komisi' => 'Komisi I', 'role' => 'Anggota'],
+            ['id_user' => 10, 'nama' => 'Dr. Jumi, S.Kom., M.Kom.', 'nim_nip' => '197004161997022001', 'komisi' => 'Komisi II', 'role' => 'Ketua Komisi II'],
+            ['id_user' => 11, 'nama' => 'Fajar Surya Herlambang, S.T., M.T.', 'nim_nip' => '198005232005011002', 'komisi' => 'Komisi II', 'role' => 'Sekretaris Komisi II'],
+            ['id_user' => 12, 'nama' => 'Yusnan Badruzzaman, S.T., M.Eng.', 'nim_nip' => '197501082001121001', 'komisi' => 'Komisi II', 'role' => 'Anggota'],
+            ['id_user' => 13, 'nama' => 'Mohammad Hasanudin, S.E., M.Si.', 'nim_nip' => '197303152002121002', 'komisi' => 'Komisi II', 'role' => 'Anggota'],
+            ['id_user' => 14, 'nama' => 'Vinda Setya Kartika, S.T., M.T.', 'nim_nip' => '198207192008122003', 'komisi' => 'Komisi II', 'role' => 'Anggota'],
+            ['id_user' => 15, 'nama' => 'Ir. Teguh Mulyo Wicaksono, S.Pd., M.Eng.', 'nim_nip' => '197708092003121002', 'komisi' => 'Komisi II', 'role' => 'Anggota'],
+            ['id_user' => 16, 'nama' => 'Ir. Riles Melvy Wattimena, M.T., IPP.', 'nim_nip' => '196411291992031002', 'komisi' => 'Komisi III', 'role' => 'Ketua Komisi III'],
+            ['id_user' => 17, 'nama' => 'Iwan Budiyono, S.E., M.Si.Ak', 'nim_nip' => '197108171999031001', 'komisi' => 'Komisi III', 'role' => 'Sekretaris Komisi III'],
+            ['id_user' => 18, 'nama' => 'Sahid, S.T., M.T.', 'nim_nip' => '196904141995121001', 'komisi' => 'Komisi III', 'role' => 'Anggota'],
+            ['id_user' => 19, 'nama' => 'Dedi Budi Setyawan, S.T., M.T.', 'nim_nip' => '197509202002121001', 'komisi' => 'Komisi III', 'role' => 'Anggota'],
+            ['id_user' => 20, 'nama' => 'Dr. Muhammad Anif, S.T., M.Eng.', 'nim_nip' => '197307042000031001', 'komisi' => 'Komisi III', 'role' => 'Anggota'],
+            ['id_user' => 21, 'nama' => 'Septian Yudha Kusuma, S.E., M.Si.Ak', 'nim_nip' => '198409152010121004', 'komisi' => 'Komisi III', 'role' => 'Anggota'],
+            ['id_user' => 22, 'nama' => 'Dr. Amin Suharjono, S.T., M.T.', 'nim_nip' => '197210081999031001', 'komisi' => 'Komisi IV', 'role' => 'Ketua Komisi IV'],
+            ['id_user' => 23, 'nama' => 'Drs. Supriyono, M.T.', 'nim_nip' => '196306281989031001', 'komisi' => 'Komisi IV', 'role' => 'Sekretaris Komisi IV'],
+            ['id_user' => 24, 'nama' => 'Sri Danaryani, S.T., M.T.', 'nim_nip' => '196803271993032001', 'komisi' => 'Komisi IV', 'role' => 'Anggota'],
+            ['id_user' => 25, 'nama' => 'Bambang Eko Sumarsono, S.T., M.T.', 'nim_nip' => '197009181998021001', 'komisi' => 'Komisi IV', 'role' => 'Anggota'],
+            ['id_user' => 26, 'nama' => 'Novi Purnomowati, S.E., M.Si.', 'nim_nip' => '197611022001122001', 'komisi' => 'Komisi IV', 'role' => 'Anggota'],
+            ['id_user' => 27, 'nama' => 'Agus Suwondo, S.T., M.T.', 'nim_nip' => '197312152000031001', 'komisi' => 'Komisi IV', 'role' => 'Anggota'],
+            ['id_user' => 28, 'nama' => 'Drs. Ahmad Mustofa, M.Ag.', 'nim_nip' => '196504101990031002', 'komisi' => 'Komisi V', 'role' => 'Ketua Komisi V'],
+            ['id_user' => 29, 'nama' => 'Nurul Hidayati, S.H., M.H.', 'nim_nip' => '197801202005012003', 'komisi' => 'Komisi V', 'role' => 'Sekretaris Komisi V'],
+            ['id_user' => 30, 'nama' => 'Dr. Mardiyono, S.Kom., M.Sc.', 'nim_nip' => '197105261998021001', 'komisi' => 'Komisi V', 'role' => 'Anggota'],
+            ['id_user' => 31, 'nama' => 'Drs. Subandi, M.M.', 'nim_nip' => '196208151989031003', 'komisi' => 'Komisi V', 'role' => 'Anggota'],
+            ['id_user' => 32, 'nama' => 'Dra. Endang Sulistyowati, M.Si.', 'nim_nip' => '196409051990032002', 'komisi' => 'Komisi V', 'role' => 'Anggota'],
+            ['id_user' => 33, 'nama' => 'Dr. Seno Darmawan, S.T., M.T.', 'nim_nip' => '197411122001121002', 'komisi' => 'Komisi I', 'role' => 'Anggota'],
+            ['id_user' => 34, 'nama' => 'Heny Yuniastuti, S.E., M.Si.', 'nim_nip' => '197903222006042001', 'komisi' => 'Komisi III', 'role' => 'Anggota'],
+        ];
     }
 
     /**
@@ -396,6 +688,262 @@ class AdminPreview extends Component
         } else {
             $this->flashMessage = "Gagal memperbarui status kehadiran anggota.";
         }
+    }
+
+    /**
+     * Styling xls export
+     */
+    public function exportExcel(): StreamedResponse
+    {
+        if (empty($this->liveAnggota)) {
+            $repo = app(ApiMeetingRepository::class);
+            $this->loadLiveAttendanceData($repo, true);
+        }
+
+        $agendaTitle = $this->liveMeeting['title'] ?? ($this->liveMeeting['nama_agenda'] ?? 'Sidang Senat Akademik Polines');
+        $slug = Str::slug($agendaTitle);
+        $fileName = 'Daftar-Hadir-Kuorum-' . ($slug ?: 'sidang-senat') . '-' . date('Ymd-His') . '.xls';
+
+        $totalInvited = $this->liveKuorum['total_invited'] ?? count($this->liveAnggota);
+        $presentCount = $this->liveKuorum['present_count'] ?? 0;
+        $izinCount = $this->liveKuorum['izin_count'] ?? 0;
+        $tidakHadirCount = $this->liveKuorum['tidak_hadir_count'] ?? 0;
+        $ambangKuorum = $this->liveKuorum['ambang_kuorum'] ?? (int) ceil(($totalInvited * 2) / 3);
+        $persenKuorum = $this->liveKuorum['present_percentage'] ?? 0;
+        $isKuorum = (bool) ($this->liveKuorum['is_kuorum'] ?? false);
+        $statusKuorum = $isKuorum ? 'KUORUM TERPENUHI (SAH)' : 'BELUM MEMENUHI KUORUM';
+
+        $headers = [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        return response()->streamDownload(function () use (
+            $agendaTitle,
+            $totalInvited,
+            $presentCount,
+            $izinCount,
+            $tidakHadirCount,
+            $ambangKuorum,
+            $persenKuorum,
+            $isKuorum,
+            $statusKuorum
+        ) {
+            echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+            echo '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
+            echo '<style>';
+            echo 'body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 11pt; color: #1e293b; }';
+            echo 'table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }';
+            echo 'th { background-color: #0b3a75; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #94a3b8; padding: 10px 8px; vertical-align: middle; font-size: 11pt; }';
+            echo 'td { border: 1px solid #cbd5e1; padding: 8px 10px; vertical-align: middle; font-size: 10.5pt; }';
+            echo '.text { mso-number-format:"\@"; }';
+            echo '.center { text-align: center; }';
+            echo '.bold { font-weight: bold; }';
+            echo '.doc-title { font-size: 14pt; font-weight: bold; color: #0b3a75; text-align: left; }';
+            echo '.doc-sub { font-size: 11pt; font-weight: bold; color: #475569; text-align: left; }';
+            echo '.meta-lbl { background-color: #f1f5f9; font-weight: bold; width: 230px; border: 1px solid #cbd5e1; }';
+            echo '.meta-val { border: 1px solid #cbd5e1; }';
+            echo '.badge-hadir { background-color: #dcfce7; color: #15803d; font-weight: bold; text-align: center; }';
+            echo '.badge-izin { background-color: #fef9c3; color: #854d0e; font-weight: bold; text-align: center; }';
+            echo '.badge-absen { background-color: #fee2e2; color: #b91c1c; font-weight: bold; text-align: center; }';
+            echo '.status-sah { background-color: #dcfce7; color: #15803d; font-weight: bold; }';
+            echo '.status-belum { background-color: #fee2e2; color: #b91c1c; font-weight: bold; }';
+            echo '</style>';
+            echo '</head><body>';
+
+            // Kop Dokumen & Ringkasan Kuorum
+            echo '<table>';
+            echo '<tr><td colspan="8" class="doc-title" style="border:none;">REKAPITULASI DAFTAR HADIR & KUORUM SIDANG SENAT AKADEMIK</td></tr>';
+            echo '<tr><td colspan="8" class="doc-sub" style="border:none;">POLITEKNIK NEGERI SEMARANG</td></tr>';
+            echo '<tr><td colspan="8" style="border:none; height:12px;"></td></tr>';
+
+            echo '<tr><td class="meta-lbl">Agenda Sidang</td><td colspan="7" class="meta-val bold">' . htmlspecialchars($agendaTitle) . '</td></tr>';
+            echo '<tr><td class="meta-lbl">Waktu Pengunduhan</td><td colspan="7" class="meta-val">' . date('d/m/Y H:i:s') . ' WIB</td></tr>';
+            echo '<tr><td class="meta-lbl">Status Kuorum</td><td colspan="7" class="meta-val ' . ($isKuorum ? 'status-sah' : 'status-belum') . '">' . $statusKuorum . '</td></tr>';
+            echo '<tr><td class="meta-lbl">Total Anggota Diundang</td><td colspan="7" class="meta-val">' . $totalInvited . ' Orang</td></tr>';
+            echo '<tr><td class="meta-lbl">Ambang Batas Kuorum (2/3)</td><td colspan="7" class="meta-val">' . $ambangKuorum . ' Orang</td></tr>';
+            echo '<tr><td class="meta-lbl">Jumlah Peserta Hadir</td><td colspan="7" class="meta-val bold">' . $presentCount . ' Orang (' . $persenKuorum . '%)</td></tr>';
+            echo '<tr><td class="meta-lbl">Jumlah Izin Resmi</td><td colspan="7" class="meta-val">' . $izinCount . ' Orang</td></tr>';
+            echo '<tr><td class="meta-lbl">Jumlah Tidak Hadir</td><td colspan="7" class="meta-val">' . $tidakHadirCount . ' Orang</td></tr>';
+            echo '<tr><td colspan="8" style="border:none; height:16px;"></td></tr>';
+            echo '</table>';
+
+            // Tabel Presensi Anggota
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th style="width: 45px;">No</th>';
+            echo '<th style="width: 260px;">Nama Anggota Senat</th>';
+            echo '<th style="width: 190px;">NIP / ID Pengenal</th>';
+            echo '<th style="width: 140px;">Status Kehadiran</th>';
+            echo '<th style="width: 130px;">Waktu Presensi</th>';
+            echo '<th style="width: 160px;">Metode Presensi</th>';
+            echo '<th style="width: 170px;">Status Verifikasi</th>';
+            echo '<th style="width: 220px;">Catatan / Keterangan</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            $no = 1;
+            foreach ($this->liveAnggota as $a) {
+                $rawStatus = $a['status_kehadiran'] ?? '';
+                $statusLabel = match($rawStatus) {
+                    'hadir' => 'Hadir',
+                    'izin' => 'Izin Resmi',
+                    'tidak_hadir' => 'Tidak Hadir',
+                    default => 'Menunggu'
+                };
+                $statusClass = match($rawStatus) {
+                    'hadir' => 'badge-hadir',
+                    'izin' => 'badge-izin',
+                    'tidak_hadir' => 'badge-absen',
+                    default => 'center'
+                };
+
+                $metodeLabel = match($a['metode_presensi'] ?? '') {
+                    'qr_scan' => 'QR Scan Mandiri',
+                    'token_input' => 'Input Kode Sesi',
+                    'manual_admin' => 'Manual Verifikasi Admin',
+                    default => '-'
+                };
+
+                $verifikasiLabel = !empty($a['is_edited_by_admin']) ? 'Diedit / Divalidasi Admin' : 'Otomatis Sistem';
+                $waktu = !empty($a['waktu_presensi']) ? $a['waktu_presensi'] . ' WIB' : '-';
+                $catatan = $a['catatan_admin'] ?? '-';
+                $nip = $a['nim_nip'] ?? '-';
+
+                echo '<tr>';
+                echo '<td class="center">' . ($no++) . '</td>';
+                echo '<td class="bold">' . htmlspecialchars($a['nama'] ?? '-') . '</td>';
+                echo '<td class="text center">' . htmlspecialchars($nip) . '</td>';
+                echo '<td class="' . $statusClass . '">' . htmlspecialchars($statusLabel) . '</td>';
+                echo '<td class="center">' . htmlspecialchars($waktu) . '</td>';
+                echo '<td class="center">' . htmlspecialchars($metodeLabel) . '</td>';
+                echo '<td>' . htmlspecialchars($verifikasiLabel) . '</td>';
+                echo '<td>' . htmlspecialchars($catatan) . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody>';
+            echo '</table>';
+            echo '</body></html>';
+        }, $fileName, $headers);
+    }
+
+    /**
+     * Ekspor Rekapitulasi Daftar Hadir & Kuorum ke CSV (Kompatibel dengan Microsoft Excel & Regional Indonesia)
+     */
+    public function exportCsv(): StreamedResponse
+    {
+        // Pastikan data live terisi
+        if (empty($this->liveAnggota)) {
+            $repo = app(ApiMeetingRepository::class);
+            $this->loadLiveAttendanceData($repo, true);
+        }
+
+        $agendaTitle = $this->liveMeeting['title'] ?? ($this->liveMeeting['nama_agenda'] ?? 'Sidang Senat Akademik Polines');
+        $slug = Str::slug($agendaTitle);
+        $fileName = 'Daftar-Hadir-Kuorum-' . ($slug ?: 'sidang-senat') . '-' . date('Ymd-His') . '.csv';
+
+        $totalInvited = $this->liveKuorum['total_invited'] ?? count($this->liveAnggota);
+        $presentCount = $this->liveKuorum['present_count'] ?? 0;
+        $izinCount = $this->liveKuorum['izin_count'] ?? 0;
+        $tidakHadirCount = $this->liveKuorum['tidak_hadir_count'] ?? 0;
+        $ambangKuorum = $this->liveKuorum['ambang_kuorum'] ?? (int) ceil(($totalInvited * 2) / 3);
+        $persenKuorum = $this->liveKuorum['present_percentage'] ?? 0;
+        $statusKuorum = ($this->liveKuorum['is_kuorum'] ?? false) ? 'KUORUM TERPENUHI (SAH)' : 'BELUM MEMENUHI KUORUM';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        return response()->streamDownload(function () use (
+            $agendaTitle,
+            $totalInvited,
+            $presentCount,
+            $izinCount,
+            $tidakHadirCount,
+            $ambangKuorum,
+            $persenKuorum,
+            $statusKuorum
+        ) {
+            $output = fopen('php://output', 'w');
+
+            // BOM UTF-8 agar Microsoft Excel otomatis membaca karakter khusus secara akurat
+            fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Instruksi eksplisit untuk Microsoft Excel agar membaca delimiter titik-koma (;)
+            fputs($output, "sep=;\r\n");
+
+            // Header Informasi Dokumen
+            fputcsv($output, ['REKAPITULASI DAFTAR HADIR & KUORUM SIDANG SENAT AKADEMIK'], ';');
+            fputcsv($output, ['POLITEKNIK NEGERI SEMARANG'], ';');
+            fputcsv($output, [], ';');
+            fputcsv($output, ['Agenda Sidang', $agendaTitle], ';');
+            fputcsv($output, ['Waktu Pengunduhan', date('d/m/Y H:i:s') . ' WIB'], ';');
+            fputcsv($output, ['Status Kuorum', $statusKuorum], ';');
+            fputcsv($output, ['Total Anggota Diundang', $totalInvited . ' Orang'], ';');
+            fputcsv($output, ['Ambang Batas Kuorum (2/3)', $ambangKuorum . ' Orang'], ';');
+            fputcsv($output, ['Jumlah Peserta Hadir', $presentCount . ' Orang (' . $persenKuorum . '%)'], ';');
+            fputcsv($output, ['Jumlah Izin Resmi', $izinCount . ' Orang'], ';');
+            fputcsv($output, ['Jumlah Tidak Hadir', $tidakHadirCount . ' Orang'], ';');
+            fputcsv($output, [], ';');
+
+            // Header Kolom Tabel
+            fputcsv($output, [
+                'No',
+                'Nama Anggota Senat',
+                'NIP / ID Pengenal',
+                'Status Kehadiran',
+                'Waktu Presensi',
+                'Metode Presensi',
+                'Status Verifikasi',
+                'Catatan / Keterangan Admin'
+            ], ';');
+
+            // Baris Data Anggota
+            $no = 1;
+            foreach ($this->liveAnggota as $a) {
+                $statusLabel = match($a['status_kehadiran'] ?? '') {
+                    'hadir' => 'Hadir',
+                    'izin' => 'Izin Resmi',
+                    'tidak_hadir' => 'Tidak Hadir',
+                    default => 'Menunggu'
+                };
+
+                $metodeLabel = match($a['metode_presensi'] ?? '') {
+                    'qr_scan' => 'QR Scan Mandiri',
+                    'token_input' => 'Input Kode Sesi',
+                    'manual_admin' => 'Manual Verifikasi Admin',
+                    default => '-'
+                };
+
+                $verifikasiLabel = !empty($a['is_edited_by_admin']) ? 'Diedit / Divalidasi Admin' : 'Otomatis Sistem';
+                $waktu = !empty($a['waktu_presensi']) ? $a['waktu_presensi'] . ' WIB' : '-';
+                $catatan = $a['catatan_admin'] ?? '-';
+                $nip = !empty($a['nim_nip']) ? '="' . $a['nim_nip'] . '"' : '-';
+
+                fputcsv($output, [
+                    $no++,
+                    $a['nama'] ?? '-',
+                    $nip,
+                    $statusLabel,
+                    $waktu,
+                    $metodeLabel,
+                    $verifikasiLabel,
+                    $catatan
+                ], ';');
+            }
+
+            fclose($output);
+        }, $fileName, $headers);
     }
 
     public function saveAction(string $entity): void
@@ -539,7 +1087,20 @@ class AdminPreview extends Component
             $rapatRes = Http::timeout(3)->get("{$base}/rapat");
             if ($rapatRes->successful()) {
                 $payloadRapat = $rapatRes->json('data') ?? $rapatRes->json();
-                $this->availableMeetings = is_array($payloadRapat) ? $payloadRapat : [];
+                $rawItems = is_array($payloadRapat) ? $payloadRapat : [];
+                $mapped = array_map(function ($r) {
+                    $mId = $r['id_rapat'] ?? ($r['id'] ?? 1);
+                    $mTitle = $r['nama_agenda'] ?? ($r['title'] ?? 'Sidang Senat');
+                    return array_merge($r, [
+                        'id' => $mId,
+                        'id_rapat' => $mId,
+                        'title' => $mTitle,
+                        'nama_agenda' => $mTitle,
+                    ]);
+                }, $rawItems);
+                if (!empty($mapped)) {
+                    $this->availableMeetings = $mapped;
+                }
             }
         } catch (\Throwable $e) {}
 
@@ -1272,8 +1833,45 @@ class AdminPreview extends Component
             return true;
         })->values()->all();
 
+        $filteredMeetings = $meetings;
+        if ($this->meetingFilterTab === 'berlangsung') {
+            $filteredMeetings = array_values(array_filter($meetings, fn($m) => in_array(strtolower($m['status'] ?? ''), ['sedang berlangsung', 'aktif', 'open', 'dibuka'])));
+        } elseif ($this->meetingFilterTab === 'terjadwal') {
+            $filteredMeetings = array_values(array_filter($meetings, fn($m) => strtolower($m['status'] ?? '') === 'terjadwal'));
+        } elseif ($this->meetingFilterTab === 'selesai') {
+            $filteredMeetings = array_values(array_filter($meetings, fn($m) => in_array(strtolower($m['status'] ?? ''), ['selesai', 'ditutup', 'closed'])));
+        }
+
         return view('livewire.admin-preview', [
+            'active' => $this->active,
+            'flashMessage' => $this->flashMessage,
+            'selectedMeetingId' => $this->selectedMeetingId,
+            'isPresensiOpen' => $this->isPresensiOpen,
+            'isKuorumLocked' => $this->isKuorumLocked,
+            'showQrModal' => $this->showQrModal,
+            'sessionCode' => $this->sessionCode,
+            'qrToken' => $this->qrToken,
+            'liveMeeting' => $this->liveMeeting,
+            'liveKuorum' => $this->liveKuorum,
+            'liveAnggota' => $this->liveAnggota,
+            'filterKehadiran' => $this->filterKehadiran,
+            'meetingFilterTab' => $this->meetingFilterTab,
+            'newMeetingTitle' => $this->newMeetingTitle,
+            'newMeetingType' => $this->newMeetingType,
+            'newMeetingDate' => $this->newMeetingDate,
+            'newMeetingTime' => $this->newMeetingTime,
+            'newMeetingRoom' => $this->newMeetingRoom,
+            'selectedLecturerIds' => $this->selectedLecturerIds,
+            'lecturerSearch' => $this->lecturerSearch,
             'meetings' => $meetings,
+            'filteredMeetings' => $filteredMeetings,
+            'availableMeetings' => array_map(function ($m) {
+                $mId = $m['id'] ?? ($m['id_rapat'] ?? 1);
+                $mTitle = $m['title'] ?? ($m['nama_agenda'] ?? 'Sidang Senat');
+                return array_merge($m, ['id' => $mId, 'id_rapat' => $mId, 'title' => $mTitle, 'nama_agenda' => $mTitle]);
+            }, !empty($this->availableMeetings) ? $this->availableMeetings : $meetings),
+            'allLecturers' => $this->allLecturers,
+            'filteredLecturers' => $this->filteredLecturers,
             'activeMeeting' => $activeMeeting,
             'aspirations' => $aspirations,
             'archives' => $archives,
