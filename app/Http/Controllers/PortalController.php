@@ -7,7 +7,11 @@ use App\Contracts\AspirationRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Contracts\VotingRepositoryInterface;
 use App\Support\SenatDirectory;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PortalController extends Controller
@@ -18,6 +22,7 @@ class PortalController extends Controller
         private ArchiveRepositoryInterface $archives,
         private RegulationRepositoryInterface $regulations,
         private PostRepositoryInterface $posts,
+        private VotingRepositoryInterface $votings,
     ) {}
 
     /** @return array<string, mixed> */
@@ -57,10 +62,33 @@ class PortalController extends Controller
     /** 12B — Agenda & Presensi */
     public function agenda(): View
     {
+        $userId = auth()->id() ?: session('auth_user_id', 6);
+        $userNama = session('auth_user_name', 'Dr. Sukamto, S.Kom., M.T.');
+
         return view('portal.agenda', [
+            'activeSession' => $this->meetings->getActiveSession(),
+            'currentMember' => [
+                'id' => $userId,
+                'name' => $userNama,
+                'nip' => '19700001',
+            ],
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
         ]);
+    }
+
+    /** Submit Presensi Anggota (QR Scan atau Kode Sesi) */
+    public function submitPresensi(Request $request): JsonResponse
+    {
+        $userId = $request->input('id_user') ?: (auth()->id() ?: session('auth_user_id', 6));
+        $tokenQr = $request->input('token_qr');
+        $sessionCode = $request->input('kode_sesi');
+        $meetingId = $request->input('id_rapat');
+
+        $result = $this->meetings->submitPresensi((int) $userId, $tokenQr, $sessionCode, $meetingId ? (int) $meetingId : null);
+
+        $status = ($result['success'] ?? false) ? 200 : 422;
+        return response()->json($result, $status);
     }
 
     /** 12C — Notulensi & Risalah */
@@ -78,7 +106,33 @@ class PortalController extends Controller
         return view('portal.voting', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
+            'activeVoting' => $this->votings->getActive(),
         ]);
+    }
+
+    /** Submit Suara E-Voting */
+    public function submitVote(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'id_voting' => ['required', 'integer'],
+            'id_opsi' => ['required', 'integer'],
+        ]);
+
+        try {
+            $result = $this->votings->castVote(
+                (int) $validated['id_voting'],
+                (int) $validated['id_opsi'],
+                auth()->id() ?? 1
+            );
+
+            if (isset($result['success']) && ! $result['success']) {
+                return back()->with('error', $result['message'] ?? 'Gagal mengirim suara.');
+            }
+
+            return back()->with('success', $result['message'] ?? 'Suara Anda berhasil dicatat.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 
     /** 12E — Aspirasi & RUU Kampus */
