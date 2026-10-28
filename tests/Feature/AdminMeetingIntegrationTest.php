@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Livewire\AdminPreview;
 use App\Repositories\Api\ApiMeetingRepository;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -28,6 +29,12 @@ class AdminMeetingIntegrationTest extends TestCase
 
     public function test_can_save_and_manage_meeting_via_backend(): void
     {
+        Http::fake([
+            '*/rapat' => Http::response(['data' => ['id_rapat' => 10]], 201),
+            '*/rapat/*' => Http::response(['data' => ['id_rapat' => 10]], 200),
+            '*' => Http::response([], 200),
+        ]);
+
         $component = Livewire::test(AdminPreview::class)
             ->call('select', 'Jadwal & Agenda Sidang')
             ->set('meetingTitle', 'Sidang Validasi Otomatis Test')
