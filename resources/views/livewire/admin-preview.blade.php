@@ -144,15 +144,7 @@
                     </div>
                 </header>
 
-                @if ($flashMessage)
-                    <div class="mb-5 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800 shadow-sm" x-data="{ show: true }" x-show="show">
-                        <div class="flex items-center gap-2">
-                            <span>✅</span>
-                            <span>{{ $flashMessage }}</span>
-                        </div>
-                        <button type="button" @click="show = false" class="text-sm font-bold text-emerald-600 hover:text-emerald-900" aria-label="Tutup">&times;</button>
-                    </div>
-                @endif
+
 
             {{-- 1. SCREEN: Dashboard Rapat --}}
             @if ($active === 'Dashboard Rapat' || $active === 'Dashboard')
@@ -1492,6 +1484,83 @@
                         </ul>
 
                         <x-senat.button variant="secondary" size="sm" class="mt-5" type="button" wire:click="saveAction('Cetak Berita Acara Voting')">Cetak Berita Acara</x-senat.button>
+                    </section>
+
+                    {{-- Riwayat & Daftar Sesi E-Voting Persidangan --}}
+                    <section class="lg:col-span-2 rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h2 class="text-[18px] font-bold text-senat-ink">Riwayat &amp; Daftar Sesi E-Voting Persidangan</h2>
+                                <p class="mt-1 text-[12px] text-senat-body">Pilih sesi voting untuk ditampilkan pada kartu monitor utama.</p>
+                            </div>
+                            <x-senat.badge state="info">{{ count($votingHistory) }} Sesi</x-senat.badge>
+                        </div>
+
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="min-w-full divide-y divide-senat-sidebarLine text-left">
+                                <thead>
+                                    <tr class="bg-senat-surface text-[11px] font-bold uppercase tracking-wider text-senat-muted">
+                                        <th class="px-3 py-3">ID</th>
+                                        <th class="px-3 py-3">Pokok Putusan / Judul Voting</th>
+                                        <th class="px-3 py-3">Sidang/Rapat</th>
+                                        <th class="px-3 py-3">Status</th>
+                                        <th class="px-3 py-3 text-center">Total Suara</th>
+                                        <th class="px-3 py-3">Waktu</th>
+                                        <th class="px-3 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-senat-sidebarLine">
+                                    @forelse ($votingHistory as $item)
+                                        @php
+                                            $itemId = (int) ($item['id_voting'] ?? $item['id'] ?? 0);
+                                            $itemTitle = $item['judul_voting'] ?? $item['judul'] ?? 'Sesi Voting Senat';
+                                            $itemStatus = strtolower($item['status'] ?? 'ditutup');
+                                            $itemTotal = (int) ($item['total_suara'] ?? $item['suara_votings_count'] ?? 0);
+                                            $itemRapat = $item['rapat'] ?? [];
+                                            $itemRapatName = is_array($itemRapat)
+                                                ? ($itemRapat['nama_agenda'] ?? $itemRapat['nama_rapat'] ?? $itemRapat['title'] ?? $itemRapat['kode'] ?? '-')
+                                                : ($itemRapat ?: '-');
+                                            $itemDate = ! empty($item['waktu_mulai'])
+                                                ? date('d M Y H:i', strtotime($item['waktu_mulai']))
+                                                : '-';
+                                            $isActive = $itemId === (int) $votingId;
+                                        @endphp
+                                        <tr class="{{ $isActive ? 'bg-senat-badgeBg/60' : 'hover:bg-senat-surface/60' }} transition-colors">
+                                            <td class="px-3 py-3 text-[12px] font-mono font-semibold text-senat-ink">#{{ $itemId ?: '-' }}</td>
+                                            <td class="px-3 py-3">
+                                                <p class="text-[13px] font-semibold text-senat-ink">{{ $itemTitle }}</p>
+                                                @if ($isActive)
+                                                    <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10.5px] font-bold text-emerald-700">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Sedang Dipantau
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-3 text-[12px] text-senat-body">{{ $itemRapatName }}</td>
+                                            <td class="px-3 py-3">
+                                                @if ($itemStatus === 'dibuka')
+                                                    <x-senat.badge state="success">DIBUKA</x-senat.badge>
+                                                @else
+                                                    <x-senat.badge state="danger">DITUTUP</x-senat.badge>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-3 text-center text-[13px] font-bold text-senat-ink">{{ $itemTotal }}</td>
+                                            <td class="px-3 py-3 text-[12px] text-senat-body">{{ $itemDate }}</td>
+                                            <td class="px-3 py-3 text-right">
+                                                <x-senat.button variant="{{ $isActive ? 'secondary' : 'primary' }}" size="sm" type="button" wire:click="selectVotingSession({{ $itemId }})">
+                                                    {{ $isActive ? 'Sedang Dipantau' : 'Pilih Sesi' }}
+                                                </x-senat.button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="px-3 py-6 text-center text-[12px] text-senat-muted">
+                                                Belum ada riwayat sesi e-voting persidangan.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </section>
 
                     {{-- Modal Form Gelar Voting Baru — handler native, tidak bergantung Livewire/Alpine --}}

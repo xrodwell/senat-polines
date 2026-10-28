@@ -36,7 +36,7 @@ class AdminPreviewTest extends TestCase
         Livewire::withQueryParams(['tab' => 'E-Voting & Pengambilan Keputusan'])
             ->test(AdminPreview::class)
             ->assertSet('active', 'E-Voting & Pengambilan Keputusan')
-            ->assertSee('Pemungutan Suara · Sidang Pleno Akreditasi Program Studi');
+            ->assertSee('Rekap Suara Masuk');
     }
 
     public function test_sidebar_has_exactly_two_groups_and_all_screens(): void
