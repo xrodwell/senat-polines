@@ -19,7 +19,6 @@
     "name": "senat-polines",
     "version": "1.0.0",
     "description": "Web demo berbasis Laravel 11.",
-    3
     "main": "tailwind.config.js",
     "repository": {
         "type": "git",
