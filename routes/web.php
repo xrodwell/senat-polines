@@ -43,9 +43,13 @@ Route::get('/berita/{slug}', [PublicController::class, 'newsShow'])->name('publi
 | Portal Internal — Figma section 2090:2 (anggota 12x, sekretariat 13x)
 |--------------------------------------------------------------------------
 */
+Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('logout');
+
 Route::prefix('portal')->group(function (): void {
     // 11 — Login Portal
     Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
+    Route::post('/login', [PortalController::class, 'authenticate'])->name('portal.login.submit');
+    Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('portal.logout');
 
     // 12 — Anggota Senat
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');

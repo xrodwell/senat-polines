@@ -29,6 +29,13 @@
                 <span class="hidden sm:inline">Anggota Senat</span>
             </a>
 
+            {{-- Logout Button --}}
+            <a href="{{ route('portal.logout') }}"
+               class="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-rose-300 transition-all hover:bg-rose-950/80 hover:text-white" title="Keluar dari sesi login">
+                <span>🚪</span>
+                <span class="hidden sm:inline">Logout</span>
+            </a>
+
             {{-- Role 3: Admin Sekretariat --}}
             <a href="{{ route('admin.preview') }}"
                class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all {{ request()->routeIs('admin.*') || request()->routeIs('portal.secretariat.*') ? 'bg-[#f37021] text-white shadow-sm ring-1 ring-white/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
