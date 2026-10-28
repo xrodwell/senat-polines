@@ -12,12 +12,12 @@
 
     @vite(['resources/css/app.css'])
     @livewireStyles
+    @livewireScripts(['defer' => true])
 
     @include('components.senat.styles')
 </head>
 <body class="min-h-screen bg-senat-surface font-sans text-senat-body antialiased">
     {{ $slot ?? '' }}
     @include('components.senat.role-switcher')
-    @livewireScripts
 </body>
 </html>

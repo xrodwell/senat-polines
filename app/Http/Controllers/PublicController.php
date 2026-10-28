@@ -30,8 +30,11 @@ class PublicController extends Controller
     /** 01 — Beranda */
     public function home(): View
     {
+        $allPosts = $this->posts->all();
+        $published = array_values(array_filter($allPosts, fn ($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
+
         return view('public.home', [
-            'posts' => $this->posts->all(),
+            'posts' => $published,
             'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'committees' => $this->committees->all(),
@@ -205,8 +208,11 @@ class PublicController extends Controller
     /** 14 — Kanal Berita & Warta */
     public function news(): View
     {
+        $allPosts = $this->posts->all();
+        $published = array_values(array_filter($allPosts, fn ($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
+
         return view('public.news', [
-            'posts' => $this->posts->all(),
+            'posts' => $published,
         ]);
     }
 

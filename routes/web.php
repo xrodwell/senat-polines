@@ -49,6 +49,7 @@ Route::prefix('portal')->group(function (): void {
 
     // 12 — Anggota Senat
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
+    Route::post('/berita/tulis', [PortalController::class, 'storePost'])->name('portal.news.store');
     Route::get('/agenda', [PortalController::class, 'agenda'])->name('portal.agenda');
     Route::get('/notulensi', [PortalController::class, 'minutes'])->name('portal.minutes');
     Route::get('/e-voting', [PortalController::class, 'voting'])->name('portal.voting');

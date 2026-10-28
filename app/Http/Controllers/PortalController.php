@@ -8,6 +8,9 @@ use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use App\Support\SenatDirectory;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PortalController extends Controller
@@ -46,12 +49,59 @@ class PortalController extends Controller
     /** 12A — Dashboard Anggota · Ringkasan */
     public function dashboard(): View
     {
+        $allPosts = $this->posts->all();
+        $published = array_values(array_filter($allPosts, fn($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
+
         return view('portal.dashboard', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
             'aspirations' => $this->aspirations->all(),
-            'announcements' => $this->posts->all(),
+            'announcements' => $published,
+            'allPosts' => $allPosts,
         ]);
+    }
+
+    /** Tambah & Publikasikan Berita langsung dari Dashboard */
+    public function storePost(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|min:3|max:255',
+            'category' => 'required|string',
+            'body' => 'required|string',
+            'thumbnail' => 'nullable|string',
+            'status' => 'nullable|string|in:Terpublikasi,Draf',
+        ], [
+            'title.required' => 'Judul berita wajib diisi.',
+            'title.min' => 'Judul berita minimal 3 karakter.',
+            'category.required' => 'Kategori berita wajib dipilih.',
+            'body.required' => 'Isi berita lengkap wajib diisi.',
+        ]);
+
+        $status = $validated['status'] ?? 'Terpublikasi';
+        $excerpt = Str::limit(strip_tags($validated['body']), 180);
+        $thumbnail = !empty($validated['thumbnail'])
+            ? $validated['thumbnail']
+            : 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80';
+
+        $payload = [
+            'title' => $validated['title'],
+            'category' => $validated['category'],
+            'date' => date('Y-m-d'),
+            'status' => $status,
+            'excerpt' => $excerpt,
+            'body_text' => $validated['body'],
+            'body' => explode("\n\n", $validated['body']),
+            'thumbnail' => $thumbnail,
+            'author' => 'Sekretariat Senat Polines',
+        ];
+
+        $this->posts->create($payload);
+
+        $msg = $status === 'Terpublikasi'
+            ? "Berita \"{$validated['title']}\" sukses dipublikasikan dan langsung tampil di dashboard!"
+            : "Draf berita \"{$validated['title']}\" berhasil disimpan.";
+
+        return redirect()->route('portal.dashboard')->with('success', $msg);
     }
 
     /** 12B — Agenda & Presensi */
