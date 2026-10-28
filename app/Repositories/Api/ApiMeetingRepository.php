@@ -32,7 +32,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
 
     private function getBaseUrl(): string
     {
-        return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:3000/api')), '/');
+        return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
     }
 
     public function all(): array
@@ -47,25 +47,41 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
             $response = Http::timeout(3)->get("{$apiUrl}/rapat");
 
             if ($response->successful()) {
-                $apiData = $response->json('data', []);
-                if (!empty($apiData)) {
+                $items = $response->json('data', []);
+                if (!empty($items)) {
                     $result = array_map(function ($r) {
+                        $id = $r['id_rapat'] ?? 1;
+                        $jenis = $r['jenis_rapat']['nama_jenis'] ?? match ((int) ($r['id_jenis_rapat'] ?? 1)) {
+                            1 => 'Pleno',
+                            2 => 'Terbuka',
+                            3 => 'Pimpinan',
+                            4 => 'Komisi',
+                            5 => 'Panitia Kerja / Badan Pekerja',
+                            6 => 'Rapat/Sidang Lainnya',
+                            default => 'Pleno',
+                        };
+
+                        $waktuRaw = $r['waktu'] ?? '09:00:00';
+                        $waktuFmt = substr($waktuRaw, 0, 5) . ' WIB';
+
                         return [
-                            'id' => $r['id_rapat'],
-                            'title' => $r['nama_agenda'],
-                            'type' => $r['jenis_rapat']['nama_jenis'] ?? 'Sidang Senat',
-                            'date' => $r['tanggal'] ?? date('Y-m-d'),
-                            'time' => $r['waktu'] ? substr($r['waktu'], 0, 5) . ' WIB' : '09:00 WIB',
-                            'room' => $r['tempat'] ?? 'Ruang Sidang Senat',
+                            'id' => $id,
+                            'title' => $r['nama_agenda'] ?? 'Agenda Sidang Senat',
+                            'type' => $jenis,
+                            'date' => isset($r['tanggal']) ? substr($r['tanggal'], 0, 10) : date('Y-m-d'),
+                            'time' => $waktuFmt,
+                            'room' => $r['tempat'] ?? 'Ruang Sidang Senat Polines',
                             'status' => $r['status'] ?? 'Terjadwal',
-                            'session_code' => $r['kode_sesi'] ?? 'PLN-892',
-                            'qr_token' => $r['token_qr'] ?? 'token-polines',
+                            'session_code' => $r['kode_sesi'] ?? ('PLN-' . str_pad((string) $id, 3, '0', STR_PAD_LEFT)),
+                            'qr_token' => $r['token_qr'] ?? ('token-polines-session-' . $id),
                             'total_invited' => 34,
                             'present_count' => 0,
                             'is_presensi_open' => (bool) ($r['is_presensi_open'] ?? false),
                             'is_kuorum_locked' => (bool) ($r['is_kuorum_locked'] ?? false),
+                            'id_jenis_rapat' => (int) ($r['id_jenis_rapat'] ?? 1),
+                            'id_user' => (int) ($r['id_user'] ?? 1),
                         ];
-                    }, $apiData);
+                    }, $items);
 
                     self::$cachedAll = $result;
                     self::$cachedAllTime = time();
@@ -127,7 +143,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
     {
         return array_values(array_filter(
             $this->all(),
-            fn (array $meeting): bool => ($meeting['status'] ?? '') === 'Terjadwal'
+            fn (array $meeting): bool => in_array($meeting['status'] ?? '', ['Terjadwal', 'dijadwalkan'], true)
         ));
     }
 
