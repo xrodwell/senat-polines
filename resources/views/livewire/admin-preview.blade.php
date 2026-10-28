@@ -118,16 +118,6 @@
                     </div>
                 </header>
 
-                @if ($flashMessage)
-                    <div class="mb-5 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800 shadow-sm" x-data="{ show: true }" x-show="show">
-                        <div class="flex items-center gap-2">
-                            <span>✅</span>
-                            <span>{{ $flashMessage }}</span>
-                        </div>
-                        <button type="button" @click="show = false" class="text-sm font-bold text-emerald-600 hover:text-emerald-900" aria-label="Tutup">&times;</button>
-                    </div>
-                @endif
-
             {{-- 1. SCREEN: Dashboard Rapat --}}
             @if ($active === 'Dashboard Rapat' || $active === 'Dashboard')
                 <div wire:key="screen-dashboard-rapat" class="space-y-6">
@@ -258,12 +248,17 @@
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <label class="text-[12px] font-semibold text-senat-ink">Jenis Sidang Senat <span class="text-rose-500">*</span></label>
-                                    <select wire:model="meetingJenisRapatId"
+                                    <select wire:model="meetingJenisRapatId" required
                                             class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                                        <option value="1">Rapat Pleno</option>
-                                        <option value="2">Rapat Komisi</option>
-                                        <option value="3">Rapat Koordinasi</option>
+                                        <option value="">-- Pilih Jenis Rapat --</option>
+                                        <option value="1">Pleno</option>
+                                        <option value="2">Terbuka</option>
+                                        <option value="3">Pimpinan</option>
+                                        <option value="4">Komisi</option>
+                                        <option value="5">Panitia Kerja / Badan Pekerja</option>
+                                        <option value="6">Rapat/Sidang Lainnya</option>
                                     </select>
+                                    @error('meetingJenisRapatId') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="text-[12px] font-semibold text-senat-ink">Tanggal dan waktu <span class="text-rose-500">*</span></label>
@@ -466,9 +461,20 @@
                 <div class="grid gap-5 xl:grid-cols-[680px_minmax(0,1fr)]">
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                         <h2 class="text-[18px] font-bold text-senat-ink">Jalannya Pembahasan</h2>
-                        <textarea rows="8" aria-label="Jalannya pembahasan"
+                        <textarea rows="6" aria-label="Jalannya pembahasan"
                                   class="mt-3 w-full rounded-[10px] border border-senat-border bg-white p-4 text-[13px] leading-relaxed text-senat-ink placeholder:text-senat-muted focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link"
                                   placeholder="Catatan jalannya pembahasan sidang diisi oleh notulis dan diverifikasi sekretariat sebelum risalah disahkan."></textarea>
+
+                        {{-- Form Opsi Rekomendasi Keputusan Dosen --}}
+                        <div class="mt-4">
+                            <label class="text-[12px] font-semibold text-senat-ink">Rekomendasi Keputusan <span class="text-rose-500">*</span></label>
+                            <select class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                <option value="">-- Pilih Rekomendasi Keputusan --</option>
+                                <option value="Pertimbangan">1. Pertimbangan</option>
+                                <option value="Penetapan">2. Penetapan</option>
+                                <option value="Keputusan">3. Keputusan</option>
+                            </select>
+                        </div>
 
                         <h3 class="mt-5 text-[13px] font-semibold text-senat-ink">Lampiran Dokumen</h3>
                         @if ($notulenItem)
@@ -856,4 +862,4 @@
 
         </div>
     </main>
-</div>
+</div> 
