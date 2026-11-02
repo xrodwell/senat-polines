@@ -30,11 +30,8 @@ class PublicController extends Controller
     /** 01 — Beranda */
     public function home(): View
     {
-        $allPosts = $this->posts->all();
-        $published = array_values(array_filter($allPosts, fn ($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
-
         return view('public.home', [
-            'posts' => $published,
+            'posts' => $this->publishedPosts(),
             'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'committees' => $this->committees->all(),
@@ -208,11 +205,8 @@ class PublicController extends Controller
     /** 14 — Kanal Berita & Warta */
     public function news(): View
     {
-        $allPosts = $this->posts->all();
-        $published = array_values(array_filter($allPosts, fn ($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
-
         return view('public.news', [
-            'posts' => $published,
+            'posts' => $this->publishedPosts(),
         ]);
     }
 
@@ -233,5 +227,23 @@ class PublicController extends Controller
             'post' => $post,
             'related' => $related,
         ]);
+    }
+
+    private function publishedPosts(): array
+    {
+        $published = array_values(array_filter(
+            $this->posts->all(),
+            fn ($post) => ($post['status'] ?? 'Terpublikasi') === 'Terpublikasi'
+        ));
+
+        usort($published, function ($a, $b): int {
+            $dateOrder = strcmp(
+                $b['published_at'] ?? $b['date'] ?? '',
+                $a['published_at'] ?? $a['date'] ?? ''
+            );
+            return $dateOrder !== 0 ? $dateOrder : ((int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
+        });
+
+        return $published;
     }
 }

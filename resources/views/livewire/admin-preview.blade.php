@@ -679,7 +679,7 @@
                                         <span class="text-[11px] text-senat-muted">{{ $post['date'] }}</span>
                                     </div>
 
-                                    <div class="mt-2.5 flex items-start gap-3.5">
+                                    <div class="mt-3 flex items-start gap-5">
                                         @if (!empty($post['thumbnail']))
                                             <img src="{{ $post['thumbnail'] }}"
                                                  alt="{{ $post['title'] }}"
@@ -744,14 +744,6 @@
                             <h2 class="text-[18px] font-bold text-senat-ink">Antrean Unggah Media</h2>
                             <p class="mt-1 text-[12px] text-senat-body">Format PDF atau gambar dokumentasi maksimal 10MB</p>
 
-                            {{-- Input File Asli (Tersembunyi) --}}
-                            <input type="file"
-                                   wire:model="mediaFile"
-                                   id="media-file-input"
-                                   accept="image/png,image/jpeg,image/webp,image/jpg,application/pdf"
-                                   class="hidden">
-
-                            {{-- Dropzone / File Picker Visual --}}
                             @if ($mediaFile)
                                 {{-- Berkas Terpilih & Siap Disimpan --}}
                                 <div class="mt-5 rounded-[12px] border-2 border-senat-primary/30 bg-[#f4f8fc] p-5 text-center">
@@ -787,28 +779,37 @@
                                     </div>
                                 </div>
                             @else
-                                {{-- Area Pilih Berkas --}}
-                                <label for="media-file-input"
-                                       class="mt-5 block cursor-pointer rounded-[12px] border-2 border-dashed border-senat-border bg-senat-surface p-6 text-center transition-colors hover:border-senat-primary hover:bg-[#f6f9fc]">
-                                    <span class="text-senat-link inline-block">
-                                        <x-senat.icon name="upload" class="mx-auto h-8 w-8 text-senat-link" />
-                                    </span>
-                                    <p class="mt-2 text-[13px] font-medium text-senat-ink">Tarik berkas dokumentasi ke sini</p>
-                                    <p class="mt-1 text-[11px] text-senat-muted">atau klik untuk memilih dari komputer</p>
-                                    <div class="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-bold text-senat-muted uppercase">
-                                        <span class="rounded bg-white px-2 py-0.5 border border-senat-border">PNG</span>
-                                        <span class="rounded bg-white px-2 py-0.5 border border-senat-border">JPG</span>
-                                        <span class="rounded bg-white px-2 py-0.5 border border-senat-border">WEBP</span>
-                                        <span class="rounded bg-white px-2 py-0.5 border border-senat-border">PDF</span>
-                                    </div>
-
-                                    <div class="mt-4">
-                                        <span class="inline-flex items-center justify-center gap-1.5 rounded-md bg-[#f8fafc] px-4 py-2 text-[11.5px] font-semibold text-senat-primary border border-senat-border shadow-2xs hover:border-senat-primary">
-                                            <x-senat.icon name="file-text" class="h-3.5 w-3.5" />
-                                            <span>Pilih Berkas</span>
+                                <div x-data="{ isDragging: false }"
+                                     @dragenter.prevent="isDragging = true"
+                                     @dragover.prevent="isDragging = true"
+                                     @dragleave.prevent="if (!$event.currentTarget.contains($event.relatedTarget)) isDragging = false"
+                                     @drop.prevent.stop="isDragging = false; if ($event.dataTransfer.files.length) $wire.upload('mediaFile', $event.dataTransfer.files[0])"
+                                     :class="isDragging ? 'border-senat-primary bg-blue-50 ring-2 ring-senat-primary/20' : ''"
+                                     class="mt-5 rounded-[12px] border-2 border-dashed border-senat-border bg-senat-surface p-6 text-center transition-colors hover:border-senat-primary hover:bg-[#f6f9fc]">
+                                    <input type="file"
+                                           wire:model="mediaFile"
+                                           id="media-file-input"
+                                           accept=".png,.jpg,.jpeg,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                                           class="hidden">
+                                    <label for="media-file-input" class="block cursor-pointer">
+                                        <span class="text-senat-link inline-block">
+                                            <x-senat.icon name="upload" class="mx-auto h-8 w-8 text-senat-link" />
                                         </span>
-                                    </div>
-                                </label>
+                                        <p class="mt-2 text-[13px] font-medium text-senat-ink">Tarik satu berkas ke sini</p>
+                                        <p class="mt-1 text-[11px] text-senat-muted">atau klik untuk memilih dari komputer · maksimal 10MB</p>
+                                        <div class="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-[10px] font-bold text-senat-muted uppercase">
+                                            @foreach (['PNG', 'JPG', 'WEBP', 'PDF', 'DOC', 'DOCX', 'XLS', 'XLSX', 'PPT', 'PPTX'] as $format)
+                                                <span class="rounded border border-senat-border bg-white px-2 py-0.5">{{ $format }}</span>
+                                            @endforeach
+                                        </div>
+                                        <div class="mt-4">
+                                            <span class="inline-flex items-center justify-center gap-1.5 rounded-md border border-senat-border bg-[#f8fafc] px-4 py-2 text-[11.5px] font-semibold text-senat-primary shadow-2xs hover:border-senat-primary">
+                                                <x-senat.icon name="file-text" class="h-3.5 w-3.5" />
+                                                <span>Pilih Berkas</span>
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
                             @endif
 
                             {{-- Loading Indikator File Livewire --}}
@@ -837,7 +838,12 @@
                                     <div wire:key="media-item-{{ $m['id'] }}" class="flex items-center justify-between gap-3 rounded-lg border border-senat-border bg-senat-surface p-2.5 transition-colors hover:bg-[#f6f9fc]">
                                         <div class="flex items-center gap-2.5 min-w-0">
                                             @if (($m['type'] ?? '') === 'image')
-                                                <img src="{{ $m['url'] }}" alt="{{ $m['name'] }}" class="h-10 w-10 shrink-0 rounded-md border border-senat-border object-cover">
+                                                <button type="button"
+                                                        wire:click="openMediaPreview('{{ $m['id'] }}')"
+                                                        class="shrink-0 rounded-md focus:outline-hidden focus:ring-2 focus:ring-senat-primary"
+                                                        aria-label="Pratinjau {{ $m['original_name'] ?? $m['name'] }}">
+                                                    <img src="{{ $m['url'] }}" alt="" class="h-10 w-10 rounded-md border border-senat-border object-cover">
+                                                </button>
                                             @else
                                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white border border-senat-border text-senat-link">
                                                     <x-senat.icon name="file-text" class="h-5 w-5" />
@@ -850,10 +856,16 @@
                                         </div>
 
                                         <div class="flex items-center gap-1 shrink-0">
+                                            <button type="button"
+                                                    wire:click="openMediaPreview('{{ $m['id'] }}')"
+                                                    title="Pratinjau berkas"
+                                                    class="rounded-md border border-senat-border bg-white px-2 py-1 text-[10.5px] font-semibold text-senat-primary hover:border-senat-primary transition-colors">
+                                                Pratinjau
+                                            </button>
                                             @if (($m['type'] ?? '') === 'image')
                                                 <button type="button"
-                                                        wire:click="useMediaAsPostThumbnail('{{ $m['url'] }}')"
-                                                        title="Gunakan sbg Gambar Berita"
+                                                        wire:click="useMediaAsPostImage('{{ $m['id'] }}')"
+                                                        title="Gunakan sebagai gambar berita"
                                                         class="rounded-md border border-senat-border bg-white px-2 py-1 text-[10.5px] font-semibold text-senat-primary hover:border-senat-primary transition-colors">
                                                     Pilih Gambar
                                                 </button>
@@ -883,12 +895,12 @@
 
                 {{-- MODAL DIALOG: Tulis & Edit Berita --}}
                 @if ($showPostModal)
-                    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto"
+                    <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-2 backdrop-blur-xs sm:p-4"
                          wire:click.self="closePostModal"
                          wire:keydown.escape="closePostModal">
-                        <div class="relative w-full max-w-2xl rounded-[16px] border border-senat-border bg-white shadow-2xl overflow-hidden my-8">
+                        <div class="relative my-auto flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-[16px] border border-senat-border bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
                             {{-- Header Modal --}}
-                            <div class="flex items-center justify-between border-b border-senat-sidebarLine px-6 py-4 bg-[#f8fafc]">
+                            <div class="flex shrink-0 items-center justify-between border-b border-senat-sidebarLine bg-[#f8fafc] px-4 py-4 sm:px-6">
                                 <div>
                                     <h3 class="text-[17px] font-bold text-senat-ink">
                                         {{ $editingPostId ? 'Edit Warta & Berita Senat' : 'Tulis Berita & Siaran Pers Baru' }}
@@ -903,7 +915,7 @@
                             </div>
 
                             {{-- Form Isi Modal --}}
-                            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                            <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
                                 {{-- Alert jika ada validasi yang belum lengkap --}}
                                 @if ($errors->any())
                                     <div class="rounded-lg bg-red-50 border border-red-200 p-3 text-[12px] text-red-700">
@@ -970,37 +982,72 @@
                                     @error('postBody') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
                                 </div>
 
-                                {{-- Gambar / Thumbnail Berita --}}
+                                {{-- Galeri Gambar Berita --}}
                                 <div>
-                                    <label class="block text-[12px] font-bold text-senat-ink">Gambar / Thumbnail Berita</label>
-                                    <div class="mt-1 flex gap-2">
-                                        <input type="text"
-                                               wire:model.live.debounce.300ms="postThumbnail"
-                                               placeholder="URL Gambar (misal: https://... atau pilih dari repositori media)"
-                                               class="w-full rounded-lg border border-senat-border px-3.5 py-2 text-[13px] text-senat-ink placeholder-senat-muted focus:border-senat-primary focus:outline-hidden">
-                                    </div>
-                                    @if (!empty($postThumbnail))
-                                        <div class="mt-2.5 flex items-center gap-3 rounded-lg border border-senat-border bg-senat-surface p-2">
-                                            <img src="{{ $postThumbnail }}" alt="Preview" class="h-14 w-20 rounded object-cover border border-senat-border">
-                                            <div class="min-w-0 flex-1">
-                                                <p class="text-[11px] font-medium text-senat-ink truncate">{{ $postThumbnail }}</p>
-                                                <button type="button" wire:click="$set('postThumbnail', '')" class="mt-0.5 text-[10.5px] font-semibold text-red-600 hover:underline">Hapus Gambar</button>
-                                            </div>
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <label class="block text-[12px] font-bold text-senat-ink">Galeri Gambar Berita</label>
+                                            <p class="mt-0.5 text-[11px] text-senat-muted">Pilih beberapa gambar tersimpan atau tambahkan lewat tautan gambar.</p>
                                         </div>
-                                    @endif
-                                    @if (!empty($mediaList))
-                                        <div class="mt-2 flex items-center gap-1.5 flex-wrap">
-                                            <span class="text-[11px] text-senat-muted">Pilih cepat dari berkas:</span>
-                                            @foreach (array_slice($mediaList, 0, 3) as $fastMedia)
-                                                @if (($fastMedia['type'] ?? '') === 'image')
-                                                    <button type="button"
-                                                            wire:click="$set('postThumbnail', '{{ $fastMedia['url'] }}')"
-                                                            class="rounded bg-senat-surface border border-senat-border px-2 py-0.5 text-[10.5px] font-medium text-senat-ink hover:border-senat-primary truncate max-w-[140px]">
-                                                        {{ $fastMedia['original_name'] ?? $fastMedia['name'] }}
-                                                    </button>
-                                                @endif
+                                        <button type="button" wire:click="openMediaPicker" class="rounded-md border border-senat-border bg-white px-3 py-2 text-[11px] font-semibold text-senat-primary hover:border-senat-primary">
+                                            Pilih dari Media Tersimpan
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                                        <input type="url" wire:model="postImageUrl" placeholder="https://alamat-gambar.jpg"
+                                               class="min-w-0 flex-1 rounded-lg border border-senat-border px-3.5 py-2 text-[13px] text-senat-ink placeholder-senat-muted focus:border-senat-primary focus:outline-hidden">
+                                        <button type="button" wire:click="addPostImageFromUrl" class="rounded-lg border border-senat-border bg-senat-surface px-4 py-2 text-[12px] font-semibold text-senat-primary hover:border-senat-primary">
+                                            Tambahkan Tautan
+                                        </button>
+                                    </div>
+                                    @error('postImageUrl') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
+
+                                    @if (count($postImages) > 0)
+                                        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                            @foreach ($postImages as $index => $image)
+                                                <div wire:key="post-image-{{ $index }}" class="overflow-hidden rounded-lg border border-senat-border bg-senat-surface">
+                                                    <img src="{{ $image }}" alt="Gambar berita {{ $index + 1 }}" class="h-28 w-full object-cover">
+                                                    <div class="flex items-center justify-between gap-2 p-2">
+                                                        <span class="truncate text-[10px] font-medium text-senat-muted">{{ $index === 0 ? 'Gambar utama' : 'Gambar ' . ($index + 1) }}</span>
+                                                        <button type="button" wire:click="removePostImage({{ $index }})" class="shrink-0 text-[10px] font-semibold text-red-600 hover:underline">Hapus</button>
+                                                    </div>
+                                                </div>
                                             @endforeach
                                         </div>
+                                    @endif
+
+                                    @if ($errors->has('postImages') || $errors->has('postImages.*'))
+                                        <p class="text-[11px] font-semibold text-red-600">{{ $errors->first('postImages') ?: $errors->first('postImages.*') }}</p>
+                                    @endif
+                                </div>
+
+                                {{-- Lampiran berita --}}
+                                <div class="rounded-lg border border-senat-border bg-senat-surface p-3.5">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <h4 class="text-[12px] font-bold text-senat-ink">Lampiran Berita</h4>
+                                            <p class="mt-0.5 text-[11px] text-senat-muted">Dokumen atau berkas lain dari media tersimpan.</p>
+                                        </div>
+                                        <button type="button" wire:click="openMediaPicker" class="rounded-md border border-senat-border bg-white px-3 py-1.5 text-[11px] font-semibold text-senat-primary hover:border-senat-primary">Pilih Berkas</button>
+                                    </div>
+                                    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                                        <input type="text" wire:model="postAttachmentName" placeholder="Nama lampiran (opsional)"
+                                               class="min-w-0 rounded-lg border border-senat-border px-3 py-2 text-[12px] text-senat-ink sm:w-1/3">
+                                        <input type="url" wire:model="postAttachmentUrl" placeholder="Tautan dokumen atau berkas"
+                                               class="min-w-0 flex-1 rounded-lg border border-senat-border px-3 py-2 text-[12px] text-senat-ink">
+                                        <button type="button" wire:click="addPostAttachmentFromUrl" class="rounded-lg border border-senat-border bg-white px-3 py-2 text-[11px] font-semibold text-senat-primary">Tambah</button>
+                                    </div>
+                                    @error('postAttachmentUrl') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
+                                    @if (count($postAttachments) > 0)
+                                        <ul class="mt-3 space-y-2">
+                                            @foreach ($postAttachments as $index => $attachment)
+                                                <li wire:key="post-attachment-{{ $index }}" class="flex items-center justify-between gap-3 rounded-md border border-senat-border bg-white px-3 py-2">
+                                                    <a href="{{ $attachment['url'] }}" target="_blank" rel="noopener noreferrer" class="min-w-0 truncate text-[11px] font-medium text-senat-link hover:underline">{{ $attachment['name'] }}</a>
+                                                    <button type="button" wire:click="removePostAttachment({{ $index }})" class="shrink-0 text-[10px] font-semibold text-red-600">Hapus</button>
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     @endif
                                 </div>
 
@@ -1020,12 +1067,12 @@
                                 </div>
 
                                 {{-- Footer Aksi Modal --}}
-                                <div class="flex items-center justify-between border-t border-senat-sidebarLine pt-4">
+                                <div class="flex flex-col-reverse items-stretch justify-between gap-3 border-t border-senat-sidebarLine pt-4 sm:flex-row sm:items-center">
                                     <x-senat.button variant="secondary" size="md" type="button" wire:click="closePostModal">
                                         Batal
                                     </x-senat.button>
 
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-col gap-2 sm:flex-row">
                                         <x-senat.button variant="secondary" size="md" type="button" wire:click="savePost(false)" wire:loading.attr="disabled">
                                             <span wire:loading.remove wire:target="savePost(false)">Simpan sebagai Draf</span>
                                             <span wire:loading wire:target="savePost(false)">Menyimpan...</span>
@@ -1039,6 +1086,100 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                @endif
+
+                @if ($showMediaPicker)
+                    <div class="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 p-2 sm:p-4"
+                         wire:click.self="closeMediaPicker"
+                         wire:keydown.escape="closeMediaPicker">
+                        <section class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]"
+                                 role="dialog" aria-modal="true" aria-labelledby="media-picker-title">
+                            <header class="flex shrink-0 items-center justify-between border-b border-senat-sidebarLine px-4 py-4 sm:px-6">
+                                <div>
+                                    <h3 id="media-picker-title" class="text-[16px] font-bold text-senat-ink">Pilih Media untuk Berita</h3>
+                                    <p class="mt-1 text-[11px] text-senat-muted">Klik gambar untuk menambah atau menghapus dari galeri. Dokumen akan menjadi lampiran.</p>
+                                </div>
+                                <button type="button" wire:click="closeMediaPicker" class="rounded-md p-2 text-senat-muted hover:bg-senat-surface" aria-label="Tutup pemilih media">×</button>
+                            </header>
+                            <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+                                @if (count($mediaList) > 0)
+                                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                        @foreach ($mediaList as $m)
+                                            @php
+                                                $selectedInPost = ($m['type'] ?? '') === 'image'
+                                                    ? in_array($m['url'] ?? '', $postImages, true)
+                                                    : collect($postAttachments)->contains('url', $m['url'] ?? '');
+                                            @endphp
+                                            <button type="button"
+                                                    wire:key="media-picker-item-{{ $m['id'] }}"
+                                                    wire:click="toggleMediaInPost('{{ $m['id'] }}')"
+                                                    class="overflow-hidden rounded-xl border text-left transition {{ $selectedInPost ? 'border-senat-primary ring-2 ring-senat-primary/20' : 'border-senat-border hover:border-senat-primary' }}">
+                                                @if (($m['type'] ?? '') === 'image')
+                                                    <img src="{{ $m['url'] }}" alt="{{ $m['original_name'] ?? $m['name'] }}" class="h-28 w-full bg-senat-surface object-cover">
+                                                @else
+                                                    <span class="flex h-28 items-center justify-center bg-senat-surface text-senat-link">
+                                                        <x-senat.icon name="file-text" class="h-9 w-9" />
+                                                    </span>
+                                                @endif
+                                                <span class="block p-2.5">
+                                                    <span class="block truncate text-[11px] font-semibold text-senat-ink">{{ $m['original_name'] ?? $m['name'] }}</span>
+                                                    <span class="mt-1 block text-[10px] font-medium {{ $selectedInPost ? 'text-senat-link' : 'text-senat-muted' }}">
+                                                        {{ $selectedInPost ? 'Dipilih · klik untuk batal' : (($m['type'] ?? '') === 'image' ? 'Gambar' : 'Lampiran') }}
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="rounded-lg border border-dashed border-senat-border p-8 text-center text-[12px] text-senat-muted">Belum ada media tersimpan. Unggah gambar atau dokumen terlebih dahulu.</p>
+                                @endif
+                            </div>
+                            <footer class="flex shrink-0 items-center justify-between gap-3 border-t border-senat-sidebarLine px-4 py-3 sm:px-6">
+                                <span class="text-[11px] text-senat-muted">{{ count($postImages) }} gambar · {{ count($postAttachments) }} lampiran dipilih</span>
+                                <button type="button" wire:click="closeMediaPicker" class="rounded-lg bg-senat-primary px-4 py-2 text-[12px] font-semibold text-white hover:bg-senat-primaryHover">Selesai</button>
+                            </footer>
+                        </section>
+                    </div>
+                @endif
+
+                @php
+                    $previewMedia = collect($mediaList)->firstWhere('id', $mediaPreviewId);
+                @endphp
+                @if ($showMediaPreviewModal && $previewMedia)
+                    <div class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/70 p-2 sm:p-4"
+                         wire:click.self="closeMediaPreview"
+                         wire:keydown.escape="closeMediaPreview">
+                        <section class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]"
+                                 role="dialog" aria-modal="true" aria-labelledby="media-preview-title">
+                            <header class="flex shrink-0 items-center justify-between gap-3 border-b border-senat-sidebarLine px-4 py-3 sm:px-6">
+                                <div class="min-w-0">
+                                    <h3 id="media-preview-title" class="truncate text-[14px] font-bold text-senat-ink">{{ $previewMedia['original_name'] ?? $previewMedia['name'] }}</h3>
+                                    <p class="text-[10px] text-senat-muted">{{ $previewMedia['size'] ?? '-' }} · {{ $previewMedia['uploaded_at'] ?? 'Baru saja' }}</p>
+                                </div>
+                                <button type="button" wire:click="closeMediaPreview" class="rounded-md p-2 text-senat-muted hover:bg-senat-surface" aria-label="Tutup pratinjau">×</button>
+                            </header>
+                            <div class="min-h-0 flex-1 overflow-auto bg-senat-surface p-3 sm:p-5">
+                                @if (($previewMedia['type'] ?? '') === 'image')
+                                    <img src="{{ $previewMedia['url'] }}" alt="{{ $previewMedia['original_name'] ?? $previewMedia['name'] }}" class="mx-auto max-h-[65dvh] max-w-full rounded-lg object-contain">
+                                @elseif (str_ends_with(strtolower($previewMedia['name'] ?? ''), '.pdf'))
+                                    <iframe src="{{ $previewMedia['url'] }}" title="Pratinjau {{ $previewMedia['original_name'] ?? $previewMedia['name'] }}" class="h-[65dvh] min-h-[300px] w-full rounded-lg border border-senat-border bg-white"></iframe>
+                                @else
+                                    <div class="flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-lg border border-senat-border bg-white p-6 text-center">
+                                        <x-senat.icon name="file-text" class="h-12 w-12 text-senat-link" />
+                                        <p class="text-[12px] font-semibold text-senat-ink">Pratinjau tidak tersedia untuk tipe berkas ini.</p>
+                                        <a href="{{ $previewMedia['url'] }}" target="_blank" rel="noopener noreferrer" class="text-[12px] font-semibold text-senat-link hover:underline">Buka atau unduh berkas</a>
+                                    </div>
+                                @endif
+                            </div>
+                            <footer class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-senat-sidebarLine px-4 py-3 sm:px-6">
+                                <a href="{{ $previewMedia['url'] }}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-semibold text-senat-link hover:underline">Buka berkas</a>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" wire:click="addMediaToPost('{{ $previewMedia['id'] }}')" class="rounded-lg border border-senat-border bg-white px-3 py-2 text-[11px] font-semibold text-senat-primary hover:border-senat-primary">Gunakan di Berita</button>
+                                    <button type="button" wire:click="closeMediaPreview" class="rounded-lg bg-senat-primary px-4 py-2 text-[11px] font-semibold text-white hover:bg-senat-primaryHover">Tutup</button>
+                                </div>
+                            </footer>
+                        </section>
                     </div>
                 @endif
 

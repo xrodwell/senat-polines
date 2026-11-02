@@ -81,7 +81,15 @@ class AdminPreview extends Component
     public string $postExcerpt = '';
     public string $postBody = '';
     public string $postThumbnail = '';
+    public array $postImages = [];
+    public string $postImageUrl = '';
+    public array $postAttachments = [];
+    public string $postAttachmentName = '';
+    public string $postAttachmentUrl = '';
     public string $postAuthor = 'Sekretariat Senat Polines';
+    public bool $showMediaPicker = false;
+    public bool $showMediaPreviewModal = false;
+    public ?string $mediaPreviewId = null;
 
     // Search & Filter Berita
     public string $postSearch = '';
@@ -225,6 +233,11 @@ class AdminPreview extends Component
             ? implode("\n\n", $target['body'])
             : ($target['body'] ?? '');
         $this->postThumbnail = $target['thumbnail'] ?? '';
+        $this->postImages = array_values(array_unique(array_filter(
+            [$this->postThumbnail, ...(is_array($target['images'] ?? null) ? $target['images'] : [])],
+            fn ($image) => is_string($image) && $image !== ''
+        )));
+        $this->postAttachments = is_array($target['attachments'] ?? null) ? $target['attachments'] : [];
         $this->postAuthor = $target['author'] ?? 'Sekretariat Senat Polines';
 
         $this->showPostModal = true;
@@ -246,6 +259,11 @@ class AdminPreview extends Component
         $this->postExcerpt = '';
         $this->postBody = '';
         $this->postThumbnail = '';
+        $this->postImages = [];
+        $this->postImageUrl = '';
+        $this->postAttachments = [];
+        $this->postAttachmentName = '';
+        $this->postAttachmentUrl = '';
         $this->postAuthor = 'Sekretariat Senat Polines';
         $this->resetValidation();
     }
@@ -261,21 +279,30 @@ class AdminPreview extends Component
                 'postBody' => 'required|string',
                 'postDate' => 'nullable|date',
                 'postStatus' => 'required|in:Terpublikasi,Draf',
+                'postImages' => 'array|max:12',
+                'postImages.*' => 'required|string|max:2048|url:http,https',
+                'postAttachments' => 'array|max:12',
+                'postAttachments.*.name' => 'required|string|max:255',
+                'postAttachments.*.url' => 'required|string|max:2048|url:http,https',
             ], [
                 'postTitle.required' => 'Judul berita wajib diisi.',
                 'postTitle.min' => 'Judul berita minimal 3 karakter.',
                 'postCategory.required' => 'Kategori berita wajib dipilih.',
                 'postBody.required' => 'Isi berita wajib diisi.',
                 'postStatus.in' => 'Status berita tidak valid.',
+                'postImages.max' => 'Berita maksimal memiliki 12 gambar.',
+                'postAttachments.max' => 'Berita maksimal memiliki 12 lampiran.',
             ]);
 
             $status = $publishNow
                 ? ($this->editingPostId ? $this->postStatus : 'Terpublikasi')
                 : 'Draf';
             $excerpt = !empty($this->postExcerpt) ? $this->postExcerpt : Str::limit(strip_tags($this->postBody), 180);
-            $thumbnail = !empty($this->postThumbnail)
-                ? $this->postThumbnail
-                : 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80';
+            $images = array_values(array_unique(array_filter(
+                [...$this->postImages, $this->postThumbnail],
+                fn ($image) => is_string($image) && $image !== ''
+            )));
+            $thumbnail = $images[0] ?? 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80';
 
             $payload = [
                 'title' => $this->postTitle,
@@ -286,6 +313,8 @@ class AdminPreview extends Component
                 'body_text' => $this->postBody,
                 'body' => explode("\n\n", $this->postBody),
                 'thumbnail' => $thumbnail,
+                'images' => $images,
+                'attachments' => array_values($this->postAttachments),
                 'author' => $this->postAuthor ?: 'Sekretariat Senat Polines',
             ];
 
@@ -351,11 +380,11 @@ class AdminPreview extends Component
     public function saveMediaFile(): void
     {
         $this->validate([
-            'mediaFile' => 'required|file|mimetypes:application/pdf,image/jpeg,image/png,image/webp|mimes:pdf,jpg,jpeg,png,webp|max:10240',
+            'mediaFile' => 'required|file|mimetypes:application/pdf,image/jpeg,image/png,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation|mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,ppt,pptx|max:10240',
         ], [
             'mediaFile.required' => 'Pilih berkas terlebih dahulu sebelum menyimpan.',
-            'mediaFile.mimetypes' => 'Format berkas harus berupa PDF, JPG, PNG, atau WEBP.',
-            'mediaFile.mimes' => 'Format berkas harus berupa PDF, JPG, PNG, atau WEBP.',
+            'mediaFile.mimetypes' => 'Format berkas harus berupa PDF, gambar, Word, Excel, atau PowerPoint.',
+            'mediaFile.mimes' => 'Format berkas harus berupa PDF, gambar, Word, Excel, atau PowerPoint.',
             'mediaFile.max' => 'Ukuran berkas melebihi batas maksimal 10MB.',
             'mediaFile.file' => 'Berkas tidak valid.',
         ]);
@@ -366,6 +395,12 @@ class AdminPreview extends Component
             'image/jpeg' => 'jpg',
             'image/png' => 'png',
             'image/webp' => 'webp',
+            'application/msword' => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/vnd.ms-excel' => 'xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'application/vnd.ms-powerpoint' => 'ppt',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
             default => throw new \RuntimeException('Tipe media tidak didukung setelah validasi.'),
         };
         $safeName = Str::uuid() . '.' . $ext;
@@ -412,8 +447,166 @@ class AdminPreview extends Component
 
     public function useMediaAsPostThumbnail(string $url): void
     {
-        $this->postThumbnail = $url;
-        $this->flashMessage = 'Tautan berkas terpilih dimasukkan sebagai Thumbnail Berita.';
+        if (! $this->showPostModal) {
+            $this->openCreatePostModal();
+        }
+
+        $this->addPostImage($url);
+        $this->postThumbnail = $this->postImages[0] ?? '';
+        $this->showMediaPicker = false;
+        $this->flashMessage = 'Gambar ditambahkan ke dokumentasi berita.';
+    }
+
+    public function useMediaAsPostImage(string $id): void
+    {
+        $media = collect($this->getMediaList())->firstWhere('id', $id);
+        if (! $media || ($media['type'] ?? '') !== 'image') {
+            $this->flashMessage = 'Gambar media tidak ditemukan.';
+            return;
+        }
+
+        $this->useMediaAsPostThumbnail($media['url']);
+    }
+
+    public function addPostImageFromUrl(): void
+    {
+        $this->validateOnly('postImageUrl', [
+            'postImageUrl' => 'required|string|max:2048|url:http,https',
+        ]);
+
+        $this->addPostImage($this->postImageUrl);
+        $this->postThumbnail = $this->postImages[0] ?? '';
+        $this->postImageUrl = '';
+    }
+
+    public function removePostImage(int $index): void
+    {
+        if (! array_key_exists($index, $this->postImages)) {
+            return;
+        }
+
+        array_splice($this->postImages, $index, 1);
+        $this->postThumbnail = $this->postImages[0] ?? '';
+    }
+
+    public function openMediaPicker(): void
+    {
+        $this->showMediaPicker = true;
+    }
+
+    public function closeMediaPicker(): void
+    {
+        $this->showMediaPicker = false;
+    }
+
+    public function addMediaToPost(string $id): void
+    {
+        $media = collect($this->getMediaList())->firstWhere('id', $id);
+        if (! $media) {
+            $this->flashMessage = 'Berkas media tidak ditemukan.';
+            return;
+        }
+
+        if (! $this->showPostModal) {
+            $this->openCreatePostModal();
+        }
+
+        if (($media['type'] ?? '') === 'image') {
+            $this->addPostImage($media['url']);
+            $this->postThumbnail = $this->postImages[0] ?? '';
+        } else {
+            $this->addPostAttachment($media);
+        }
+
+        $this->closeMediaPreview();
+    }
+
+    public function toggleMediaInPost(string $id): void
+    {
+        $media = collect($this->getMediaList())->firstWhere('id', $id);
+        if (! $media) {
+            $this->flashMessage = 'Berkas media tidak ditemukan.';
+            return;
+        }
+
+        if (($media['type'] ?? '') === 'image') {
+            $index = array_search($media['url'], $this->postImages, true);
+            if ($index === false) {
+                $this->addPostImage($media['url']);
+            } else {
+                array_splice($this->postImages, $index, 1);
+            }
+            $this->postThumbnail = $this->postImages[0] ?? '';
+            return;
+        }
+
+        $attachmentIndex = collect($this->postAttachments)->search(fn ($item) => ($item['url'] ?? '') === ($media['url'] ?? ''));
+        if ($attachmentIndex === false) {
+            $this->addPostAttachment($media);
+        } else {
+            array_splice($this->postAttachments, $attachmentIndex, 1);
+        }
+    }
+
+    public function addPostAttachmentFromUrl(): void
+    {
+        $this->validateOnly('postAttachmentUrl', [
+            'postAttachmentUrl' => 'required|string|max:2048|url:http,https',
+        ]);
+
+        $url = $this->postAttachmentUrl;
+        $this->addPostAttachment([
+            'name' => $this->postAttachmentName ?: basename((string) parse_url($url, PHP_URL_PATH)),
+            'url' => $url,
+        ]);
+        $this->postAttachmentName = '';
+        $this->postAttachmentUrl = '';
+    }
+
+    public function removePostAttachment(int $index): void
+    {
+        if (! array_key_exists($index, $this->postAttachments)) {
+            return;
+        }
+
+        array_splice($this->postAttachments, $index, 1);
+    }
+
+    public function openMediaPreview(string $id): void
+    {
+        if (! collect($this->getMediaList())->contains(fn ($item) => (string)($item['id'] ?? '') === $id)) {
+            $this->flashMessage = 'Berkas media tidak ditemukan.';
+            return;
+        }
+
+        $this->mediaPreviewId = $id;
+        $this->showMediaPreviewModal = true;
+    }
+
+    public function closeMediaPreview(): void
+    {
+        $this->mediaPreviewId = null;
+        $this->showMediaPreviewModal = false;
+    }
+
+    private function addPostImage(string $url): void
+    {
+        if (! in_array($url, $this->postImages, true)) {
+            $this->postImages[] = $url;
+        }
+    }
+
+    private function addPostAttachment(array $media): void
+    {
+        $url = $media['url'] ?? '';
+        if (! $url || collect($this->postAttachments)->contains('url', $url)) {
+            return;
+        }
+
+        $this->postAttachments[] = [
+            'name' => $media['original_name'] ?? $media['name'] ?? 'Lampiran',
+            'url' => $url,
+        ];
     }
 
     public function getMediaList(): array
