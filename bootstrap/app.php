@@ -11,7 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Cloudflare Tunnel / reverse proxy meneruskan skema asli lewat header
+        // X-Forwarded-Proto. Tanpa trust proxy, Laravel membangun URL aset dengan
+        // http:// sehingga di halaman https:// browser memblokir CSS/JS (mixed content).
+        $middleware->trustProxies(at: '*');
+
+        $middleware->validateCsrfTokens(except: [
+            'portal/presensi/submit',
+            'api/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

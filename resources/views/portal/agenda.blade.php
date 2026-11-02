@@ -1,3 +1,28 @@
+@push('head')
+<style>
+    #qr-reader {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+        background: #000;
+    }
+    #qr-reader video {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        border-radius: 8px;
+    }
+    #qr-reader__scan_region {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    #qr-reader__scan_region img {
+        display: none !important;
+    }
+</style>
+@endpush
+
 @extends('layouts.portal')
 
 @section('title', 'Agenda & Presensi — Portal Internal Senat Akademik Polines')
@@ -28,7 +53,7 @@
     $hariIni = $active ? [$active] : [];
 @endphp
 
-<div class="mx-auto w-full max-w-[1116px]" x-data="{ tab: 'hari-ini', kamera: true, kode: '' }">
+<div class="mx-auto w-full max-w-[1116px]" x-data="agendaScanner()">
 
     {{-- ================= PAGE HEADER ================= --}}
     <header class="mb-6">
@@ -89,89 +114,115 @@
                                message="Agenda sidang yang sedang berlangsung akan tampil di sini." />
             @endif
 
-            {{-- Presensi dengan Kamera --}}
-            <div class="rounded-xl border border-senat-line bg-[#f5f8fc] p-4">
-                <div class="grid grid-cols-1 gap-5 lg:grid-cols-[468px_1fr]">
-                    {{-- Camera preview --}}
-                    <div class="relative overflow-hidden rounded-[10px] bg-[#0d1b2d]" x-show="kamera">
-                        <div class="flex h-[318px] flex-col px-4 py-4">
-                            <div class="flex items-center justify-between">
-                                <span class="rounded-full bg-[#16395f] px-3 py-1.5 text-[10px] font-semibold tracking-[0.06em] text-[#bfdbfe]">KAMERA AKTIF</span>
-                                <span class="text-[12px] font-semibold text-[#55d68a]" aria-hidden="true">●</span>
+            {{-- Presensi dengan Kamera & Verifikasi --}}
+            <div class="rounded-xl border border-senat-line bg-[#f5f8fc] p-5 shadow-sm">
+                {{-- Banner status kehadiran jika sudah hadir --}}
+                <div x-show="isHadir" x-cloak class="rounded-xl border border-emerald-300 bg-emerald-50 p-5 mb-5 text-center">
+                    <div class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-2">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <h3 class="text-base font-bold text-emerald-900">Kehadiran Anda Telah Terverifikasi</h3>
+                    <p class="text-xs text-emerald-700 mt-1">
+                        Tercatat atas nama <strong class="font-semibold">{{ $currentMember['name'] ?? 'Anggota Senat' }}</strong> pada pukul <span class="font-mono font-bold" x-text="waktuHadir"></span> WIB.
+                    </p>
+                    <p class="text-[11px] text-emerald-600 mt-1">Status keikutsertaan telah disinkronkan ke monitor kuorum Sekretariat Senat.</p>
+                </div>
+
+                <div x-show="!isHadir" class="grid grid-cols-1 gap-6 lg:grid-cols-[468px_1fr]">
+                    {{-- Camera Scanner Container --}}
+                    <div>
+                        <div class="relative overflow-hidden rounded-[12px] bg-[#0d1b2d] border border-slate-700 shadow-md">
+                            {{-- Top indicator --}}
+                            <div class="flex items-center justify-between px-4 py-3 bg-[#0d1b2d]/90 border-b border-slate-700/60 z-10">
+                                <span class="rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.06em]"
+                                      :class="kamera ? 'bg-emerald-950 text-emerald-400 border border-emerald-700' : 'bg-slate-800 text-slate-400'">
+                                    <span x-text="kamera ? '● PEMINDAI KAMERA AKTIF' : '○ KAMERA NONAKTIF'"></span>
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-mono">{{ $currentMember['name'] ?? 'Anggota' }}</span>
                             </div>
 
-                            <div class="relative mx-auto mt-3 flex h-[176px] w-[176px] items-center justify-center rounded-[12px] border-2 border-[#38bdf8] bg-[#102640]">
-                                <span class="absolute left-0 top-0 h-[3px] w-7 bg-[#55d68a]"></span>
-                                <span class="absolute left-0 top-0 h-7 w-[3px] bg-[#55d68a]"></span>
-                                <span class="absolute right-0 top-0 h-[3px] w-7 bg-[#55d68a]"></span>
-                                <span class="absolute right-0 top-0 h-7 w-[3px] bg-[#55d68a]"></span>
-                                <span class="absolute bottom-0 left-0 h-[3px] w-7 bg-[#55d68a]"></span>
-                                <span class="absolute bottom-0 left-0 h-7 w-[3px] bg-[#55d68a]"></span>
-                                <span class="absolute bottom-0 right-0 h-[3px] w-7 bg-[#55d68a]"></span>
-                                <span class="absolute bottom-0 right-0 h-7 w-[3px] bg-[#55d68a]"></span>
-                                <span class="h-[2px] w-[144px] bg-[#55d68a]"></span>
+                            {{-- Area Video Pemindai --}}
+                            <div class="relative aspect-square w-full flex items-center justify-center bg-black overflow-hidden">
+                                {{-- Html5Qrcode mount target --}}
+                                <div id="qr-reader" class="w-full h-full" x-show="kamera"></div>
+                                
+
+                                {{-- Fallback saat kamera mati --}}
+                                <div x-show="!kamera" class="flex flex-col items-center justify-center p-6 text-center text-white">
+                                    <div class="h-14 w-14 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 mb-3 border border-slate-700">
+                                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    </div>
+                                    <p class="text-sm font-semibold text-slate-200">Kamera Scanner Presensi</p>
+                                    <p class="text-xs text-slate-400 mt-1 max-w-[280px]">Arahkan kamera ke layar QR proyektor ruang sidang.</p>
+                                    
+                                    <div class="mt-4">
+                                        <x-senat.button variant="primary" size="sm" type="button" @click="startCamera()">
+                                            Buka Kamera Live
+                                        </x-senat.button>
+                                    </div>
+                                </div>
+                            </div>
+                            {{-- Bottom Toolbar --}}
+                            <div class="flex items-center justify-between px-4 py-2.5 bg-[#0d1b2d] border-t border-slate-700/60" x-show="kamera">
+                                <span class="text-[11px] text-slate-300">Posisikan QR di dalam area bidik</span>
+                                <button type="button" @click="stopCamera()"
+                                        class="rounded bg-slate-800 px-3 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-700">
+                                    Tutup Kamera
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Scanner Controls & Manual Input --}}
+                    <div class="flex flex-col justify-between">
+                        <div>
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <h3 class="text-[18px] font-bold text-senat-ink">Presensi Sidang Elektronik</h3>
+                                    <p class="text-xs text-senat-muted mt-0.5">Identitas: <strong class="text-senat-primary">{{ $currentMember['name'] ?? 'Anggota Senat' }}</strong> (ID: {{ $currentMember['id'] ?? 2 }})</p>
+                                </div>
+                                <x-senat.badge state="info" :dot="false">Akun Terverifikasi</x-senat.badge>
                             </div>
 
-                            <p class="mt-6 text-center text-[11px] font-semibold text-[#d6e4f5]">
-                                Posisikan QR berbentuk persegi di dalam bingkai
+                            <p class="mt-3 text-[12px] leading-relaxed text-senat-body">
+                                Pindai QR yang ditayangkan Sekretariat pada layar proyektor ruang sidang. Sistem akan memverifikasi hak kehadiran dan memperbarui status kuorum secara seketika.
                             </p>
 
-                            <div class="mt-auto flex flex-wrap items-center gap-2">
-                                <span class="rounded-[7px] bg-[#16395f] px-3 py-1.5 text-[10px] font-medium text-[#d6e4f5]">Kamera belakang ▾</span>
-                                <button type="button" class="rounded-[7px] bg-white px-3 py-1.5 text-[10px] font-semibold text-senat-ink">↻ Ganti kamera</button>
-                                <button type="button" class="rounded-[7px] bg-[#16395f] px-3 py-1.5 text-[10px] font-medium text-[#d6e4f5]">☼ Lampu</button>
+                            {{-- Status Message Alert Box --}}
+                            <div x-show="statusMessage" x-cloak class="mt-4 rounded-lg p-3 text-xs font-medium"
+                                 :class="{
+                                     'bg-blue-50 text-blue-800 border border-blue-200': scanStatus === 'scanning' || scanStatus === 'submitting',
+                                     'bg-emerald-50 text-emerald-800 border border-emerald-200': scanStatus === 'success',
+                                     'bg-rose-50 text-rose-800 border border-rose-200': scanStatus === 'error'
+                                 }">
+                                <div class="flex items-center gap-2">
+                                    <span x-show="scanStatus === 'submitting'" class="h-3 w-3 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></span>
+                                    <span x-text="statusMessage"></span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {{-- Camera fallback --}}
-                    <div x-cloak x-show="!kamera"
-                         class="flex h-[318px] flex-col items-center justify-center rounded-[10px] bg-[#0d1b2d] px-6 text-center">
-                        <p class="text-[13px] font-semibold text-[#d6e4f5]">Kamera dimatikan</p>
-                        <p class="mt-2 text-[11px] text-[#8fa9c6]">Gunakan kode sesi di samping atau aktifkan kembali kamera.</p>
-                        <button type="button" @click="kamera = true"
-                                class="mt-4 rounded-[7px] bg-white px-4 py-2 text-[11px] font-semibold text-senat-ink">Aktifkan kamera</button>
-                    </div>
-
-                    {{-- Scanner controls --}}
-                    <div>
-                        <div class="flex flex-wrap items-start justify-between gap-3">
-                            <h3 class="text-[18px] font-bold text-senat-ink">Presensi dengan Kamera</h3>
-                            <x-senat.badge state="success" :dot="false">Izin kamera aktif</x-senat.badge>
-                        </div>
-                        <p class="mt-3 text-[13px] leading-relaxed text-senat-muted">
-                            Pindai QR yang ditampilkan Sekretariat. Sistem akan memeriksa sesi, waktu presensi, dan identitas anggota sebelum mencatat kehadiran.
-                        </p>
-
-                        <div class="mt-4 flex items-start gap-3 rounded-lg bg-[#eaf3fe] px-3 py-3">
-                            <span class="text-[13px] font-semibold text-senat-link" aria-hidden="true">i</span>
-                            <div>
-                                <p class="text-[12px] font-semibold text-senat-ink">Menunggu QR dipindai</p>
-                                <p class="mt-0.5 text-[10px] text-senat-muted">QR valid akan langsung diperiksa tanpa pindah halaman.</p>
+                            {{-- Alternatif Input Manual Kode Sesi --}}
+                            <div class="mt-5 rounded-xl border border-senat-line bg-white p-4">
+                                <label for="sessionCodeInput" class="block text-[11px] font-bold uppercase tracking-wider text-senat-ink">
+                                    Tidak dapat memindai kamera? Masukkan Kode Sesi:
+                                </label>
+                                <p class="text-[11px] text-senat-muted mt-0.5">Kode sesi 6-digit tertera pada layar proyektor (misal: PLN-892)</p>
+                                <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                                    <input id="sessionCodeInput" type="text" x-model="kode" maxlength="10"
+                                           placeholder="Contoh: PLN-892"
+                                           @keydown.enter.prevent="submitManualCode()"
+                                           class="h-10 w-full max-w-[240px] rounded-lg border border-[#9fb3c8] px-3 font-mono text-sm uppercase font-bold text-senat-ink placeholder:text-senat-muted placeholder:font-normal focus:border-senat-link focus:outline-none focus:ring-2 focus:ring-senat-badgeBg">
+                                    <x-senat.button variant="primary" type="button" @click="submitManualCode()" ::disabled="scanStatus === 'submitting'">
+                                        Verifikasi Kode Sesi
+                                    </x-senat.button>
+                                </div>
                             </div>
                         </div>
 
-                        <p class="mt-4 text-[11px] font-medium text-senat-muted">Tidak dapat memindai? Masukkan kode sesi</p>
-                        <div class="mt-2 flex flex-wrap items-center gap-2">
-                            <input type="text" x-model="kode" inputmode="numeric" maxlength="6"
-                                   placeholder="Kode sesi 6 digit"
-                                   class="h-[38px] w-full max-w-[280px] rounded-lg border border-[#9fb3c8] px-3 text-[12px] text-senat-ink placeholder:text-senat-muted focus:border-senat-link focus:outline-none focus:ring-2 focus:ring-senat-badgeBg">
-                            <x-senat.button size="sm" class="!h-[38px]" type="button">Verifikasi</x-senat.button>
-                            <x-senat.button size="sm" variant="secondary" class="!h-[38px]" type="button" @click="kamera = false">Tutup kamera</x-senat.button>
+                        <div class="mt-4 flex items-center gap-2 text-[11px] text-senat-muted">
+                            <span class="text-senat-link font-bold">ℹ</span>
+                            <span>Presensi hanya dapat dilakukan saat sesi dibuka dan belum dibekukan oleh Sekretariat.</span>
                         </div>
-
-                        <div class="mt-4 flex flex-wrap items-start gap-3 rounded-lg bg-[#fff4df] px-3 py-3">
-                            <span class="text-[14px] font-semibold leading-none text-[#a95100]" aria-hidden="true"><x-senat.icon name="warning" class="h-[18px] w-[18px]" /></span>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-[12px] font-semibold text-senat-ink">Izin ditolak atau kamera tidak tersedia?</p>
-                                <p class="mt-1 text-[11px] text-senat-muted">Gunakan kode sesi atau aktifkan izin kamera pada browser.</p>
-                            </div>
-                            <span class="text-[11px] font-semibold text-[#a95100]">Buka pengaturan browser</span>
-                        </div>
-
-                        <p class="mt-4 text-[11px] leading-relaxed text-senat-muted">
-                            Kamera diproses di perangkat untuk membaca QR. Video tidak direkam; stream berhenti saat kamera ditutup.
-                        </p>
                     </div>
                 </div>
             </div>
@@ -236,4 +287,129 @@
     </section>
 
 </div>
+
+@push('scripts')
+<script>
+(function() {
+    function registerAgendaScanner() {
+        if (!window.Alpine || window._agendaScannerRegistered) return;
+        window._agendaScannerRegistered = true;
+        window.Alpine.data('agendaScanner', () => ({
+            tab: 'hari-ini',
+            kamera: false,
+            kode: '',
+            scanner: null,
+            scanStatus: 'idle',
+            statusMessage: '',
+            isHadir: false,
+            waktuHadir: '',
+            userId: {{ (int) ($currentMember['id'] ?? 6) }},
+            meetingId: {{ (int) ($fokus['id'] ?? 0) }},
+
+            startCamera() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    this.scanStatus = 'error';
+                    this.statusMessage = 'Browser HP membatasi live video via HTTP biasa. Silakan masukkan Kode Sesi manual atau aktifkan izin via chrome://flags.';
+                    return;
+                }
+                this.kamera = true;
+                this.scanStatus = 'scanning';
+                this.statusMessage = 'Arahkan kotak bidik kamera tepat ke QR Code di layar.';
+                this.$nextTick(() => {
+                    if (window.Html5Qrcode && !this.scanner) {
+                        this.scanner = new window.Html5Qrcode('qr-reader');
+                        this.scanner.start(
+                            { facingMode: 'environment' },
+                            {
+                                fps: 15,
+                                aspectRatio: 1.0,
+                                qrbox: (viewfinderWidth, viewfinderHeight) => {
+                                    const min = Math.min(viewfinderWidth, viewfinderHeight);
+                                    const size = Math.floor(min * 0.75);
+                                    return { width: size, height: size };
+                                }
+                            },
+                            (decodedText) => {
+                                this.onQrScanned(decodedText);
+                            },
+                            (err) => {}
+                        ).catch(err => {
+                            this.scanStatus = 'error';
+                            this.statusMessage = 'Gagal mengakses kamera: ' + (err.message || 'Izin kamera ditolak. Silakan gunakan kode sesi manual.');
+                        });
+                    }
+                });
+            },
+
+            stopCamera() {
+                if (this.scanner) {
+                    this.scanner.stop().then(() => {
+                        this.scanner.clear();
+                        this.scanner = null;
+                    }).catch(() => { this.scanner = null; });
+                }
+                this.kamera = false;
+                if (this.scanStatus === 'scanning') this.scanStatus = 'idle';
+            },
+
+            async onQrScanned(token) {
+                if (this.scanStatus === 'submitting' || this.isHadir) return;
+                this.stopCamera();
+                await this.submitPresence({ token_qr: token });
+            },
+
+            async submitManualCode() {
+                if (!this.kode || this.kode.trim().length < 3) {
+                    alert('Mohon ketikkan kode sesi yang valid (contoh: PLN-892).');
+                    return;
+                }
+                await this.submitPresence({ kode_sesi: this.kode.trim() });
+            },
+
+            async submitPresence(payload) {
+                this.scanStatus = 'submitting';
+                this.statusMessage = 'Memverifikasi token presensi ke sistem Senat...';
+
+                try {
+                    const res = await fetch('{{ route('portal.presensi.submit') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id_user: this.userId,
+                            id_rapat: this.meetingId,
+                            ...payload
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.scanStatus = 'success';
+                        this.isHadir = true;
+                        this.waktuHadir = data.data?.waktu_presensi || new Date().toLocaleTimeString('id-ID');
+                        this.statusMessage = data.message || 'Presensi berhasil dicatat!';
+                    } else {
+                        this.scanStatus = 'error';
+                        this.statusMessage = data.message || 'Gagal memproses presensi.';
+                    }
+                } catch (e) {
+                    this.scanStatus = 'error';
+                    this.statusMessage = 'Kesalahan koneksi ke server: ' + e.message;
+                }
+            }
+        }));
+    }
+
+    if (window.Alpine) {
+        registerAgendaScanner();
+    } else {
+        document.addEventListener('alpine:init', registerAgendaScanner);
+    }
+})();
+</script>
+@endpush
+
 @endsection
