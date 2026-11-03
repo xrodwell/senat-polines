@@ -197,9 +197,9 @@ class AdminPreview extends Component
     public string $filterKehadiran = 'semua'; // semua, hadir, izin, menunggu
 
     // State Modul E-Voting & Pengambilan Keputusan (Tersambung Backend API)
-    public ?int $votingId = 1;
-    public string $votingTitle = 'Pemungutan Suara · Sidang Pleno Akreditasi Program Studi';
-    public string $votingStatus = 'dibuka';
+    public ?int $votingId = null;
+    public string $votingTitle = 'Pemungutan Suara Sidang Senat Akademik';
+    public string $votingStatus = 'ditutup';
     public string $votingMeetingCode = 'PLN-892';
     public string $votingDate = '';
     public array $votingStats = [
@@ -218,7 +218,7 @@ class AdminPreview extends Component
     public bool $showNewVotingModal = false;
     public string $newVotingTitle = '';
     public string $newVotingDescription = '';
-    public ?int $newVotingMeetingId = 1;
+    public ?int $newVotingMeetingId = null;
     public array $availableMeetings = [];
     // Multi-Meeting & History State
     public ?int $selectedMeetingId = null;
@@ -286,6 +286,10 @@ class AdminPreview extends Component
 
         if ($this->active === 'Pusat Aspirasi & Tindak Lanjut' && empty($this->apiAspirations)) {
             $this->loadAspirationsFromApi();
+        }
+
+        if ($this->active === 'E-Voting & Pengambilan Keputusan') {
+            $this->loadVotingData();
         }
     }
 
@@ -1134,12 +1138,12 @@ class AdminPreview extends Component
         $base = $this->getBackendUrl();
 
         try {
-            $rapatRes = Http::timeout(3)->get("{$base}/rapat");
+            $rapatRes = Http::timeout(3)->acceptJson()->get("{$base}/rapat");
             if ($rapatRes->successful()) {
                 $payloadRapat = $rapatRes->json('data') ?? $rapatRes->json();
                 $rawItems = is_array($payloadRapat) ? $payloadRapat : [];
                 $mapped = array_map(function ($r) {
-                    $mId = $r['id_rapat'] ?? ($r['id'] ?? 1);
+                    $mId = $r['id_rapat'] ?? ($r['id'] ?? null);
                     $mTitle = $r['nama_agenda'] ?? ($r['title'] ?? 'Sidang Senat');
                     return array_merge($r, [
                         'id' => $mId,
@@ -1150,12 +1154,15 @@ class AdminPreview extends Component
                 }, $rawItems);
                 if (!empty($mapped)) {
                     $this->availableMeetings = $mapped;
+                    if (empty($this->newVotingMeetingId) || !in_array($this->newVotingMeetingId, array_column($mapped, 'id_rapat'))) {
+                        $this->newVotingMeetingId = $mapped[0]['id_rapat'] ?? null;
+                    }
                 }
             }
         } catch (\Throwable $e) {}
 
         try {
-            $response = Http::timeout(3)->get("{$base}/voting");
+            $response = Http::timeout(3)->acceptJson()->get("{$base}/voting");
             if ($response->successful()) {
                 $payload = $response->json('data') ?? $response->json();
                 $items = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
@@ -1163,15 +1170,33 @@ class AdminPreview extends Component
                 if (is_array($items) && !empty($items)) {
                     $this->votingHistory = $this->normalizeVotingHistory($items);
 
+                    // 1. Cek sesi yang sebelumnya dipantau via session atau state
+                    $preferredId = session('admin_active_voting_id') ?: $this->votingId;
+                    $chosen = null;
+                    if ($preferredId) {
+                        foreach ($this->votingHistory as $item) {
+                            if ((int) ($item['id_voting'] ?? $item['id'] ?? 0) === (int) $preferredId) {
+                                $chosen = $item;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 2. Cek apakah ada sesi yang saat ini berstatus dibuka
                     $active = null;
                     foreach ($this->votingHistory as $item) {
-                        if (in_array($item['status'], ['dibuka', 'aktif', 'active', 'open'], true)) {
+                        if (in_array(strtolower($item['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
                             $active = $item;
                             break;
                         }
                     }
 
-                    $this->applyVotingSession($active ?? $this->votingHistory[0]);
+                    // Prioritas penentuan sesi kartu monitor:
+                    // - Jika admin sedang memantau sesi tertentu ($chosen), TETAP pertahankan sesi itu (misal baru saja ditutup).
+                    // - Jika tidak ada sesi yang dipilih, ambil sesi aktif dibuka ($active).
+                    // - Terakhir, fallback ke sesi paling atas ($this->votingHistory[0]).
+                    $targetSession = $chosen ?? $active ?? $this->votingHistory[0];
+                    $this->applyVotingSession($targetSession);
                 }
             }
         } catch (\Throwable $e) {
@@ -1235,13 +1260,22 @@ class AdminPreview extends Component
         $rapat = is_array($v['rapat'] ?? null) ? $v['rapat'] : [];
         if (! empty($rapat['kode'])) {
             $this->votingMeetingCode = $rapat['kode'];
+        } elseif (! empty($rapat['kode_sesi'])) {
+            $this->votingMeetingCode = $rapat['kode_sesi'];
         } elseif (! empty($rapat['session_code'])) {
             $this->votingMeetingCode = $rapat['session_code'];
+        } else {
+            $this->votingMeetingCode = 'PLN-' . str_pad((string) ($rapat['id_rapat'] ?? $this->votingId), 3, '0', STR_PAD_LEFT);
         }
 
         if (! empty($v['waktu_mulai'])) {
             $this->votingDate = date('d M Y', strtotime((string) $v['waktu_mulai']));
         }
+
+        $anggotaRapats = is_array($rapat['anggota_rapats'] ?? $rapat['anggotaRapats'] ?? null)
+            ? ($rapat['anggota_rapats'] ?? $rapat['anggotaRapats'])
+            : [];
+        $invitedCount = count($anggotaRapats) ?: (int) ($v['kuorum']['total_undangan'] ?? $v['kuorum']['total'] ?? 34);
 
         $totalSuara = (int) ($v['total_suara'] ?? $v['suara_votings_count'] ?? 0);
         $newStats = [
@@ -1250,7 +1284,7 @@ class AdminPreview extends Component
             'Tolak' => ['suara' => 0, 'persentase' => 0],
             'Abstain' => ['suara' => 0, 'persentase' => 0],
             'total_suara' => $totalSuara,
-            'kuorum' => "{$totalSuara} / 34 anggota",
+            'kuorum' => "{$totalSuara} / {$invitedCount} anggota",
         ];
 
         $rekapList = $v['hasil_rekap'] ?? null;
@@ -1313,7 +1347,7 @@ class AdminPreview extends Component
             $newStats['Tolak'] = $newStats['Tidak Setuju'];
         }
 
-        $this->votingStats = array_merge($this->votingStats, $newStats);
+        $this->votingStats = $newStats;
     }
 
     public function selectVotingSession(int $id): void
@@ -1331,6 +1365,7 @@ class AdminPreview extends Component
             return;
         }
 
+        session(['admin_active_voting_id' => $id]);
         $this->applyVotingSession($session);
         $this->refreshVotingData();
         $this->flashMessage = "Sesi voting '{$this->votingTitle}' berhasil ditampilkan pada kartu monitor utama.";
@@ -1344,19 +1379,25 @@ class AdminPreview extends Component
 
         try {
             if ($this->votingId) {
-                $response = Http::timeout(3)->post("{$base}/voting/{$this->votingId}/{$action}");
+                $response = Http::timeout(3)->acceptJson()->post("{$base}/voting/{$this->votingId}/{$action}");
                 if (! $response->successful()) {
-                    Http::timeout(3)->put("{$base}/voting/{$this->votingId}", [
+                    Http::timeout(3)->acceptJson()->put("{$base}/voting/{$this->votingId}", [
                         'status' => $target,
                     ]);
                 }
             }
             $this->votingStatus = $target;
+            if ($this->votingId) {
+                session(['admin_active_voting_id' => $this->votingId]);
+            }
             $this->flashMessage = ($target === 'dibuka')
                 ? 'Sesi pemungutan suara resmi dibuka untuk seluruh anggota Senat.'
                 : 'Sesi pemungutan suara resmi ditutup dan dikunci.';
         } catch (\Throwable $e) {
             $this->votingStatus = $target;
+            if ($this->votingId) {
+                session(['admin_active_voting_id' => $this->votingId]);
+            }
             $this->flashMessage = ($target === 'dibuka')
                 ? 'Sesi pemungutan suara resmi dibuka untuk seluruh anggota Senat.'
                 : 'Sesi pemungutan suara resmi ditutup dan dikunci.';
@@ -1375,10 +1416,14 @@ class AdminPreview extends Component
 
         try {
             if ($this->votingId) {
-                Http::timeout(3)->put("{$base}/voting/{$this->votingId}", [
+                $payload = [
                     'judul_voting' => $this->votingTitle,
                     'status' => $this->votingStatus,
-                ]);
+                ];
+                if (! empty($this->newVotingMeetingId)) {
+                    $payload['id_rapat'] = $this->newVotingMeetingId;
+                }
+                Http::timeout(3)->acceptJson()->put("{$base}/voting/{$this->votingId}", $payload);
             }
             $this->flashMessage = 'Rekapitulasi dan berita acara voting berhasil disimpan ke sistem persidangan.';
         } catch (\Throwable $e) {
@@ -1388,9 +1433,13 @@ class AdminPreview extends Component
 
     public function openNewVotingModal(): void
     {
+        $this->resetErrorBag();
+        if (empty($this->availableMeetings)) {
+            $this->loadVotingData();
+        }
         $this->showNewVotingModal = true;
-        if (empty($this->newVotingMeetingId) && !empty($this->availableMeetings)) {
-            $this->newVotingMeetingId = $this->availableMeetings[0]['id_rapat'] ?? 1;
+        if ((empty($this->newVotingMeetingId) || $this->newVotingMeetingId === 1) && !empty($this->availableMeetings)) {
+            $this->newVotingMeetingId = $this->availableMeetings[0]['id_rapat'] ?? null;
         }
     }
 
@@ -1399,6 +1448,30 @@ class AdminPreview extends Component
         $this->showNewVotingModal = false;
         $this->newVotingTitle = '';
         $this->newVotingDescription = '';
+        $this->resetErrorBag();
+    }
+
+    public function hapusSesiVoting(int $id): void
+    {
+        $base = $this->getBackendUrl();
+
+        try {
+            $res = Http::timeout(3)->acceptJson()->delete("{$base}/voting/{$id}");
+            if ($res->successful()) {
+                $this->flashMessage = "Sesi voting #{$id} berhasil dihapus dari sistem.";
+            } else {
+                $this->flashMessage = "Gagal menghapus sesi voting #{$id}.";
+            }
+        } catch (\Throwable $e) {
+            $this->flashMessage = "Gagal menghubungi server untuk menghapus sesi voting: " . $e->getMessage();
+        }
+
+        if ((int) $this->votingId === $id || (int) session('admin_active_voting_id') === $id) {
+            $this->votingId = null;
+            session()->forget('admin_active_voting_id');
+        }
+
+        $this->loadVotingData();
     }
 
     public function deployNewVoting(): void
@@ -1410,10 +1483,26 @@ class AdminPreview extends Component
             'newVotingTitle.min' => 'Judul voting minimal 2 karakter.',
         ]);
 
+        // Cegah duplikasi submit identik jika sesi dengan judul tersebut sudah sedang dibuka
+        if (!empty($this->newVotingTitle)) {
+            foreach ($this->votingHistory as $item) {
+                if (strtolower(trim($item['judul_voting'] ?? '')) === strtolower(trim($this->newVotingTitle))
+                    && in_array(strtolower($item['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
+                    $this->flashMessage = 'Sesi voting dengan pokok putusan tersebut sudah sedang dibuka saat ini.';
+                    return;
+                }
+            }
+        }
+
         $base = $this->getBackendUrl();
+        $targetMeetingId = $this->newVotingMeetingId;
+        if (empty($targetMeetingId) && !empty($this->availableMeetings)) {
+            $targetMeetingId = $this->availableMeetings[0]['id_rapat'] ?? null;
+        }
+
         try {
-            $res = Http::timeout(5)->post("{$base}/voting", [
-                'id_rapat' => $this->newVotingMeetingId ?? 1,
+            $res = Http::timeout(5)->acceptJson()->post("{$base}/voting", [
+                'id_rapat' => (int) $targetMeetingId,
                 'judul_voting' => $this->newVotingTitle,
                 'deskripsi' => $this->newVotingDescription ?: 'Musyawarah mufakat & pemungutan suara resmi sidang Senat Akademik Polines.',
                 'status' => 'dibuka',
@@ -1424,6 +1513,7 @@ class AdminPreview extends Component
             if ($res->successful()) {
                 $created = $res->json();
                 $this->votingId = $created['id_voting'] ?? $created['id'] ?? $this->votingId;
+                session(['admin_active_voting_id' => $this->votingId]);
                 $this->showNewVotingModal = false;
                 $this->newVotingTitle = '';
                 $this->newVotingDescription = '';
@@ -1433,7 +1523,11 @@ class AdminPreview extends Component
                 return;
             }
 
-            $this->flashMessage = 'Gagal membuka sesi voting baru: ' . ($res->json('message') ?? 'Terjadi kesalahan sistem.');
+            $errMsg = $res->json('message');
+            if (empty($errMsg) && $res->json('errors')) {
+                $errMsg = collect($res->json('errors'))->flatten()->first();
+            }
+            $this->flashMessage = 'Gagal membuka sesi voting baru: ' . ($errMsg ?: 'Terjadi kesalahan sistem.');
         } catch (\Throwable $e) {
             $this->flashMessage = 'Gagal menghubungi server persidangan: ' . $e->getMessage();
         }
@@ -1462,8 +1556,9 @@ class AdminPreview extends Component
                     $rekapList = $rekap['rekapitulasi'] ?? $rekap['opsi'] ?? [];
                     if (!empty($rekapList) && is_array($rekapList)) {
                         $total = (int) ($rekap['total_suara'] ?? $this->votingStats['total_suara']);
+                        $invited = (int) ($rekap['kuorum']['total_undangan'] ?? 34) ?: 34;
                         $this->votingStats['total_suara'] = $total;
-                        $this->votingStats['kuorum'] = "{$total} / 34 anggota";
+                        $this->votingStats['kuorum'] = "{$total} / {$invited} anggota";
                         foreach ($rekapList as $opt) {
                             $label = $opt['nama_opsi'] ?? $opt['label'] ?? '';
                             $suara = (int) ($opt['jumlah_suara'] ?? $opt['total'] ?? 0);

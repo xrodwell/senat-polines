@@ -80,7 +80,7 @@
     </section>
 
     {{-- ================= TABS ================= --}}
-    <div class="mt-6 rounded-[14px] border border-senat-line bg-white shadow-[0_2px_8px_rgba(13,26,41,0.05)]">
+    <div class="mt-6 rounded-[14px] border border-senat-line bg-white shadow-[0_2px_8px_rgba(13,26,41,0.05)] overflow-hidden">
         <div class="flex flex-wrap" role="tablist" aria-label="Bagian risalah">
             @foreach (['ringkasan' => 'Ringkasan', 'keputusan' => 'Keputusan', 'action' => 'Action Items', 'lampiran' => 'Lampiran'] as $key => $label)
                 <button type="button" role="tab" @click="tab = '{{ $key }}'"

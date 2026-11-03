@@ -10,11 +10,28 @@
     }
 @endphp
 
-<div class="min-h-screen bg-senat-surface text-senat-body antialiased">
+<div class="min-h-screen bg-senat-surface text-senat-body antialiased"
+     x-data="{
+         sidebarCollapsed: localStorage.getItem('admin_sidebar_collapsed') === 'true',
+         animated: false,
+         toggleSidebar() {
+             this.animated = true;
+             this.sidebarCollapsed = !this.sidebarCollapsed;
+             localStorage.setItem('admin_sidebar_collapsed', this.sidebarCollapsed);
+         }
+     }">
 
     {{-- Topbar khas Portal Senat (Figma 2269:728) --}}
     <header class="sticky top-0 z-40 flex h-[60px] items-center bg-senat-primary text-white lg:h-16 shadow-sm">
-        <div class="relative flex w-full items-center gap-3 px-5 lg:px-6">
+        <div class="relative flex w-full items-center gap-3 px-4 sm:px-5 lg:px-6">
+            {{-- Tombol Toggle Sidebar --}}
+            <button type="button"
+                    @click="toggleSidebar()"
+                    class="senat-tap flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition cursor-pointer shrink-0"
+                    :title="sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'">
+                <x-senat.icon name="menu" class="h-4 w-4" />
+            </button>
+
             <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-9 w-9 rounded-lg object-contain lg:h-[38px] lg:w-[38px]">
             <span class="leading-none">
                 <span class="block text-[14px] font-bold">SENAT<span class="hidden sm:inline"> AKADEMIK</span></span>
@@ -45,7 +62,7 @@
 
     <div class="flex min-h-[calc(100vh-60px)] lg:min-h-[calc(100vh-64px)]">
 
-        {{-- Sidebar (Figma 2269:764 style) --}}
+        {{-- Sidebar (Figma 2269:764 style modern & collapsible) --}}
         <aside x-data="{
                    init() {
                        this.$nextTick(() => {
@@ -57,38 +74,137 @@
                    }
                }"
                @scroll.passive="sessionStorage.setItem('admin_sidebar_scroll', $el.scrollTop)"
-               class="w-full shrink-0 border-b border-senat-sidebarLine bg-white lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-[280px] lg:overflow-y-auto lg:border-b-0 lg:border-r"
+               class="w-full shrink-0 border-b border-senat-sidebarLine bg-white lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-[280px] lg:overflow-y-auto lg:border-b-0 lg:border-r flex flex-col justify-between"
+               :class="{
+                   'transition-all duration-200 ease-in-out': animated,
+                   'lg:!w-[72px]': sidebarCollapsed,
+                   'lg:w-[280px]': !sidebarCollapsed
+               }"
                aria-label="Navigasi Admin Sekretariat">
             
-            <div class="px-[23px] pt-[24px]">
-                <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-senat-muted">ADMIN SEKRETARIAT</p>
-                <p class="mt-1 text-[12px] text-senat-body">Tata Kelola Sidang &amp; Publikasi</p>
+            <div>
+                <div class="border-b border-slate-100"
+                     :class="{
+                         'transition-all duration-200': animated,
+                         'p-3 text-center': sidebarCollapsed,
+                         'px-5 pt-5 pb-4': !sidebarCollapsed
+                     }">
+                    <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'justify-between gap-3'">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#003366] text-white shadow-xs"
+                                 :title="sidebarCollapsed ? 'Admin Sekretariat' : ''">
+                                <x-senat.icon name="dashboard" class="h-4 w-4 text-amber-400" />
+                            </div>
+                            <div class="min-w-0" x-show="!sidebarCollapsed" x-transition.opacity>
+                                <div class="flex items-center gap-1.5">
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-900">ADMIN SEKRETARIAT</p>
+                                </div>
+                                <p class="mt-0.5 text-[11px] text-slate-500 truncate">Tata Kelola Sidang &amp; Publikasi</p>
+                            </div>
+                        </div>
+
+                        {{-- Tombol Toggle Inline --}}
+                        <button type="button"
+                                @click="toggleSidebar()"
+                                x-show="!sidebarCollapsed"
+                                class="hidden lg:flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                title="Ciutkan Sidebar">
+                            <x-senat.icon name="chevron-left" class="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+
+                <nav class="mt-4 space-y-6 pb-6"
+                     :class="{
+                         'transition-all duration-200': animated,
+                         'px-2': sidebarCollapsed,
+                         'px-3.5': !sidebarCollapsed
+                     }"
+                     aria-label="Menu Admin">
+                    @php
+                        $iconMap = [
+                            'Dashboard Rapat' => 'dashboard',
+                            'Jadwal & Agenda Sidang' => 'calendar',
+                            'Presensi & Verifikasi QR' => 'scan',
+                            'Kuorum & Kehadiran Anggota' => 'users',
+                            'Risalah & Notulensi Sidang' => 'minutes',
+                            'E-Voting & Pengambilan Keputusan' => 'vote',
+                            'Pengaturan Informasi & Hero' => 'image',
+                            'Profil, Tupoksi & Struktur' => 'folder',
+                            'Direktori Komisi & Anggota' => 'user',
+                            'Manajemen Berita & Siaran Pers' => 'file-text',
+                            'Katalog Regulasi & Produk Hukum' => 'folder',
+                            'Repositori Arsip & Dokumen' => 'inbox',
+                            'Pusat Aspirasi & Tindak Lanjut' => 'aspiration',
+                        ];
+                    @endphp
+
+                    @foreach ($groups as $group => $items)
+                        <div wire:key="group-{{ \Illuminate\Support\Str::slug($group) }}" aria-labelledby="grup-{{ $loop->index }}">
+                            <div x-show="!sidebarCollapsed" x-transition.opacity>
+                                <p id="grup-{{ $loop->index }}" class="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                                    {{ $group }}
+                                </p>
+                            </div>
+                            <div x-show="sidebarCollapsed" class="my-2 border-t border-slate-100"></div>
+
+                            <div class="space-y-1">
+                                @foreach ($items as $item)
+                                    @php
+                                        $isActive = ($active === $item);
+                                        $itemSlug = \Illuminate\Support\Str::slug($item);
+                                        $iconName = $iconMap[$item] ?? 'dot';
+                                    @endphp
+                                    <a href="{{ route('admin.preview', ['tab' => $item]) }}"
+                                       wire:click.prevent="select('{{ $item }}')"
+                                       wire:key="menu-link-{{ $itemSlug }}"
+                                       @if ($isActive) aria-current="page" @endif
+                                       :title="sidebarCollapsed ? '{{ $item }}' : ''"
+                                       class="group relative flex min-h-[38px] w-full items-center rounded-xl transition-all duration-150 {{ $isActive ? 'bg-[#003366] text-white shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium' }}"
+                                       :class="sidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'">
+                                        <span class="shrink-0 transition-transform duration-150 group-hover:scale-110 {{ $isActive ? 'text-amber-300' : 'text-slate-400 group-hover:text-slate-700' }}">
+                                            <x-senat.icon :name="$iconName" class="h-4 w-4" />
+                                        </span>
+                                        <span class="truncate text-[12px] flex-1" x-show="!sidebarCollapsed" x-transition.opacity>{{ $item }}</span>
+                                        @if ($isActive)
+                                            <span class="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" x-show="!sidebarCollapsed"></span>
+                                        @endif
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </nav>
             </div>
 
-            <nav class="mt-5 space-y-6 px-[15px] pb-6" aria-label="Menu Admin">
-                @foreach ($groups as $group => $items)
-                    <div wire:key="group-{{ \Illuminate\Support\Str::slug($group) }}" aria-labelledby="grup-{{ $loop->index }}">
-                        <p id="grup-{{ $loop->index }}" class="px-2 pb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-senat-muted">
-                            {{ $group }}
-                        </p>
-                        <div class="space-y-[4px]">
-                            @foreach ($items as $item)
-                                @php
-                                    $isActive = ($active === $item);
-                                    $itemSlug = \Illuminate\Support\Str::slug($item);
-                                @endphp
-                                <a href="{{ route('admin.preview', ['tab' => $item]) }}"
-                                   wire:key="menu-link-{{ $itemSlug }}"
-                                   @if ($isActive) aria-current="page" @endif
-                                   class="senat-tap flex min-h-[40px] w-full items-center gap-[11px] rounded-[9px] px-[12px] text-left transition-colors {{ $isActive ? 'bg-[#eef4fb] ring-1 ring-senat-badgeLine' : 'hover:bg-senat-surface' }}">
-                                    <span class="h-2 w-2 shrink-0 rounded-full {{ $isActive ? 'bg-senat-link' : 'bg-slate-300' }}"></span>
-                                    <span class="truncate text-[12.5px] {{ $isActive ? 'font-semibold text-senat-primary' : 'font-medium text-senat-ink' }}">{{ $item }}</span>
-                                </a>
-                            @endforeach
+            <div class="mt-auto border-t border-slate-100 bg-slate-50/60"
+                 :class="{
+                     'transition-all duration-200': animated,
+                     'p-2 text-center': sidebarCollapsed,
+                     'p-3': !sidebarCollapsed
+                 }">
+                <div class="flex items-center rounded-xl bg-white border border-slate-200/80 shadow-2xs"
+                     :class="sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2'">
+                    <div class="flex items-center gap-2.5 min-w-0" :title="sidebarCollapsed ? 'Administrator (Sekretariat Senat)' : ''">
+                        <div class="h-8 w-8 rounded-lg bg-[#003366]/10 text-[#003366] flex items-center justify-center text-xs font-bold shrink-0">
+                            AS
+                        </div>
+                        <div class="min-w-0" x-show="!sidebarCollapsed" x-transition.opacity>
+                            <p class="text-[11.5px] font-bold text-slate-900 truncate">Administrator</p>
+                            <p class="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                Sekretariat Senat
+                            </p>
                         </div>
                     </div>
-                @endforeach
-            </nav>
+                    <a href="{{ route('public.home') }}"
+                       x-show="!sidebarCollapsed"
+                       title="Ke Portal Publik"
+                       class="h-7 w-7 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition">
+                        <x-senat.icon name="external" class="h-3.5 w-3.5" />
+                    </a>
+                </div>
+            </div>
         </aside>
 
         {{-- Area Konten Utama Menggunakan Persis Desain Portal Sekretariat --}}
@@ -1603,7 +1719,7 @@
                                 <span>{{ $votingStatus === 'dibuka' ? 'Kunci & Tutup Voting' : 'Buka Voting' }}</span>
                             </x-senat.button>
                             <x-senat.button variant="secondary" type="button"
-                                            onclick="document.getElementById('modal-voting-baru').style.display='flex'">Gelar Voting Baru</x-senat.button>
+                                            wire:click="openNewVotingModal">Gelar Voting Baru</x-senat.button>
                             <x-senat.button variant="secondary" type="button" wire:click="refreshVotingData">Muat Ulang</x-senat.button>
                         </div>
                     </section>
@@ -1647,13 +1763,13 @@
                             <table class="min-w-full divide-y divide-senat-sidebarLine text-left">
                                 <thead>
                                     <tr class="bg-senat-surface text-[11px] font-bold uppercase tracking-wider text-senat-muted">
-                                        <th class="px-3 py-3">ID</th>
+                                        <th class="px-3 py-3 whitespace-nowrap">ID</th>
                                         <th class="px-3 py-3">Pokok Putusan / Judul Voting</th>
                                         <th class="px-3 py-3">Sidang/Rapat</th>
-                                        <th class="px-3 py-3">Status</th>
-                                        <th class="px-3 py-3 text-center">Total Suara</th>
-                                        <th class="px-3 py-3">Waktu</th>
-                                        <th class="px-3 py-3 text-right">Aksi</th>
+                                        <th class="px-3 py-3 whitespace-nowrap">Status</th>
+                                        <th class="px-3 py-3 text-center whitespace-nowrap">Total Suara</th>
+                                        <th class="px-3 py-3 whitespace-nowrap">Waktu</th>
+                                        <th class="px-3 py-3 text-right whitespace-nowrap">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-senat-sidebarLine">
@@ -1673,8 +1789,8 @@
                                             $isActive = $itemId === (int) $votingId;
                                         @endphp
                                         <tr class="{{ $isActive ? 'bg-senat-badgeBg/60' : 'hover:bg-senat-surface/60' }} transition-colors">
-                                            <td class="px-3 py-3 text-[12px] font-mono font-semibold text-senat-ink">#{{ $itemId ?: '-' }}</td>
-                                            <td class="px-3 py-3">
+                                            <td class="px-3 py-3 whitespace-nowrap text-[12px] font-mono font-semibold text-senat-ink">#{{ $itemId ?: '-' }}</td>
+                                            <td class="px-3 py-3 min-w-[200px]">
                                                 <p class="text-[13px] font-semibold text-senat-ink">{{ $itemTitle }}</p>
                                                 @if ($isActive)
                                                     <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10.5px] font-bold text-emerald-700">
@@ -1682,20 +1798,31 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td class="px-3 py-3 text-[12px] text-senat-body">{{ $itemRapatName }}</td>
-                                            <td class="px-3 py-3">
+                                            <td class="px-3 py-3 min-w-[140px] text-[12px] text-senat-body">{{ $itemRapatName }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">
                                                 @if ($itemStatus === 'dibuka')
                                                     <x-senat.badge state="success">DIBUKA</x-senat.badge>
                                                 @else
                                                     <x-senat.badge state="danger">DITUTUP</x-senat.badge>
                                                 @endif
                                             </td>
-                                            <td class="px-3 py-3 text-center text-[13px] font-bold text-senat-ink">{{ $itemTotal }}</td>
-                                            <td class="px-3 py-3 text-[12px] text-senat-body">{{ $itemDate }}</td>
-                                            <td class="px-3 py-3 text-right">
-                                                <x-senat.button variant="{{ $isActive ? 'secondary' : 'primary' }}" size="sm" type="button" wire:click="selectVotingSession({{ $itemId }})">
-                                                    {{ $isActive ? 'Sedang Dipantau' : 'Pilih Sesi' }}
-                                                </x-senat.button>
+                                            <td class="px-3 py-3 text-center whitespace-nowrap text-[13px] font-bold text-senat-ink">{{ $itemTotal }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap text-[12px] text-senat-body">{{ $itemDate }}</td>
+                                            <td class="px-3 py-3 text-right whitespace-nowrap">
+                                                <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                                                    <x-senat.button variant="{{ $isActive ? 'secondary' : 'primary' }}" size="sm" type="button" class="whitespace-nowrap" wire:click="selectVotingSession({{ $itemId }})">
+                                                        {{ $isActive ? 'Sedang Dipantau' : 'Pilih Sesi' }}
+                                                    </x-senat.button>
+                                                    <button type="button"
+                                                            wire:click="hapusSesiVoting({{ $itemId }})"
+                                                            wire:confirm="Yakin ingin menghapus sesi voting ini?"
+                                                            class="inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                                                            title="Hapus Sesi Voting">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
@@ -1710,17 +1837,19 @@
                         </div>
                     </section>
 
-                    {{-- Modal Form Gelar Voting Baru — handler native, tidak bergantung Livewire/Alpine --}}
-                    <div id="modal-voting-baru" style="display:none"
-                         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4"
-                         onclick="if (event.target === this) this.style.display='none'">
-                            <div class="w-full max-w-lg rounded-2xl border border-senat-sidebarLine bg-white p-6 shadow-2xl space-y-4">
+                    {{-- Modal Form Gelar Voting Baru --}}
+                    @if ($showNewVotingModal)
+                        <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4"
+                             wire:keydown.escape="closeNewVotingModal"
+                             wire:click.self="closeNewVotingModal">
+                            <div class="w-full max-w-lg rounded-2xl border border-senat-sidebarLine bg-white p-6 shadow-2xl space-y-4"
+                                 wire:click.stop>
                                 <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-3">
                                     <div>
                                         <h3 class="text-[17px] font-bold text-senat-ink">Gelar Sesi Voting Baru</h3>
                                         <p class="text-[12px] text-senat-body">Inisialisasi pemungutan suara sidang untuk anggota Senat</p>
                                     </div>
-                                    <button type="button" onclick="document.getElementById('modal-voting-baru').style.display='none'" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" aria-label="Tutup">
+                                    <button type="button" wire:click="closeNewVotingModal" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" aria-label="Tutup">
                                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
@@ -1730,11 +1859,11 @@
                                 <div class="space-y-4">
                                     <div>
                                         <label class="block text-[12px] font-semibold text-senat-ink mb-1">Agenda Sidang / Rapat</label>
-                                        <select wire:model="newVotingMeetingId" class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink focus:border-senat-link focus:outline-none">
+                                        <select wire:model.live="newVotingMeetingId" class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink focus:border-senat-link focus:outline-none">
                                             @forelse ($availableMeetings as $meeting)
-                                                <option value="{{ $meeting['id_rapat'] ?? 1 }}">{{ $meeting['nama_agenda'] ?? 'Sidang Pleno Senat' }}</option>
+                                                <option value="{{ $meeting['id_rapat'] ?? ($meeting['id'] ?? '') }}">{{ $meeting['nama_agenda'] ?? 'Sidang Pleno Senat' }}</option>
                                             @empty
-                                                <option value="1">Sidang Pleno Penetapan Standar Akademik &amp; Kurikulum</option>
+                                                <option value="">Belum ada agenda rapat aktif</option>
                                             @endforelse
                                         </select>
                                     </div>
@@ -1748,7 +1877,7 @@
 
                                     <div>
                                         <label class="block text-[12px] font-semibold text-senat-ink mb-1">Penjelasan Draf / Keterangan Putusan</label>
-                                        <textarea wire:model="newVotingDescription" rows="3" placeholder="Uraikan materi atau pokok keputusan yang dimusyawarahkan..."
+                                        <textarea wire:model="newVotingDescription" rows="3" placeholder="Uraikan materi atau pokok keputusan yang dimusyawahkankan..."
                                                   class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink placeholder-slate-400 focus:border-senat-link focus:outline-none"></textarea>
                                     </div>
 
@@ -1761,18 +1890,18 @@
                                         @if ($flashMessage)
                                             <p class="mr-auto text-[11.5px] font-medium text-rose-700">{{ $flashMessage }}</p>
                                         @endif
-                                        <button type="button" onclick="document.getElementById('modal-voting-baru').style.display='none'" class="inline-flex items-center justify-center rounded-md border border-senat-border bg-[#f8fafc] px-4 py-2 text-[12px] font-semibold text-senat-primary hover:border-senat-primary transition">
+                                        <button type="button" wire:click="closeNewVotingModal" class="inline-flex items-center justify-center rounded-md border border-senat-border bg-[#f8fafc] px-4 py-2 text-[12px] font-semibold text-senat-primary hover:border-senat-primary transition">
                                             Batal
                                         </button>
                                         <button type="button"
-                                                onclick="var t=document.getElementById('input-voting-judul'); if(!t.value.trim()){t.focus();return;} document.getElementById('modal-voting-baru').style.display='none';"
                                                 wire:click="deployNewVoting" class="inline-flex items-center justify-center rounded-md bg-senat-primary px-5 py-2 text-[12px] font-bold text-white transition hover:bg-senat-primaryHover">
                                             Buka Sesi Voting
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                    </div>
+                        </div>
+                    @endif
                 </div>
 
             {{-- 7. SCREEN: Pengaturan Informasi & Hero --}}

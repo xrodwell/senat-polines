@@ -64,6 +64,18 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
                         $waktuRaw = $r['waktu'] ?? '09:00:00';
                         $waktuFmt = substr($waktuRaw, 0, 5) . ' WIB';
 
+                        $anggotaList = is_array($r['anggota_rapats'] ?? $r['anggotaRapats'] ?? null)
+                            ? ($r['anggota_rapats'] ?? $r['anggotaRapats'])
+                            : [];
+                        $totalInvited = isset($r['anggota_rapats_count'])
+                            ? (int) $r['anggota_rapats_count']
+                            : (isset($r['kuorum']['total_invited']) ? (int) $r['kuorum']['total_invited'] : (count($anggotaList) ?: 34));
+                        $presentCount = isset($r['hadir_count'])
+                            ? (int) $r['hadir_count']
+                            : (isset($r['kuorum']['present_count'])
+                                ? (int) $r['kuorum']['present_count']
+                                : collect($anggotaList)->filter(fn ($a) => strtolower((string) ($a['status_kehadiran'] ?? '')) === 'hadir' || !empty($a['waktu_presensi']))->count());
+
                         return [
                             'id' => $id,
                             'title' => $r['nama_agenda'] ?? 'Agenda Sidang Senat',
@@ -74,8 +86,8 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
                             'status' => $r['status'] ?? 'Terjadwal',
                             'session_code' => $r['kode_sesi'] ?? ('PLN-' . str_pad((string) $id, 3, '0', STR_PAD_LEFT)),
                             'qr_token' => $r['token_qr'] ?? ('token-polines-session-' . $id),
-                            'total_invited' => 34,
-                            'present_count' => 0,
+                            'total_invited' => $totalInvited,
+                            'present_count' => $presentCount,
                             'is_presensi_open' => (bool) ($r['is_presensi_open'] ?? false),
                             'is_kuorum_locked' => (bool) ($r['is_kuorum_locked'] ?? false),
                             'id_jenis_rapat' => (int) ($r['id_jenis_rapat'] ?? 1),
