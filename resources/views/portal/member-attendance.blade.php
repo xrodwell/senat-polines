@@ -47,9 +47,14 @@
             <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
                 <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
                     <h2 class="text-sm font-bold uppercase tracking-wider text-slate-800">Langkah 1 &mdash; Pilih Rapat</h2>
-                    <span class="text-[11px] font-mono font-semibold uppercase tracking-wide px-2 py-0.5 rounded border"
-                          :class="selectedMeetingId ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-amber-50 text-amber-700 border-amber-300'"
-                          x-text="selectedMeetingId ? 'RAPAT TERPILIH' : 'BELUM DIPILIH'"></span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-semibold uppercase tracking-wide px-2 py-0.5 rounded border"
+                              :class="apiOnline ? 'bg-blue-50 text-polines-navy border-blue-300' : 'bg-slate-100 text-slate-500 border-slate-300'"
+                              x-text="apiOnline ? 'TERHUBUNG SERVER' : 'MODE LOKAL'"></span>
+                        <span class="text-[11px] font-mono font-semibold uppercase tracking-wide px-2 py-0.5 rounded border"
+                              :class="selectedMeetingId ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-amber-50 text-amber-700 border-amber-300'"
+                              x-text="selectedMeetingId ? 'RAPAT TERPILIH' : 'BELUM DIPILIH'"></span>
+                    </div>
                 </div>
                 <div class="p-5 sm:p-6">
                     <p class="text-xs text-slate-500 leading-relaxed mb-4">
@@ -477,11 +482,13 @@
                     </div>
 
                     {{-- Aksi simpan & export --}}
+                    <p class="text-[11px] text-rose-600 mt-4" x-show="noteError" x-cloak x-text="noteError"></p>
                     <div class="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-100">
                         <div class="flex items-center gap-3 text-[11px]">
                             <span class="text-slate-500" x-text="attachments.length + ' lampiran'"></span>
                             <span class="text-emerald-600 font-semibold" x-show="savedNote" x-cloak>&#10003; Tersimpan</span>
                             <span class="text-amber-600 font-semibold" x-show="noteDirty && !savedNote">&#9679; Belum disimpan</span>
+                            <span class="text-polines-navy font-semibold" x-show="menyimpan" x-cloak>Mengirim&hellip;</span>
                         </div>
 
                         <div class="flex flex-wrap gap-2">
@@ -640,16 +647,22 @@
 
 <script>
 window.__senatMeetings = @json($meetings ?? []);
+window.__senatUserId = {{ (int) ($idUser ?? 2) }};
+window.__senatBase = '{{ url('/') }}';
 document.addEventListener('alpine:init', () => {
     Alpine.data('memberAttendance', () => ({
         /* ---------- Gerbang: rapat terpilih ---------- */
         meetings: [],
         selectedMeetingId: null,
+        idUser: 2,
+        apiOnline: false,
+        menyimpan: false,
 
         /* ---------- Catatan & notulensi ---------- */
         noteText: '',
         noteDirty: false,
         savedNote: false,
+        noteError: '',
         attachments: [],
 
         /* ---------- Berbagi dokumen & tautan ---------- */
@@ -688,6 +701,7 @@ document.addEventListener('alpine:init', () => {
 
         init() {
             this.meetings = window.__senatMeetings || [];
+            this.idUser = window.__senatUserId || 2;
             this.loadVoteState();
             window.addEventListener('storage', () => this.loadVoteState());
 
@@ -750,13 +764,95 @@ document.addEventListener('alpine:init', () => {
             this.savedNote = false;
             this.shareError = '';
 
+            // Tampilkan cache lokal dulu agar UI tidak kosong saat menunggu jaringan
             this.loadNote();
             this.loadAttachments();
             this.loadShared();
+
+            this.muatWorkspace();
         },
 
         storageKey(kind) {
             return 'polines_senat_' + kind + '_' + this.selectedMeetingId;
+        },
+
+        baseUrl() {
+            return (window.__senatBase || '') + '/portal/attendance/' + this.selectedMeetingId;
+        },
+
+        csrf() {
+            const m = document.querySelector('meta[name="csrf-token"]');
+            return m ? m.getAttribute('content') : '';
+        },
+
+        /** Ambil catatan + lampiran + berbagi dari backend (via proxy Laravel). */
+        async muatWorkspace() {
+            const idRapat = this.selectedMeetingId;
+            if (!idRapat) return;
+
+            try {
+                const res = await fetch(this.baseUrl() + '/workspace', {
+                    headers: { 'Accept': 'application/json' },
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (this.selectedMeetingId !== idRapat) return; // rapat berganti saat menunggu
+
+                this.apiOnline = true;
+
+                if (data.catatan && typeof data.catatan.isi === 'string') {
+                    const html = data.catatan.isi;
+                    this.$nextTick(() => {
+                        if (this.$refs.editor) this.$refs.editor.innerHTML = html;
+                        this.noteText = this.htmlToText(html);
+                    });
+                    localStorage.setItem(this.storageKey('note'), html);
+                } else {
+                    this.$nextTick(() => { if (this.$refs.editor) this.$refs.editor.innerHTML = ''; this.noteText = ''; });
+                }
+
+                this.attachments = (data.lampiran || []).map(r => this.mapLampiran(r));
+                this.sharedItems = (data.berbagi || []).map(r => this.mapBerbagi(r));
+                this.persistAttachments();
+                this.persistShared();
+            } catch (err) {
+                console.warn('Workspace API tidak tersedia, memakai penyimpanan lokal.', err);
+                this.apiOnline = false;
+            }
+        },
+
+        mapLampiran(r) {
+            return {
+                id: r.id_lampiran,
+                name: r.nama,
+                size: r.ukuran,
+                url: r.url,
+                mime: r.mime,
+                by: r.user ? r.user.nama : 'Anggota',
+                mine: Number(r.id_user) === Number(this.idUser),
+                time: this.timeOf(r.created_at),
+            };
+        },
+
+        mapBerbagi(r) {
+            return {
+                id: r.id_berbagi,
+                kind: r.jenis === 'link' ? 'link' : 'file',
+                name: r.nama,
+                url: r.url,
+                size: r.ukuran,
+                by: r.user ? r.user.nama : 'Anggota',
+                mine: Number(r.id_user) === Number(this.idUser),
+                time: this.timeOf(r.created_at),
+            };
+        },
+
+        timeOf(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '';
+            return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
         },
 
         /* ================= CATATAN (TEKS EDITOR) ================= */
@@ -789,9 +885,40 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        saveNote() {
+        async saveNote() {
             if (!this.selectedMeetingId || !this.$refs.editor) return;
-            localStorage.setItem(this.storageKey('note'), this.$refs.editor.innerHTML);
+
+            const html = this.$refs.editor.innerHTML;
+            this.noteError = '';
+            this.menyimpan = true;
+
+            // Cache lokal selalu ditulis agar tidak ada catatan yang hilang
+            localStorage.setItem(this.storageKey('note'), html);
+
+            if (this.apiOnline) {
+                try {
+                    const res = await fetch(this.baseUrl() + '/catatan', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrf(),
+                        },
+                        body: JSON.stringify({ isi: html }),
+                    });
+
+                    if (!res.ok) {
+                        const msg = await res.json().catch(() => ({}));
+                        throw new Error(msg.message || ('HTTP ' + res.status));
+                    }
+                } catch (err) {
+                    this.menyimpan = false;
+                    this.noteError = 'Gagal menyimpan ke server: ' + err.message + ' (tersimpan lokal)';
+                    return;
+                }
+            }
+
+            this.menyimpan = false;
             this.noteText = this.$refs.editor.innerText || '';
             this.noteDirty = false;
             this.savedNote = true;
@@ -799,29 +926,58 @@ document.addEventListener('alpine:init', () => {
         },
 
         /* ================= LAMPIRAN NOTULENSI (UNGGAH BERKAS) ================= */
-        addAttachments(e) {
+        async addAttachments(e) {
             const files = Array.from(e.target.files || []);
             const max = 10 * 1024 * 1024;
+            this.noteError = '';
 
-            files.forEach(file => {
+            for (const file of files) {
                 if (file.size > max) {
                     alert('Berkas "' + file.name + '" melebihi 10 MB dan dilewati.');
-                    return;
+                    continue;
                 }
-                const item = {
-                    id: 'att-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-                    name: file.name,
-                    size: file.size,
-                    time: this.nowLabel()
-                };
-                const reader = new FileReader();
-                reader.onload = () => {
-                    item.dataUrl = reader.result;
-                    this.attachments.push(item);
-                    this.persistAttachments();
-                };
-                reader.readAsDataURL(file);
-            });
+
+                if (this.apiOnline) {
+                    try {
+                        const form = new FormData();
+                        form.append('file', file);
+
+                        const res = await fetch(this.baseUrl() + '/lampiran', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf() },
+                            body: form,
+                        });
+
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+
+                        this.attachments.unshift(this.mapLampiran(data.lampiran));
+                        this.persistAttachments();
+                        continue;
+                    } catch (err) {
+                        this.noteError = 'Unggah gagal: ' + err.message + ' — disimpan lokal.';
+                    }
+                }
+
+                // Fallback lokal
+                await new Promise(resolve => {
+                    const item = {
+                        id: 'att-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                        name: file.name,
+                        size: file.size,
+                        time: this.nowLabel()
+                    };
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        item.dataUrl = reader.result;
+                        this.attachments.unshift(item);
+                        resolve();
+                    };
+                    reader.onerror = resolve;
+                    reader.readAsDataURL(file);
+                });
+                this.persistAttachments();
+            }
 
             e.target.value = '';
         },
@@ -837,13 +993,33 @@ document.addEventListener('alpine:init', () => {
 
         persistAttachments() {
             try {
-                localStorage.setItem(this.storageKey('attach'), JSON.stringify(this.attachments));
+                // Saat online, isi berkas ada di server — cukup simpan metadata
+                const payload = this.apiOnline
+                    ? this.attachments.map(({ dataUrl, ...rest }) => rest)
+                    : this.attachments;
+                localStorage.setItem(this.storageKey('attach'), JSON.stringify(payload));
             } catch (err) {
                 console.warn('Lampiran terlalu besar untuk penyimpanan lokal; tetap tersedia di sesi ini.', err);
             }
         },
 
-        removeAttachment(i) {
+        async removeAttachment(i) {
+            const f = this.attachments[i];
+            if (!f) return;
+
+            if (this.apiOnline && typeof f.id === 'number') {
+                try {
+                    const res = await fetch(this.baseUrl() + '/lampiran/' + f.id, {
+                        method: 'DELETE',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf() },
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                } catch (err) {
+                    this.noteError = 'Gagal menghapus lampiran: ' + err.message;
+                    return;
+                }
+            }
+
             this.attachments.splice(i, 1);
             this.persistAttachments();
         },
@@ -851,6 +1027,7 @@ document.addEventListener('alpine:init', () => {
         downloadAttachment(i) {
             const f = this.attachments[i];
             if (!f) return;
+            if (f.url) { window.open(f.url, '_blank', 'noopener'); return; }
             if (!f.dataUrl) { alert('Isi berkas tidak tersedia pada sesi ini.'); return; }
             this.downloadFile(f.name, null, null, f.dataUrl);
         },
@@ -859,51 +1036,74 @@ document.addEventListener('alpine:init', () => {
         loadShared() {
             try {
                 const raw = localStorage.getItem(this.storageKey('share'));
-                this.sharedItems = raw ? JSON.parse(raw) : this.seedShared();
+                this.sharedItems = raw ? JSON.parse(raw) : [];
             } catch (err) {
-                this.sharedItems = this.seedShared();
+                this.sharedItems = [];
             }
-        },
-
-        seedShared() {
-            const seed = [
-                { id: 'seed-1', kind: 'file', name: 'Draf-Risalah-Sidang-Pleno.docx', size: 184320, by: 'Sekretariat Senat', time: '09:12', mine: false },
-                { id: 'seed-2', kind: 'link', name: 'Rekaman Sidang (Google Drive)', url: 'https://drive.polines.ac.id/senat/risalah-pleno-2026', by: 'Sekretariat Senat', time: '09:20', mine: false }
-            ];
-            try { localStorage.setItem(this.storageKey('share'), JSON.stringify(seed)); } catch (err) {}
-            return seed;
         },
 
         persistShared() {
             try { localStorage.setItem(this.storageKey('share'), JSON.stringify(this.sharedItems)); } catch (err) {}
         },
 
-        shareFiles(e) {
+        async shareFiles(e) {
             const files = Array.from(e.target.files || []);
+            this.shareError = '';
 
-            files.forEach(file => {
-                const item = {
-                    id: 'shr-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-                    kind: 'file',
-                    name: file.name,
-                    size: file.size,
-                    by: 'Anda',
-                    time: this.nowLabel(),
-                    mine: true
-                };
-                const reader = new FileReader();
-                reader.onload = () => {
-                    item.dataUrl = reader.result;
-                    this.sharedItems.push(item);
-                    this.persistShared();
-                };
-                reader.readAsDataURL(file);
-            });
+            for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Berkas "' + file.name + '" melebihi 10 MB dan dilewati.');
+                    continue;
+                }
+
+                if (this.apiOnline) {
+                    try {
+                        const form = new FormData();
+                        form.append('file', file);
+
+                        const res = await fetch(this.baseUrl() + '/berbagi', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf() },
+                            body: form,
+                        });
+
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+
+                        this.sharedItems.unshift(this.mapBerbagi(data.berbagi));
+                        this.persistShared();
+                        continue;
+                    } catch (err) {
+                        this.shareError = 'Gagal membagikan ' + file.name + ': ' + err.message;
+                    }
+                }
+
+                await new Promise(resolve => {
+                    const item = {
+                        id: 'shr-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                        kind: 'file',
+                        name: file.name,
+                        size: file.size,
+                        by: 'Anda',
+                        time: this.nowLabel(),
+                        mine: true
+                    };
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        item.dataUrl = reader.result;
+                        this.sharedItems.unshift(item);
+                        resolve();
+                    };
+                    reader.onerror = resolve;
+                    reader.readAsDataURL(file);
+                });
+                this.persistShared();
+            }
 
             e.target.value = '';
         },
 
-        addLink() {
+        async addLink() {
             this.shareError = '';
             const url = (this.shareUrl || '').trim();
 
@@ -912,10 +1112,38 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            this.sharedItems.push({
+            const nama = (this.shareTitle || '').trim() || this.domainOf(url);
+
+            if (this.apiOnline) {
+                try {
+                    const res = await fetch(this.baseUrl() + '/berbagi', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrf(),
+                        },
+                        body: JSON.stringify({ url: url, nama: nama, jenis: 'link' }),
+                    });
+
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+
+                    this.sharedItems.unshift(this.mapBerbagi(data.berbagi));
+                    this.shareUrl = '';
+                    this.shareTitle = '';
+                    this.persistShared();
+                    return;
+                } catch (err) {
+                    this.shareError = err.message;
+                    return;
+                }
+            }
+
+            this.sharedItems.unshift({
                 id: 'lnk-' + Date.now(),
                 kind: 'link',
-                name: (this.shareTitle || '').trim() || this.domainOf(url),
+                name: nama,
                 url: url,
                 by: 'Anda',
                 time: this.nowLabel(),
@@ -927,7 +1155,23 @@ document.addEventListener('alpine:init', () => {
             this.persistShared();
         },
 
-        removeShared(i) {
+        async removeShared(i) {
+            const item = this.sharedItems[i];
+            if (!item) return;
+
+            if (this.apiOnline && typeof item.id === 'number') {
+                try {
+                    const res = await fetch(this.baseUrl() + '/berbagi/' + item.id, {
+                        method: 'DELETE',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf() },
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                } catch (err) {
+                    this.shareError = 'Gagal menghapus: ' + err.message;
+                    return;
+                }
+            }
+
             this.sharedItems.splice(i, 1);
             this.persistShared();
         },
@@ -937,8 +1181,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         downloadShared(item) {
+            if (item.url) { window.open(item.url, '_blank', 'noopener'); return; }
             if (!item.dataUrl) {
-                alert('Berkas ini dibagikan peserta lain. Unduhan tersedia bila penyimpanan backend aktif.');
+                alert('Berkas ini tidak memiliki tautan unduhan.');
                 return;
             }
             this.downloadFile(item.name, null, null, item.dataUrl);

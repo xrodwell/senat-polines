@@ -284,6 +284,7 @@ class PortalController extends Controller
             'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'meetings' => $this->meetings->all(),
+            'idUser' => (int) (auth()->id() ?: session('auth_user_id', (int) env('PORTAL_DEMO_USER_ID', 2))),
         ]);
     }
 

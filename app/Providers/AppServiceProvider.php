@@ -10,12 +10,14 @@ use App\Contracts\FeatureRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Contracts\RapatWorkspaceRepositoryInterface;
 use App\Contracts\VotingRepositoryInterface;
 use App\Repositories\Api\ApiChatbotRepository;
 use App\Repositories\Api\ApiCommitteeRepository;
 use App\Repositories\Api\ApiMeetingRepository;
 use App\Repositories\Api\ApiPostRepository;
 use App\Repositories\Api\ApiRegulationRepository;
+use App\Repositories\Api\ApiRapatWorkspaceRepository;
 use App\Repositories\Api\ApiVotingRepository;
 use App\Repositories\Mock\JsonArchiveRepository;
 use App\Repositories\Mock\JsonAspirationRepository;
@@ -39,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ArchiveRepositoryInterface::class, JsonArchiveRepository::class);
         $this->app->bind(ChatbotRepositoryInterface::class, ApiChatbotRepository::class);
         $this->app->bind(VotingRepositoryInterface::class, ApiVotingRepository::class);
+        $this->app->bind(RapatWorkspaceRepositoryInterface::class, ApiRapatWorkspaceRepository::class);
     }
 
     public function boot(): void
