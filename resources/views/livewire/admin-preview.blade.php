@@ -1113,7 +1113,9 @@
                                     <h3 class="text-[16px] font-bold text-senat-ink">Notulensi Otomatis dari Rekaman</h3>
                                     <p class="mt-0.5 max-w-[620px] text-[12px] leading-relaxed text-senat-muted">
                                         Unggah rekaman rapat (audio atau video). Sistem mentranskripsi lalu menyusun draf notulensi
-                                        secara otomatis. Wajib diperiksa dan disunting petugas sebelum disahkan.
+                                        secara otomatis. Maksimal <strong>1 GB</strong> dan <strong>4 jam</strong> per rekaman —
+                                        untuk rapat panjang unggah audio saja (M4A/MP3), bukan video.
+                                        Rekaman asli disimpan 90 hari, transkrip &amp; notulensi permanen.
                                     </p>
                                 </div>
                             </div>

@@ -1700,9 +1700,11 @@ class AdminPreview extends Component
     public function mulaiRekaman(): void
     {
         $this->validate([
-            'rekamanFile' => 'required|file|max:512000',
+            'rekamanFile' => 'required|file|max:1024000',
             'rekamanRapatId' => 'required|integer|min:1',
-        ], [], ['rekamanFile' => 'berkas rekaman', 'rekamanRapatId' => 'rapat']);
+        ], [
+            'rekamanFile.max' => 'Berkas terlalu besar. Maksimal 1 GB — untuk rapat panjang unggah audio (M4A/MP3) saja, bukan video.',
+        ], ['rekamanFile' => 'berkas rekaman', 'rekamanRapatId' => 'rapat']);
 
         $this->reset(['rekamanTranskrip', 'rekamanNotulen', 'rekamanError', 'rekamanStatus', 'rekamanProgres', 'rekamanAktifId']);
 
