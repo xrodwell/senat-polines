@@ -137,6 +137,19 @@ class AdminPreview extends Component
     public ?int $viewingNotulensiId = null;
     public bool $isFormOpen = false;
 
+    // State Notulensi Otomatis (rekaman audio/video → transkrip → draf notulensi)
+    public $rekamanFile = null;
+    public ?int $rekamanRapatId = null;
+    public ?int $rekamanAktifId = null;
+    public string $rekamanStatus = '';
+    public int $rekamanProgres = 0;
+    public string $rekamanTranskrip = '';
+    public string $rekamanNotulen = '';
+    public string $rekamanError = '';
+    public string $rekamanNama = '';
+    public int $rekamanDurasi = 0;
+    public array $rekamanList = [];
+
     // State Katalog Regulasi & Produk Hukum (Backend API Integration)
     public array $regulasiList = [];
     public array $periodeList = [];
@@ -1519,6 +1532,12 @@ class AdminPreview extends Component
                 ['id_user' => 3, 'nama' => 'Andi Setyawan, S.E., M.M.', 'nim_nip' => '197405191999031001'],
             ];
         }
+
+        // Modul Notulensi Otomatis memakai rapat yang sama dengan form notulensi
+        if (! $this->rekamanRapatId) {
+            $this->rekamanRapatId = $this->notulensiRapatId;
+        }
+        $this->muatRekamanList();
     }
 
     public function openNotulensiForm(): void
@@ -1634,6 +1653,177 @@ class AdminPreview extends Component
             }
         } catch (\Throwable $e) {
             $this->flashMessage = 'Gagal memperbarui status: ' . $e->getMessage();
+        }
+    }
+
+    /* ================= NOTULENSI OTOMATIS (rekaman → teks → draf) ================= */
+
+    public function updatedRekamanRapatId(): void
+    {
+        $this->muatRekamanList();
+    }
+
+    public function muatRekamanList(): void
+    {
+        $id = $this->rekamanRapatId ?: $this->notulensiRapatId;
+
+        if (! $id) {
+            $this->rekamanList = [];
+
+            return;
+        }
+
+        try {
+            $res = Http::timeout(6)->get($this->getBackendUrl() . "/rapat/{$id}/rekaman");
+
+            if (! $res->successful()) {
+                $this->rekamanList = [];
+
+                return;
+            }
+
+            $this->rekamanList = array_map(fn ($r) => [
+                'id_rekaman' => $r['id_rekaman'] ?? null,
+                'nama_asli' => $r['nama_asli'] ?? '',
+                'status' => $r['status'] ?? '',
+                'progres' => (int) ($r['progres'] ?? 0),
+                'durasi' => (int) ($r['durasi'] ?? 0),
+                'ukuran' => (int) ($r['ukuran'] ?? 0),
+                'id_notulensi' => $r['id_notulensi'] ?? null,
+                'dibuat' => $r['dibuat'] ?? null,
+            ], (array) $res->json());
+        } catch (\Throwable $e) {
+            $this->rekamanList = [];
+        }
+    }
+
+    public function mulaiRekaman(): void
+    {
+        $this->validate([
+            'rekamanFile' => 'required|file|max:512000',
+            'rekamanRapatId' => 'required|integer|min:1',
+        ], [], ['rekamanFile' => 'berkas rekaman', 'rekamanRapatId' => 'rapat']);
+
+        $this->reset(['rekamanTranskrip', 'rekamanNotulen', 'rekamanError', 'rekamanStatus', 'rekamanProgres', 'rekamanAktifId']);
+
+        $this->rekamanNama = $this->rekamanFile->getClientOriginalName();
+
+        try {
+            $res = Http::timeout(900)
+                ->attach(
+                    'berkas',
+                    file_get_contents($this->rekamanFile->getRealPath()),
+                    $this->rekamanNama,
+                    ['Content-Type' => $this->rekamanFile->getMimeType() ?: 'application/octet-stream']
+                )
+                ->post($this->getBackendUrl() . "/rapat/{$this->rekamanRapatId}/rekaman", ['id_user' => 1]);
+
+            if (! $res->successful()) {
+                $this->rekamanError = $res->json('message') ?? ('HTTP ' . $res->status());
+                $this->flashMessage = 'Gagal mengunggah rekaman: ' . $this->rekamanError;
+
+                return;
+            }
+
+            $this->rekamanAktifId = (int) $res->json('id_rekaman');
+            $this->rekamanStatus = 'unggah';
+            $this->rekamanProgres = 2;
+            $this->rekamanFile = null;
+            $this->flashMessage = 'Rekaman terunggah. Transkripsi dan penyusunan notulensi berjalan otomatis — halaman ini akan memperbarui sendiri.';
+
+            $this->pollRekaman();
+            $this->muatRekamanList();
+        } catch (\Throwable $e) {
+            $this->rekamanError = $e->getMessage();
+            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
+        }
+    }
+
+    /** Dipanggil wire:poll selama proses berjalan. */
+    public function pollRekaman(): void
+    {
+        if (! $this->rekamanAktifId) {
+            return;
+        }
+
+        $idRapat = $this->rekamanRapatId ?: $this->notulensiRapatId;
+
+        try {
+            $res = Http::timeout(15)->get($this->getBackendUrl() . "/rapat/{$idRapat}/rekaman/{$this->rekamanAktifId}");
+
+            if (! $res->successful()) {
+                return;
+            }
+
+            $d = $res->json();
+
+            $this->rekamanStatus = (string) ($d['status'] ?? '');
+            $this->rekamanProgres = (int) ($d['progres'] ?? 0);
+            $this->rekamanDurasi = (int) ($d['durasi'] ?? 0);
+            $this->rekamanError = (string) ($d['error'] ?? '');
+
+            if (! empty($d['transkrip'])) {
+                $this->rekamanTranskrip = (string) $d['transkrip'];
+            }
+
+            if (! empty($d['notulen'])) {
+                $this->rekamanNotulen = (string) $d['notulen'];
+            }
+
+            if ($this->rekamanStatus === 'selesai') {
+                $this->flashMessage = 'Notulensi otomatis selesai. Periksa dan sunting sebelum disahkan.';
+                $this->loadNotulensiData();
+                $this->muatRekamanList();
+            }
+
+            if ($this->rekamanStatus === 'gagal') {
+                $this->flashMessage = 'Pemrosesan gagal: ' . $this->rekamanError;
+                $this->muatRekamanList();
+            }
+        } catch (\Throwable $e) {
+            // biarkan polling berikutnya mencoba lagi
+        }
+    }
+
+    /** Buka hasil otomatis di formulir notulensi untuk disunting petugas. */
+    public function suntingHasilRekaman(): void
+    {
+        if (trim($this->rekamanNotulen) === '') {
+            $this->flashMessage = 'Belum ada hasil notulensi untuk disunting.';
+
+            return;
+        }
+
+        $this->notulensiIsi = $this->rekamanNotulen;
+        $this->notulensiRapatId = $this->rekamanRapatId ?: $this->notulensiRapatId;
+        $this->notulensiStatus = 'draf';
+        $this->notulensiFile = '';
+        $this->selectedNotulensiId = null;
+        $this->isFormOpen = true;
+
+        $this->flashMessage = 'Draf hasil otomatis dimuat ke formulir. Periksa nama, angka, dan keputusan sebelum menyimpan.';
+    }
+
+    public function hapusRekaman(int $id): void
+    {
+        $idRapat = $this->rekamanRapatId ?: $this->notulensiRapatId;
+
+        try {
+            $res = Http::timeout(10)->delete($this->getBackendUrl() . "/rapat/{$idRapat}/rekaman/{$id}");
+
+            if ($res->successful() || $res->status() === 204) {
+                $this->flashMessage = 'Rekaman #' . $id . ' dihapus.';
+            } else {
+                $this->flashMessage = 'Gagal menghapus rekaman: HTTP ' . $res->status();
+            }
+
+            if ($this->rekamanAktifId === $id) {
+                $this->reset(['rekamanAktifId', 'rekamanStatus', 'rekamanProgres', 'rekamanTranskrip', 'rekamanNotulen', 'rekamanError']);
+            }
+
+            $this->muatRekamanList();
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
         }
     }
 

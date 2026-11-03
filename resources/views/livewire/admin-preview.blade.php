@@ -1102,6 +1102,151 @@
                         </div>
                     </section>
 
+                    {{-- Notulensi Otomatis: rekaman audio/video → transkrip → draf notulensi --}}
+                    <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-senat-link text-white">
+                                    <x-senat.icon name="upload" class="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 class="text-[16px] font-bold text-senat-ink">Notulensi Otomatis dari Rekaman</h3>
+                                    <p class="mt-0.5 max-w-[620px] text-[12px] leading-relaxed text-senat-muted">
+                                        Unggah rekaman rapat (audio atau video). Sistem mentranskripsi lalu menyusun draf notulensi
+                                        secara otomatis. Wajib diperiksa dan disunting petugas sebelum disahkan.
+                                    </p>
+                                </div>
+                            </div>
+                            <x-senat.badge state="info">Whisper + Gemini</x-senat.badge>
+                        </div>
+
+                        <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <label class="block">
+                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Rapat</span>
+                                    <select wire:model.live="rekamanRapatId"
+                                            class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-2 text-[13px] text-senat-ink">
+                                        @foreach ($rapatList as $r)
+                                            <option value="{{ $r['id_rapat'] ?? '' }}">{{ $r['nama_agenda'] ?? ('Rapat #' . ($r['id_rapat'] ?? '')) }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+
+                                <label class="block">
+                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Berkas Rekaman</span>
+                                    <input type="file" wire:model="rekamanFile"
+                                           accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.mp4,.mov,.mkv,.webm,.3gp"
+                                           class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12.5px] text-senat-body file:mr-3 file:rounded-md file:border-0 file:bg-senat-badgeBg file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-senat-ink">
+                                </label>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button type="button" wire:click="mulaiRekaman" wire:loading.attr="disabled" wire:target="rekamanFile,mulaiRekaman"
+                                        class="inline-flex items-center gap-1.5 rounded-[10px] bg-senat-link px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
+                                    <x-senat.icon name="upload" class="h-4 w-4" />
+                                    <span wire:loading.remove wire:target="mulaiRekaman">Proses Jadi Notulensi</span>
+                                    <span wire:loading wire:target="mulaiRekaman">Mengunggah&hellip;</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        @error('rekamanFile') <p class="mt-2 text-[12px] text-rose-600">{{ $message }}</p> @enderror
+                        @error('rekamanRapatId') <p class="mt-2 text-[12px] text-rose-600">{{ $message }}</p> @enderror
+
+                        {{-- Progress selama proses berjalan --}}
+                        @if (in_array($rekamanStatus, ['unggah', 'transkripsi', 'menyusun']))
+                            <div wire:poll.2s="pollRekaman" class="mt-4 rounded-xl border border-senat-border bg-senat-badgeBg/40 p-4">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-[12.5px] font-semibold text-senat-ink">{{ $rekamanNama ?: 'Rekaman' }}</p>
+                                        <p class="mt-0.5 text-[11.5px] text-senat-muted">
+                                            @if ($rekamanStatus === 'transkripsi')
+                                                Mentranskripsi rekaman&hellip;
+                                            @elseif ($rekamanStatus === 'menyusun')
+                                                Menyusun draf notulensi&hellip;
+                                            @else
+                                                Menyiapkan berkas&hellip;
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <span class="shrink-0 font-mono text-[12px] font-bold text-senat-link">{{ $rekamanProgres }}%</span>
+                                </div>
+                                <div class="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-senat-border/60">
+                                    <div class="h-full rounded-full bg-senat-link transition-all duration-500" style="width: {{ max(3, $rekamanProgres) }}%"></div>
+                                </div>
+                                <p class="mt-2 text-[11px] text-senat-muted">Halaman ini memperbarui sendiri. Aman untuk ditinggal.</p>
+                            </div>
+                        @endif
+
+                        @if ($rekamanError !== '' && $rekamanStatus !== 'gagal')
+                            <p class="mt-3 text-[12px] text-rose-600">{{ $rekamanError }}</p>
+                        @endif
+
+                        {{-- Hasil --}}
+                        @if ($rekamanNotulen !== '')
+                            <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <p class="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-emerald-800">
+                                        <x-senat.icon name="check" class="h-4 w-4" /> Draf notulensi siap diperiksa
+                                    </p>
+                                    <span class="font-mono text-[11px] text-emerald-700">
+                                        {{ $rekamanDurasi > 0 ? floor($rekamanDurasi / 60) . ' mnt ' . ($rekamanDurasi % 60) . ' dtk audio' : '' }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-3 max-h-[360px] overflow-y-auto rounded-lg border border-emerald-200 bg-white p-4 text-[12.5px] leading-relaxed text-senat-ink [&_h1]:mt-3 [&_h1]:text-[14px] [&_h1]:font-bold [&_h2]:mt-3 [&_h2]:text-[12px] [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wide [&_h2]:text-senat-primary [&_h2:first-child]:mt-0 [&_h3]:mt-2 [&_h3]:font-semibold [&_li]:my-0.5 [&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1.5 [&_strong]:font-semibold [&_table]:my-2 [&_table]:w-full [&_td]:border-b [&_td]:border-senat-border/60 [&_td]:py-1 [&_td]:align-top [&_th]:border-b [&_th]:border-senat-border [&_th]:py-1 [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5">
+                                    {!! \Illuminate\Support\Str::markdown($rekamanNotulen, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
+                                </div>
+
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <button type="button" wire:click="suntingHasilRekaman"
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-[12px] font-semibold text-white hover:opacity-90">
+                                        <x-senat.icon name="edit" class="h-3.5 w-3.5" /> Sunting &amp; Simpan ke Notulensi
+                                    </button>
+
+                                    @if ($rekamanAktifId)
+                                        <button type="button" wire:click="hapusRekaman({{ $rekamanAktifId }})"
+                                                class="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-[12px] font-semibold text-rose-700 hover:bg-rose-50">
+                                            <x-senat.icon name="trash" class="h-3.5 w-3.5" /> Hapus Rekaman
+                                        </button>
+                                    @endif
+                                </div>
+
+                                @if ($rekamanTranskrip !== '')
+                                    <details class="mt-3">
+                                        <summary class="cursor-pointer text-[11.5px] font-semibold text-senat-muted hover:text-senat-ink">Lihat transkrip mentah</summary>
+                                        <div class="mt-2 max-h-[240px] overflow-y-auto whitespace-pre-wrap rounded-lg border border-senat-border bg-white p-3 text-[12px] leading-relaxed text-senat-body">{{ $rekamanTranskrip }}</div>
+                                    </details>
+                                @endif
+                            </div>
+                        @endif
+
+                        {{-- Riwayat rekaman rapat ini --}}
+                        @if (!empty($rekamanList))
+                            <div class="mt-4 border-t border-senat-sidebarLine pt-3">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Riwayat Rekaman Rapat Ini</p>
+                                <ul class="mt-2 space-y-1.5">
+                                    @foreach ($rekamanList as $rk)
+                                        <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-senat-border bg-white px-3 py-2">
+                                            <div class="min-w-0">
+                                                <p class="truncate text-[12px] font-semibold text-senat-ink">{{ $rk['nama_asli'] }}</p>
+                                                <p class="font-mono text-[10.5px] text-senat-muted">
+                                                    {{ strtoupper($rk['status']) }} &middot; {{ $rk['progres'] }}%
+                                                    @if ($rk['durasi'] > 0) &middot; {{ floor($rk['durasi'] / 60) }} mnt @endif
+                                                    @if ($rk['id_notulensi']) &middot; notulensi #{{ $rk['id_notulensi'] }} @endif
+                                                </p>
+                                            </div>
+                                            <button type="button" wire:click="hapusRekaman({{ $rk['id_rekaman'] }})"
+                                                    class="shrink-0 rounded-md border border-senat-border px-2.5 py-1 text-[11px] font-semibold text-senat-muted hover:border-rose-300 hover:text-rose-700">
+                                                Hapus
+                                            </button>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </section>
+
                     {{-- Collapsible Form: Input / Edit Notulensi --}}
                     @if ($isFormOpen)
                         <section class="rounded-[14px] border-2 border-senat-link/30 bg-white p-6 shadow-[0_4px_20px_0_rgba(13,26,41,0.08)]">
@@ -1285,7 +1430,7 @@
 
                                 {{-- Excerpt / Ringkasan Jalannya Pembahasan --}}
                                 <div class="mt-4 rounded-[10px] bg-slate-50/70 p-3.5 text-[12.5px] leading-relaxed text-senat-ink border border-slate-100">
-                                    <p class="line-clamp-3 whitespace-pre-line">{{ $item['isi_notulensi'] }}</p>
+                                    <p class="line-clamp-3">{{ \Illuminate\Support\Str::of($item['isi_notulensi'])->replaceMatches('/^#{1,6}\s*/m', '')->replaceMatches('/\*\*(.+?)\*\*/', '$1')->replaceMatches('/^\s*[-*]\s+/m', '• ')->replace('|', ' ')->squish()->limit(240) }}</p>
                                 </div>
 
                                 {{-- Lampiran Dokumen & Quick Status Changer --}}
@@ -1373,8 +1518,8 @@
 
                                         <div>
                                             <h4 class="text-[13px] font-bold text-senat-ink">Jalannya Musyawarah &amp; Catatan Risalah:</h4>
-                                            <div class="mt-2 rounded-xl border border-senat-border bg-slate-50/50 p-4 text-[13px] leading-relaxed text-senat-ink whitespace-pre-line">
-                                                {{ $viewItem['isi_notulensi'] }}
+                                            <div class="mt-2 rounded-xl border border-senat-border bg-slate-50/50 p-4 text-[13px] leading-relaxed text-senat-ink [&_h2]:mt-3 [&_h2]:text-[12px] [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wide [&_h2]:text-senat-primary [&_h2:first-child]:mt-0 [&_li]:my-0.5 [&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1.5 [&_strong]:font-semibold [&_table]:my-2 [&_table]:w-full [&_td]:border-b [&_td]:border-senat-border/60 [&_td]:py-1 [&_th]:border-b [&_th]:border-senat-border [&_th]:py-1 [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5">
+                                                {!! \Illuminate\Support\Str::markdown($viewItem['isi_notulensi'], ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
                                             </div>
                                         </div>
 
