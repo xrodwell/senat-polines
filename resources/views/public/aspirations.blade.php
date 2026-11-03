@@ -244,9 +244,10 @@
                                 Setelah dikirim, alamat email akan diverifikasi sebelum nomor tiket diterbitkan.
                             </p>
                             <button type="submit"
-                                    class="inline-flex h-[38px] w-full items-center justify-center gap-1.5 rounded-lg bg-[#155ead] px-5 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-[#124e91] sm:w-[244px] sm:shrink-0">
-                                Kirim Aspirasi
-                                <span aria-hidden="true">›</span>
+                                    :disabled="loading"
+                                    class="inline-flex h-[38px] w-full items-center justify-center gap-1.5 rounded-lg bg-[#155ead] px-5 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-[#124e91] disabled:opacity-50 sm:w-[244px] sm:shrink-0">
+                                <span x-text="loading ? 'Mengirim aspirasi...' : 'Kirim Aspirasi'">Kirim Aspirasi</span>
+                                <span aria-hidden="true" x-show="!loading">›</span>
                             </button>
                         </div>
                         <p class="mt-4 text-[11px] leading-[1.3] text-[#667085]">

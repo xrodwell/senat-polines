@@ -27,6 +27,9 @@ Route::get('/regulasi/standar-pedoman', [PublicController::class, 'standards'])-
 
 // 06 / 09 — Kanal Aspirasi & Pelacak
 Route::get('/aspirasi', [PublicController::class, 'aspirations'])->name('public.aspirations');
+Route::post('/aspirasi/kirim', [PublicController::class, 'submitAspiration'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('public.aspirations.submit');
 Route::get('/aspirasi/track', [PublicController::class, 'trackAspiration'])->name('public.aspirations.track');
 Route::get('/aspirasi/track/{ticket}', [PublicController::class, 'trackAspiration'])->name('public.aspirations.show');
 

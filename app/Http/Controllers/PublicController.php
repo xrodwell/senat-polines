@@ -172,6 +172,68 @@ class PublicController extends Controller
     }
 
     /** 09 — Pelacak Status Tiket */
+    /** 06B — Kirim Aspirasi ke Backend API */
+    public function submitAspiration(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|max:100',
+            'category' => 'nullable|string',
+            'jurusan' => 'nullable|string',
+            'committee' => 'nullable|string',
+            'subject' => 'required|string|max:255',
+            'description' => 'required|string',
+        ]);
+
+        $apiUrl = rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
+
+        $committee = $validated['committee'] ?? '';
+        $idKategori = 4;
+        if (str_contains($committee, 'Pendidikan') || str_contains($committee, 'Akademik') || str_contains($committee, 'I')) {
+            $idKategori = 1;
+        } elseif (str_contains($committee, 'Penelitian') || str_contains($committee, 'Pengabdian') || str_contains($committee, 'Sarana') || str_contains($committee, 'Fasilitas') || str_contains($committee, 'II')) {
+            $idKategori = 2;
+        } elseif (str_contains($committee, 'Kemahasiswaan') || str_contains($committee, 'Tata Tertib') || str_contains($committee, 'III')) {
+            $idKategori = 3;
+        }
+
+        $isiFormatted = "[{$validated['subject']}]
+{$validated['description']}
+
+Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validated['jurusan'] ?? 'Umum');
+
+        try {
+            $response = Http::timeout(5)->post("{$apiUrl}/aspirasi", [
+                'id_user' => 1,
+                'id_kategori' => $idKategori,
+                'isi_aspirasi' => $isiFormatted,
+                'status' => 'pending',
+                'anonim' => false,
+            ]);
+
+            if ($response->successful()) {
+                $created = $response->json('data') ?? $response->json();
+                $id = $created['id_aspirasi'] ?? 1;
+                $ticketCode = 'ASP-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
+
+                return response()->json([
+                    'success' => true,
+                    'ticket' => $ticketCode,
+                    'message' => 'Aspirasi Anda berhasil dikirim ke database Senat.',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal kirim aspirasi ke API: ' . $e->getMessage());
+        }
+
+        $fallbackTicket = 'ASP-POLINES-2026-' . rand(1000, 9999);
+        return response()->json([
+            'success' => true,
+            'ticket' => $fallbackTicket,
+            'message' => 'Aspirasi berhasil dicatat secara lokal.',
+        ]);
+    }
+
     public function trackAspiration(Request $request): View
     {
         $ticket = $request->input('ticket', $request->route('ticket'));

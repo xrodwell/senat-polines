@@ -31,15 +31,18 @@
         ];
 
         $statusText = $asp['status'] ?? '';
-        $stage = str_contains($statusText, 'Ditindaklanjuti') ? 3
-            : (str_contains($statusText, 'Telaah') || str_contains($statusText, 'Ditelaah') ? 3 : 2);
+        $stage = (str_contains($statusText, 'Ditindaklanjuti') || str_contains($statusText, 'Selesai')) ? 4
+            : ((str_contains($statusText, 'Telaah') || str_contains($statusText, 'Ditelaah') || str_contains($statusText, 'Diproses')) ? 3 : 2);
         $progress = (int) round($stage / 4 * 100);
 
-        $statusOk = str_contains($statusText, 'Ditindaklanjuti');
+        $statusOk = str_contains($statusText, 'Ditindaklanjuti') || str_contains($statusText, 'Selesai');
+        $statusInReview = str_contains($statusText, 'Telaah') || str_contains($statusText, 'Ditelaah') || str_contains($statusText, 'Diproses');
         $badgeClass = $statusOk
             ? 'border-[#86efac] bg-[#f0fdf4] text-[#166534]'
-            : 'border-[#fcd34d] bg-[#fffbeb] text-[#92400e]';
-        $badgeDot = $statusOk ? 'bg-[#16a34a]' : 'bg-[#f59e0b]';
+            : ($statusInReview
+                ? 'border-[#93c5fd] bg-[#eff6ff] text-[#1e40af]'
+                : 'border-[#fcd34d] bg-[#fffbeb] text-[#92400e]');
+        $badgeDot = $statusOk ? 'bg-[#16a34a]' : ($statusInReview ? 'bg-[#2563eb]' : 'bg-[#f59e0b]');
 
         $steps = [
             ['no' => '01', 'title' => 'Kirim aspirasi melalui formulir Kanal Aspirasi.', 'detail' => 'Status diperbarui oleh Sekretariat Senat sesuai proses musyawarah.'],
