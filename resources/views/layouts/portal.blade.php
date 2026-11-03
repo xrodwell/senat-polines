@@ -7,6 +7,10 @@
     <meta name="theme-color" content="#003366">
     <title>@yield('title', 'Portal Internal Senat Akademik Polines')</title>
 
+    {{-- Favicon --}}
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-polines.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo-polines.png') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">

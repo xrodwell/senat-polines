@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\RapatWorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -56,6 +57,7 @@ Route::prefix('portal')->group(function (): void {
 
     // 12 — Anggota Senat
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
+    Route::post('/berita/tulis', [PortalController::class, 'storePost'])->name('portal.news.store');
     Route::get('/agenda', [PortalController::class, 'agenda'])->name('portal.agenda');
     Route::get('/notulensi', [PortalController::class, 'minutes'])->name('portal.minutes');
     Route::get('/e-voting', [PortalController::class, 'voting'])->name('portal.voting');
@@ -69,6 +71,21 @@ Route::prefix('portal')->group(function (): void {
 
     // Layar operasional lama (dipertahankan)
     Route::get('/attendance', [PortalController::class, 'memberAttendance'])->name('portal.attendance');
+
+    // Workspace rapat anggota: catatan, lampiran notulensi, berbagi dokumen/tautan
+    Route::get('/attendance/{rapat}/workspace', [RapatWorkspaceController::class, 'show'])
+        ->name('portal.attendance.workspace');
+    Route::post('/attendance/{rapat}/catatan', [RapatWorkspaceController::class, 'simpanCatatan'])
+        ->name('portal.attendance.catatan');
+    Route::post('/attendance/{rapat}/lampiran', [RapatWorkspaceController::class, 'unggahLampiran'])
+        ->name('portal.attendance.lampiran.store');
+    Route::delete('/attendance/{rapat}/lampiran/{lampiran}', [RapatWorkspaceController::class, 'hapusLampiran'])
+        ->name('portal.attendance.lampiran.destroy');
+    Route::post('/attendance/{rapat}/berbagi', [RapatWorkspaceController::class, 'bagikan'])
+        ->name('portal.attendance.berbagi.store');
+    Route::delete('/attendance/{rapat}/berbagi/{berbagi}', [RapatWorkspaceController::class, 'hapusBerbagi'])
+        ->name('portal.attendance.berbagi.destroy');
+
     Route::get('/session', [PortalController::class, 'adminMeetingSession'])->name('portal.session');
 
     // 13 — Sekretariat (dialihkan ke /admin sesuai arsitektur panel terpadu)

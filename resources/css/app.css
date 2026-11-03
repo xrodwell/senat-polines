@@ -31,3 +31,7 @@
     --color-polines-orange: #f37021;
     --color-polines-orangeHover: #d95f14;
 }
+
+[x-cloak] {
+    display: none !important;
+}

@@ -12,6 +12,7 @@ use App\Support\SenatDirectory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PortalController extends Controller
@@ -115,12 +116,59 @@ class PortalController extends Controller
     /** 12A — Dashboard Anggota · Ringkasan */
     public function dashboard(): View
     {
+        $allPosts = $this->posts->all();
+        $published = array_values(array_filter($allPosts, fn($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
+
         return view('portal.dashboard', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
             'aspirations' => $this->aspirations->all(),
-            'announcements' => $this->posts->all(),
+            'announcements' => $published,
+            'allPosts' => $allPosts,
         ]);
+    }
+
+    /** Tambah & Publikasikan Berita langsung dari Dashboard */
+    public function storePost(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|min:3|max:255',
+            'category' => 'required|string',
+            'body' => 'required|string',
+            'thumbnail' => 'nullable|string',
+            'status' => 'nullable|string|in:Terpublikasi,Draf',
+        ], [
+            'title.required' => 'Judul berita wajib diisi.',
+            'title.min' => 'Judul berita minimal 3 karakter.',
+            'category.required' => 'Kategori berita wajib dipilih.',
+            'body.required' => 'Isi berita lengkap wajib diisi.',
+        ]);
+
+        $status = $validated['status'] ?? 'Terpublikasi';
+        $excerpt = Str::limit(strip_tags($validated['body']), 180);
+        $thumbnail = !empty($validated['thumbnail'])
+            ? $validated['thumbnail']
+            : 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80';
+
+        $payload = [
+            'title' => $validated['title'],
+            'category' => $validated['category'],
+            'date' => date('Y-m-d'),
+            'status' => $status,
+            'excerpt' => $excerpt,
+            'body_text' => $validated['body'],
+            'body' => explode("\n\n", $validated['body']),
+            'thumbnail' => $thumbnail,
+            'author' => 'Sekretariat Senat Polines',
+        ];
+
+        $this->posts->create($payload);
+
+        $msg = $status === 'Terpublikasi'
+            ? "Berita \"{$validated['title']}\" sukses dipublikasikan dan langsung tampil di dashboard!"
+            : "Draf berita \"{$validated['title']}\" berhasil disimpan.";
+
+        return redirect()->route('portal.dashboard')->with('success', $msg);
     }
 
     /** 12B — Agenda & Presensi */
@@ -161,16 +209,139 @@ class PortalController extends Controller
         return view('portal.minutes', [
             'meetings' => $this->meetings->all(),
             'archives' => $this->archives->all(),
+            'idUser' => (int) (auth()->id() ?: session('auth_user_id', (int) env('PORTAL_DEMO_USER_ID', 2))),
         ]);
     }
 
     /** 12D — E-Voting */
     public function voting(): View
     {
+        $userId = (int) (auth()->id() ?: session('auth_user_id', 2));
+        $activeVoting = $this->votings->getActive();
+        $allVotings = $this->votings->all();
+
+        // Periksa partisipasi anggota pada sesi voting aktif
+        if ($activeVoting) {
+            $userVotedActive = false;
+            $userChoiceActive = null;
+            $suaraList = $activeVoting['suara_votings'] ?? $activeVoting['suaraVotings'] ?? [];
+            foreach ($suaraList as $s) {
+                if ((int) ($s['id_user'] ?? 0) === $userId) {
+                    $userVotedActive = true;
+                    $optId = $s['id_opsi'] ?? null;
+                    foreach (($activeVoting['opsi'] ?? []) as $o) {
+                        if (($o['id_opsi'] ?? $o['id'] ?? null) == $optId) {
+                            $userChoiceActive = $o;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+            $activeVoting['has_voted'] = $userVotedActive;
+            $activeVoting['my_choice'] = $userChoiceActive;
+        }
+
+        // Siapkan riwayat voting (semua voting terdahulu yang sudah ditutup/selesai)
+        $closedVotings = collect($allVotings)
+            ->filter(function ($v) {
+                $status = strtolower($v['status'] ?? '');
+                return in_array($status, ['ditutup', 'selesai', 'closed'], true);
+            });
+
+        // Jika di database belum ada sesi voting yang berstatus ditutup, ambil arsip riwayat voting senat
+        if ($closedVotings->isEmpty()) {
+            $fallbackRepo = new \App\Repositories\Mock\JsonVotingRepository();
+            $closedVotings = collect($fallbackRepo->defaultVotings())
+                ->filter(fn ($v) => in_array(strtolower($v['status'] ?? ''), ['ditutup', 'selesai', 'closed'], true));
+        }
+
+        $historyVotings = $closedVotings
+            ->map(function ($v) use ($userId) {
+                // Periksa partisipasi anggota pada sesi voting ini
+                $userVoted = false;
+                $userPilihanNama = null;
+                $waktuVote = null;
+
+                $suaraList = $v['suara_votings'] ?? $v['suaraVotings'] ?? [];
+                foreach ($suaraList as $s) {
+                    if ((int) ($s['id_user'] ?? 0) === $userId) {
+                        $userVoted = true;
+                        $waktuVote = $s['waktu_vote'] ?? null;
+                        $optId = $s['id_opsi'] ?? null;
+                        foreach (($v['opsi'] ?? []) as $o) {
+                            if (($o['id_opsi'] ?? $o['id'] ?? null) == $optId) {
+                                $userPilihanNama = $o['nama_opsi'] ?? $o['label'] ?? 'Suara Tercatat';
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                // Cek presensi / undangan rapat
+                $rapat = $v['rapat'] ?? [];
+                $anggotaRapats = $rapat['anggota_rapats'] ?? $rapat['anggotaRapats'] ?? [];
+                $isInvited = empty($anggotaRapats);
+                $isPresent = false;
+
+                if (!empty($anggotaRapats)) {
+                    foreach ($anggotaRapats as $ar) {
+                        if ((int) ($ar['id_user'] ?? 0) === $userId) {
+                            $isInvited = true;
+                            $statusHadir = strtolower((string) ($ar['status_kehadiran'] ?? ''));
+                            $isPresent = ($statusHadir === 'hadir' || !empty($ar['waktu_presensi']));
+                            break;
+                        }
+                    }
+                }
+
+                // Tentukan status partisipasi
+                if ($userVoted) {
+                    $statusPartisipasi = 'voted';
+                } elseif ($isPresent) {
+                    $statusPartisipasi = 'present_not_voted';
+                } elseif ($isInvited) {
+                    $statusPartisipasi = 'absent';
+                } else {
+                    $statusPartisipasi = 'not_invited';
+                }
+
+                $v['user_voted'] = $userVoted;
+                $v['user_pilihan_nama'] = $userPilihanNama;
+                $v['user_waktu_vote'] = $waktuVote;
+                $v['status_partisipasi'] = $statusPartisipasi;
+
+                // Tentukan status hasil keputusan sidang
+                $opsiList = $v['opsi'] ?? [];
+                $sortedOpsi = collect($opsiList)->sortByDesc(fn ($o) => (int) ($o['total'] ?? $o['jumlah_suara'] ?? 0));
+                $topOpsi = $sortedOpsi->first();
+                $topNama = strtolower($topOpsi['nama_opsi'] ?? $topOpsi['label'] ?? '');
+
+                $hasilKeputusan = 'Disetujui';
+                $badgeState = 'success';
+                if (str_contains($topNama, 'tidak') || str_contains($topNama, 'tolak')) {
+                    $hasilKeputusan = 'Ditolak';
+                    $badgeState = 'danger';
+                } elseif (str_contains($topNama, 'abstain')) {
+                    $hasilKeputusan = 'Musyawarah Lanjutan';
+                    $badgeState = 'warning';
+                }
+
+                $v['hasil_keputusan'] = $hasilKeputusan;
+                $v['badge_state'] = $badgeState;
+
+                return $v;
+            })
+            ->values()
+            ->all();
+
         return view('portal.voting', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
-            'activeVoting' => $this->votings->getActive(),
+            'activeVoting' => $activeVoting,
+            'historyVotings' => $historyVotings,
+            'userId' => $userId,
         ]);
     }
 
@@ -183,10 +354,11 @@ class PortalController extends Controller
         ]);
 
         try {
+            $userId = (int) (auth()->id() ?: session('auth_user_id', 2));
             $result = $this->votings->castVote(
                 (int) $validated['id_voting'],
                 (int) $validated['id_opsi'],
-                auth()->id() ?? 1
+                $userId
             );
 
             if (isset($result['success']) && ! $result['success']) {
@@ -236,6 +408,7 @@ class PortalController extends Controller
             'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'meetings' => $this->meetings->all(),
+            'idUser' => (int) (auth()->id() ?: session('auth_user_id', (int) env('PORTAL_DEMO_USER_ID', 2))),
         ]);
     }
 

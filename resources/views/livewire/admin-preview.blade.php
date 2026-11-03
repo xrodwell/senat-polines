@@ -10,11 +10,28 @@
     }
 @endphp
 
-<div class="min-h-screen bg-senat-surface text-senat-body antialiased">
+<div class="min-h-screen bg-senat-surface text-senat-body antialiased"
+     x-data="{
+         sidebarCollapsed: localStorage.getItem('admin_sidebar_collapsed') === 'true',
+         animated: false,
+         toggleSidebar() {
+             this.animated = true;
+             this.sidebarCollapsed = !this.sidebarCollapsed;
+             localStorage.setItem('admin_sidebar_collapsed', this.sidebarCollapsed);
+         }
+     }">
 
     {{-- Topbar khas Portal Senat (Figma 2269:728) --}}
     <header class="sticky top-0 z-40 flex h-[60px] items-center bg-senat-primary text-white lg:h-16 shadow-sm">
-        <div class="relative flex w-full items-center gap-3 px-5 lg:px-6">
+        <div class="relative flex w-full items-center gap-3 px-4 sm:px-5 lg:px-6">
+            {{-- Tombol Toggle Sidebar --}}
+            <button type="button"
+                    @click="toggleSidebar()"
+                    class="senat-tap flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition cursor-pointer shrink-0"
+                    :title="sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'">
+                <x-senat.icon name="menu" class="h-4 w-4" />
+            </button>
+
             <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-9 w-9 rounded-lg object-contain lg:h-[38px] lg:w-[38px]">
             <span class="leading-none">
                 <span class="block text-[14px] font-bold">SENAT<span class="hidden sm:inline"> AKADEMIK</span></span>
@@ -45,7 +62,7 @@
 
     <div class="flex min-h-[calc(100vh-60px)] lg:min-h-[calc(100vh-64px)]">
 
-        {{-- Sidebar (Figma 2269:764 style) --}}
+        {{-- Sidebar (Figma 2269:764 style modern & collapsible) --}}
         <aside x-data="{
                    init() {
                        this.$nextTick(() => {
@@ -57,38 +74,137 @@
                    }
                }"
                @scroll.passive="sessionStorage.setItem('admin_sidebar_scroll', $el.scrollTop)"
-               class="w-full shrink-0 border-b border-senat-sidebarLine bg-white lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-[280px] lg:overflow-y-auto lg:border-b-0 lg:border-r"
+               class="w-full shrink-0 border-b border-senat-sidebarLine bg-white lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-[280px] lg:overflow-y-auto lg:border-b-0 lg:border-r flex flex-col justify-between"
+               :class="{
+                   'transition-all duration-200 ease-in-out': animated,
+                   'lg:!w-[72px]': sidebarCollapsed,
+                   'lg:w-[280px]': !sidebarCollapsed
+               }"
                aria-label="Navigasi Admin Sekretariat">
             
-            <div class="px-[23px] pt-[24px]">
-                <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-senat-muted">ADMIN SEKRETARIAT</p>
-                <p class="mt-1 text-[12px] text-senat-body">Tata Kelola Sidang &amp; Publikasi</p>
+            <div>
+                <div class="border-b border-slate-100"
+                     :class="{
+                         'transition-all duration-200': animated,
+                         'p-3 text-center': sidebarCollapsed,
+                         'px-5 pt-5 pb-4': !sidebarCollapsed
+                     }">
+                    <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'justify-between gap-3'">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#003366] text-white shadow-xs"
+                                 :title="sidebarCollapsed ? 'Admin Sekretariat' : ''">
+                                <x-senat.icon name="dashboard" class="h-4 w-4 text-amber-400" />
+                            </div>
+                            <div class="min-w-0" x-show="!sidebarCollapsed" x-transition.opacity>
+                                <div class="flex items-center gap-1.5">
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-900">ADMIN SEKRETARIAT</p>
+                                </div>
+                                <p class="mt-0.5 text-[11px] text-slate-500 truncate">Tata Kelola Sidang &amp; Publikasi</p>
+                            </div>
+                        </div>
+
+                        {{-- Tombol Toggle Inline --}}
+                        <button type="button"
+                                @click="toggleSidebar()"
+                                x-show="!sidebarCollapsed"
+                                class="hidden lg:flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                title="Ciutkan Sidebar">
+                            <x-senat.icon name="chevron-left" class="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+
+                <nav class="mt-4 space-y-6 pb-6"
+                     :class="{
+                         'transition-all duration-200': animated,
+                         'px-2': sidebarCollapsed,
+                         'px-3.5': !sidebarCollapsed
+                     }"
+                     aria-label="Menu Admin">
+                    @php
+                        $iconMap = [
+                            'Dashboard Rapat' => 'dashboard',
+                            'Jadwal & Agenda Sidang' => 'calendar',
+                            'Presensi & Verifikasi QR' => 'scan',
+                            'Kuorum & Kehadiran Anggota' => 'users',
+                            'Risalah & Notulensi Sidang' => 'minutes',
+                            'E-Voting & Pengambilan Keputusan' => 'vote',
+                            'Pengaturan Informasi & Hero' => 'image',
+                            'Profil, Tupoksi & Struktur' => 'folder',
+                            'Direktori Komisi & Anggota' => 'user',
+                            'Manajemen Berita & Siaran Pers' => 'file-text',
+                            'Katalog Regulasi & Produk Hukum' => 'folder',
+                            'Repositori Arsip & Dokumen' => 'inbox',
+                            'Pusat Aspirasi & Tindak Lanjut' => 'aspiration',
+                        ];
+                    @endphp
+
+                    @foreach ($groups as $group => $items)
+                        <div wire:key="group-{{ \Illuminate\Support\Str::slug($group) }}" aria-labelledby="grup-{{ $loop->index }}">
+                            <div x-show="!sidebarCollapsed" x-transition.opacity>
+                                <p id="grup-{{ $loop->index }}" class="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                                    {{ $group }}
+                                </p>
+                            </div>
+                            <div x-show="sidebarCollapsed" class="my-2 border-t border-slate-100"></div>
+
+                            <div class="space-y-1">
+                                @foreach ($items as $item)
+                                    @php
+                                        $isActive = ($active === $item);
+                                        $itemSlug = \Illuminate\Support\Str::slug($item);
+                                        $iconName = $iconMap[$item] ?? 'dot';
+                                    @endphp
+                                    <a href="{{ route('admin.preview', ['tab' => $item]) }}"
+                                       wire:click.prevent="select('{{ $item }}')"
+                                       wire:key="menu-link-{{ $itemSlug }}"
+                                       @if ($isActive) aria-current="page" @endif
+                                       :title="sidebarCollapsed ? '{{ $item }}' : ''"
+                                       class="group relative flex min-h-[38px] w-full items-center rounded-xl transition-all duration-150 {{ $isActive ? 'bg-[#003366] text-white shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium' }}"
+                                       :class="sidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'">
+                                        <span class="shrink-0 transition-transform duration-150 group-hover:scale-110 {{ $isActive ? 'text-amber-300' : 'text-slate-400 group-hover:text-slate-700' }}">
+                                            <x-senat.icon :name="$iconName" class="h-4 w-4" />
+                                        </span>
+                                        <span class="truncate text-[12px] flex-1" x-show="!sidebarCollapsed" x-transition.opacity>{{ $item }}</span>
+                                        @if ($isActive)
+                                            <span class="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" x-show="!sidebarCollapsed"></span>
+                                        @endif
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </nav>
             </div>
 
-            <nav class="mt-5 space-y-6 px-[15px] pb-6" aria-label="Menu Admin">
-                @foreach ($groups as $group => $items)
-                    <div wire:key="group-{{ \Illuminate\Support\Str::slug($group) }}" aria-labelledby="grup-{{ $loop->index }}">
-                        <p id="grup-{{ $loop->index }}" class="px-2 pb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-senat-muted">
-                            {{ $group }}
-                        </p>
-                        <div class="space-y-[4px]">
-                            @foreach ($items as $item)
-                                @php
-                                    $isActive = ($active === $item);
-                                    $itemSlug = \Illuminate\Support\Str::slug($item);
-                                @endphp
-                                <a href="{{ route('admin.preview', ['tab' => $item]) }}"
-                                   wire:key="menu-link-{{ $itemSlug }}"
-                                   @if ($isActive) aria-current="page" @endif
-                                   class="senat-tap flex min-h-[40px] w-full items-center gap-[11px] rounded-[9px] px-[12px] text-left transition-colors {{ $isActive ? 'bg-[#eef4fb] ring-1 ring-senat-badgeLine' : 'hover:bg-senat-surface' }}">
-                                    <span class="h-2 w-2 shrink-0 rounded-full {{ $isActive ? 'bg-senat-link' : 'bg-slate-300' }}"></span>
-                                    <span class="truncate text-[12.5px] {{ $isActive ? 'font-semibold text-senat-primary' : 'font-medium text-senat-ink' }}">{{ $item }}</span>
-                                </a>
-                            @endforeach
+            <div class="mt-auto border-t border-slate-100 bg-slate-50/60"
+                 :class="{
+                     'transition-all duration-200': animated,
+                     'p-2 text-center': sidebarCollapsed,
+                     'p-3': !sidebarCollapsed
+                 }">
+                <div class="flex items-center rounded-xl bg-white border border-slate-200/80 shadow-2xs"
+                     :class="sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2'">
+                    <div class="flex items-center gap-2.5 min-w-0" :title="sidebarCollapsed ? 'Administrator (Sekretariat Senat)' : ''">
+                        <div class="h-8 w-8 rounded-lg bg-[#003366]/10 text-[#003366] flex items-center justify-center text-xs font-bold shrink-0">
+                            AS
+                        </div>
+                        <div class="min-w-0" x-show="!sidebarCollapsed" x-transition.opacity>
+                            <p class="text-[11.5px] font-bold text-slate-900 truncate">Administrator</p>
+                            <p class="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                Sekretariat Senat
+                            </p>
                         </div>
                     </div>
-                @endforeach
-            </nav>
+                    <a href="{{ route('public.home') }}"
+                       x-show="!sidebarCollapsed"
+                       title="Ke Portal Publik"
+                       class="h-7 w-7 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition">
+                        <x-senat.icon name="external" class="h-3.5 w-3.5" />
+                    </a>
+                </div>
+            </div>
         </aside>
 
         {{-- Area Konten Utama Menggunakan Persis Desain Portal Sekretariat --}}
@@ -119,15 +235,32 @@
                         </h1>
                     </div>
 
-                    <div class="flex items-center gap-2.5">
-                        <button type="button"
-                                wire:click="saveAction(@js($active))"
-                                class="senat-tap inline-flex h-9 items-center gap-1.5 rounded-md bg-senat-primary px-4 text-[12px] font-semibold text-white transition hover:bg-senat-primaryHover">
-                            <x-senat.icon name="check" class="h-3.5 w-3.5" />
-                            <span>Simpan Perubahan</span>
-                        </button>
+                    <div class="flex items-center gap-2">
+                        @if (in_array($active, ['Presensi & Verifikasi QR', 'Kuorum & Kehadiran Anggota']))
+                            <button type="button"
+                                    wire:click="exportExcel"
+                                    class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-3.5 text-[12px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm"
+                                    title="Unduh Rekap Kehadiran dan Status Kuorum ke Excel (.xls)">
+                                <span>Ekspor Excel (.xls)</span>
+                            </button>
+                            <button type="button"
+                                    wire:click="exportCsv"
+                                    class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-3.5 text-[12px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm"
+                                    title="Unduh Rekap Kehadiran ke CSV (.csv)">
+                                <span>Ekspor CSV</span>
+                            </button>
+                        @else
+                            <button type="button"
+                                    wire:click="saveAction(@js($active))"
+                                    class="senat-tap inline-flex h-9 items-center gap-1.5 rounded-md bg-senat-primary px-4 text-[12px] font-semibold text-white transition hover:bg-senat-primaryHover">
+                                <x-senat.icon name="check" class="h-3.5 w-3.5" />
+                                <span>Simpan Perubahan</span>
+                            </button>
+                        @endif
                     </div>
                 </header>
+
+
 
             {{-- 1. SCREEN: Dashboard Rapat --}}
             @if ($active === 'Dashboard Rapat' || $active === 'Dashboard')
@@ -234,68 +367,330 @@
 
             {{-- 2. SCREEN: Jadwal & Agenda Sidang (Figma 13B) --}}
             @elseif ($active === 'Jadwal & Agenda Sidang')
-                <div wire:key="screen-jadwal-agenda" class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
+                <div wire:key="screen-jadwal-agenda" class="grid gap-5 xl:grid-cols-[680px_minmax(0,1fr)]">
+                    {{-- Form Buat Sidang Baru & Seleksi Dosen --}}
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
-                        <h2 class="text-[18px] font-bold text-senat-ink">Buat Sidang Baru</h2>
-                        <p class="mt-1.5 text-[13px] text-senat-body">Gunakan jenis sidang sesuai ketentuan Senat.</p>
-
-                        <form class="mt-5 space-y-4" wire:submit.prevent="saveAction('Jadwal Sidang Baru')">
+                        <div class="flex items-center justify-between border-b border-senat-line pb-3">
                             <div>
-                                <label class="text-[12px] font-semibold text-senat-ink">Judul / agenda sidang</label>
-                                <input type="text" placeholder="Contoh: Sidang Pleno Penetapan Standar Kurikulum Vokasi"
-                                       class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                <h2 class="text-[18px] font-bold text-senat-ink">
+                                    {{ $editingMeetingId ? 'Sunting Sidang #' . $editingMeetingId : 'Buat Sidang Baru' }}
+                                </h2>
+                                <p class="mt-0.5 text-[12px] text-senat-body">
+                                    {{ $editingMeetingId ? 'Perbarui informasi agenda sidang di Backend API.' : 'Jadwalkan sidang dan tentukan dosen yang diundang.' }}
+                                </p>
                             </div>
+                            @if ($editingMeetingId)
+                                <span class="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-900 border border-amber-200">Mode Edit Aktif</span>
+                            @else
+                                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-senat-primary border border-blue-200">Sidang Senat</span>
+                            @endif
+                        </div>
 
-                            <div class="grid gap-4 sm:grid-cols-2">
+                        @if ($editingMeetingId)
+                            <form class="mt-4 space-y-4" wire:submit.prevent="saveMeeting('Terjadwal')">
                                 <div>
-                                    <label class="text-[12px] font-semibold text-senat-ink">Tanggal dan waktu</label>
-                                    <input type="datetime-local" value="{{ date('Y-m-d\TH:i') }}"
-                                           class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    <label class="text-[12px] font-semibold text-senat-ink">Judul / Agenda Sidang <span class="text-rose-500">*</span></label>
+                                    <input type="text" wire:model="meetingTitle" placeholder="Contoh: Sidang Pleno Penetapan Standar Kurikulum Vokasi" required
+                                           class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    @error('meetingTitle') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
                                 </div>
+
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Jenis Sidang Senat <span class="text-rose-500">*</span></label>
+                                        <select wire:model="meetingJenisRapatId"
+                                                class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                            <option value="1">Rapat Pleno</option>
+                                            <option value="2">Rapat Komisi</option>
+                                            <option value="3">Rapat Koordinasi</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Tanggal dan Waktu <span class="text-rose-500">*</span></label>
+                                        <input type="datetime-local" wire:model="meetingDateTime" required
+                                               class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                        @error('meetingDateTime') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label class="text-[12px] font-semibold text-senat-ink">Lokasi atau tautan hybrid</label>
-                                    <input type="text" value="Ruang Sidang Utama Gd. Direktorat"
-                                           class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    <label class="text-[12px] font-semibold text-senat-ink">Lokasi / Ruangan <span class="text-rose-500">*</span></label>
+                                    <input type="text" wire:model="meetingRoom" placeholder="Contoh: Ruang Sidang Utama Gd. Direktorat" required
+                                           class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    @error('meetingRoom') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
                                 </div>
-                            </div>
 
-                            <div>
-                                <label class="text-[12px] font-semibold text-senat-ink">Peserta dan undangan</label>
-                                <input type="text" value="Seluruh Anggota Senat (34 Orang)"
-                                       class="mt-1.5 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                            </div>
+                                <div class="flex flex-wrap items-center gap-3 pt-2">
+                                    <button type="submit"
+                                            class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-5 text-[12px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm">
+                                        Perbarui Sidang
+                                    </button>
+                                    <button type="button" wire:click="saveMeeting('Draft')"
+                                            class="senat-tap inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                                        Simpan sebagai Draft
+                                    </button>
+                                    <button type="button" wire:click="resetMeetingForm"
+                                            class="senat-tap inline-flex h-9 items-center justify-center rounded-md border border-rose-200 bg-rose-50 px-4 text-[12px] font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                                        Batal Edit
+                                    </button>
+                                </div>
+                            </form>
+                        @else
+                            <form class="mt-4 space-y-4" wire:submit.prevent="createNewMeeting">
+                                <div>
+                                    <label class="text-[12px] font-semibold text-senat-ink">Judul / Agenda Sidang <span class="text-rose-500">*</span></label>
+                                    <input type="text"
+                                           wire:model="newMeetingTitle"
+                                           placeholder="Contoh: Sidang Pleno Penetapan Standar Kurikulum MBKM Vokasi"
+                                           class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                </div>
 
-                            <div class="flex flex-wrap items-center gap-3 pt-2">
-                                <x-senat.button variant="secondary" type="button" wire:click="saveAction('Draft Sidang')">Simpan sebagai Draft</x-senat.button>
-                                <x-senat.button variant="primary" type="submit">Buat Undangan</x-senat.button>
-                            </div>
-                        </form>
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Jenis Sidang Senat</label>
+                                        <select wire:model="newMeetingType"
+                                                class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                            <option value="Sidang Pleno">Sidang Pleno Lengkap</option>
+                                            <option value="Sidang Komisi I">Sidang Komisi I (Pendidikan &amp; Pengajaran)</option>
+                                            <option value="Sidang Komisi II">Sidang Komisi II (Penelitian &amp; PkM)</option>
+                                            <option value="Sidang Komisi III">Sidang Komisi III (Kelembagaan &amp; SDM)</option>
+                                            <option value="Sidang Komisi IV">Sidang Komisi IV (Kerjasama &amp; Alumni)</option>
+                                            <option value="Sidang Komisi V">Sidang Komisi V (Kode Etik &amp; Advokasi)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Tanggal Sidang <span class="text-rose-500">*</span></label>
+                                        <input type="date"
+                                               wire:model="newMeetingDate"
+                                               class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    </div>
+                                </div>
+
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Waktu Pelaksanaan</label>
+                                        <input type="text"
+                                               wire:model="newMeetingTime"
+                                               placeholder="Contoh: 09:00 - 12:30 WIB"
+                                               class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    </div>
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Ruangan / Tempat</label>
+                                        <input type="text"
+                                               wire:model="newMeetingRoom"
+                                               placeholder="Contoh: Ruang Sidang Utama Lantai 2"
+                                               class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                    </div>
+                                </div>
+
+                                {{-- Komponen Seleksi Dosen yang Diundang --}}
+                                <div class="rounded-xl border border-senat-border bg-slate-50/60 p-3.5 space-y-2.5">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <label class="text-[12px] font-bold text-senat-ink">Dosen &amp; Anggota Senat yang Diundang</label>
+                                            <p class="text-[11px] text-senat-muted">Tentukan anggota yang berhak hadir dan dihitung kuorumnya.</p>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+                                                {{ count($selectedLecturerIds) }} Dosen Dipilih
+                                            </span>
+                                            <span class="text-[10.5px] text-slate-500 font-medium">
+                                                (Kuorum 2/3 = {{ (int) ceil(count($selectedLecturerIds) * 2 / 3) }} Orang)
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Tombol Cepat / Preset Komisi --}}
+                                    <div class="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                                        <span class="text-senat-muted font-semibold mr-1">Pilih Cepat:</span>
+                                        <button type="button" wire:click="selectAllLecturers" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Semua (34)</button>
+                                        <button type="button" wire:click="selectCommitteeLecturers('Komisi I')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi I</button>
+                                        <button type="button" wire:click="selectCommitteeLecturers('Komisi II')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi II</button>
+                                        <button type="button" wire:click="selectCommitteeLecturers('Komisi III')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi III</button>
+                                        <button type="button" wire:click="selectCommitteeLecturers('Pimpinan')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Pimpinan</button>
+                                        <button type="button" wire:click="clearSelectedLecturers" class="px-2 py-1 rounded bg-white border border-rose-200 text-rose-600 font-semibold hover:bg-rose-50 shadow-2xs">Kosongkan</button>
+                                    </div>
+
+                                    {{-- Input Cari Dosen --}}
+                                    <div class="pt-1">
+                                        <input type="text"
+                                               wire:model.live.debounce.200ms="lecturerSearch"
+                                               placeholder="Cari nama dosen, NIP, atau komisi..."
+                                               class="h-8 w-full rounded-md border border-slate-200 bg-white px-2.5 text-[11.5px] text-senat-ink focus:border-senat-link focus:outline-none">
+                                    </div>
+
+                                    {{-- Scrollable Checkbox List --}}
+                                    <div class="max-h-52 overflow-y-auto divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white p-1 text-xs">
+                                        @forelse ($filteredLecturers as $lec)
+                                            <label wire:key="lec-check-{{ $lec['id_user'] }}" class="flex items-center gap-2.5 py-1.5 px-2 rounded hover:bg-slate-50 cursor-pointer transition">
+                                                <input type="checkbox"
+                                                       value="{{ $lec['id_user'] }}"
+                                                       wire:click="toggleLecturer({{ $lec['id_user'] }})"
+                                                       {{ in_array($lec['id_user'], $selectedLecturerIds, true) ? 'checked' : '' }}
+                                                       class="rounded border-slate-300 text-emerald-700 focus:ring-emerald-600 h-3.5 w-3.5">
+                                                <div class="flex-1 min-w-0 leading-tight">
+                                                    <p class="font-bold text-[12px] text-senat-ink truncate">{{ $lec['nama'] }}</p>
+                                                    <p class="text-[10.5px] text-slate-500 font-mono">NIP: {{ $lec['nim_nip'] }} · <span class="font-semibold text-senat-primary">{{ $lec['komisi'] }}</span></p>
+                                                </div>
+                                            </label>
+                                        @empty
+                                            <p class="p-3 text-center text-slate-400 text-[11px]">Dosen tidak ditemukan dengan kata kunci tersebut.</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-3 pt-2">
+                                    <button type="submit"
+                                            class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-5 text-[12px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm">
+                                        <span>Jadwalkan Sidang &amp; Terbitkan Undangan</span>
+                                    </button>
+                                    <button type="button"
+                                            wire:click="saveAction('Draf Sidang Disimpan')"
+                                            class="senat-tap inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                                        <span>Simpan sebagai Draf</span>
+                                    </button>
+                                </div>
+                            </form>
+                        @endif
                     </section>
 
+                    {{-- Daftar Sidang Terjadwal & Riwayat Sidang --}}
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
-                        <h2 class="text-[18px] font-bold text-senat-ink">Sidang Terjadwal</h2>
-                        <ul class="mt-3 divide-y divide-senat-sidebarLine">
-                            @foreach ($meetings as $meeting)
-                                <li class="py-4 first:pt-2">
-                                    <p class="text-[14px] font-semibold text-senat-ink">{{ $meeting['title'] }}</p>
-                                    <p class="mt-1 text-[12px] text-senat-body">
-                                        {{ \Illuminate\Support\Carbon::parse($meeting['date'])->format('d M') }} · {{ $meeting['time'] }}
-                                    </p>
-                                    <div class="mt-3 flex items-center justify-between gap-3">
-                                        <x-senat.badge :state="$this->chipState($meeting['type'])">{{ $this->chipLabel($meeting['type']) }}</x-senat.badge>
-                                        <x-senat.button variant="secondary" size="sm" type="button" wire:click="saveAction('Kelola Sidang {{ $meeting['session_code'] }}')">Kelola</x-senat.button>
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-senat-line pb-3">
+                            <div>
+                                <h2 class="text-[18px] font-bold text-senat-ink">Agenda &amp; Riwayat Sidang</h2>
+                                <p class="text-[12px] text-senat-muted">Daftar Sidang Terjadwal, aktif, dan riwayat lalu (Data dinamis dari Backend API port 8001).</p>
+                            </div>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+                                {{ count($filteredMeetings) }} Agenda
+                            </span>
+                        </div>
+
+                        {{-- Filter Status Tabs --}}
+                        <div class="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
+                            @foreach (['semua' => 'Semua', 'berlangsung' => 'Sedang Berlangsung', 'terjadwal' => 'Terjadwal', 'selesai' => 'Riwayat Selesai'] as $tabKey => $tabName)
+                                <button type="button"
+                                        wire:key="meeting-tab-{{ $tabKey }}"
+                                        wire:click="$set('meetingFilterTab', '{{ $tabKey }}')"
+                                        class="px-2.5 py-1 rounded-md font-semibold transition-colors shrink-0 {{ $meetingFilterTab === $tabKey ? 'bg-senat-primary text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                                    {{ $tabName }}
+                                </button>
+                            @endforeach
+                        </div>
+
+                        <ul class="mt-3 divide-y divide-senat-sidebarLine max-h-[620px] overflow-y-auto pr-1">
+                            @forelse ($filteredMeetings as $meeting)
+                                <li wire:key="item-meeting-{{ $meeting['id'] ?? ($meeting['id_rapat'] ?? $loop->index) }}" class="py-3.5 first:pt-1">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono text-[10.5px] font-bold text-senat-muted uppercase">{{ $meeting['session_code'] ?? 'PLN' }}</span>
+                                                <x-senat.badge :state="$this->chipState($meeting['type'] ?? '')">{{ $meeting['type'] ?? 'Sidang' }}</x-senat.badge>
+                                                @if (in_array(strtolower($meeting['status'] ?? ''), ['sedang berlangsung', 'aktif']))
+                                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Berlangsung
+                                                    </span>
+                                                @elseif (in_array(strtolower($meeting['status'] ?? ''), ['terjadwal', 'dijadwalkan']))
+                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        Terjadwal
+                                                    </span>
+                                                @elseif (in_array(strtolower($meeting['status'] ?? ''), ['draft', 'draf']))
+                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-600">
+                                                        Draft
+                                                    </span>
+                                                @else
+                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                                        {{ $meeting['status'] ?? 'Selesai' }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <p class="mt-1 text-[13.5px] font-bold leading-snug text-senat-ink">{{ $meeting['title'] ?? ($meeting['nama_agenda'] ?? 'Sidang') }}</p>
+                                            <p class="mt-1 text-[11.5px] text-senat-body">
+                                                {{ \Illuminate\Support\Carbon::parse($meeting['date'] ?? now())->format('d M Y') }} · {{ $meeting['time'] ?? '09:00 WIB' }}
+                                            </p>
+                                            <p class="text-[11px] text-senat-muted truncate">📍 {{ $meeting['room'] ?? 'Ruang Sidang Senat' }}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2.5 flex flex-wrap items-center justify-between border-t border-slate-100 pt-2.5 gap-2 text-[11px]">
+                                        <span class="font-semibold text-slate-600">
+                                            👥 {{ $meeting['total_invited'] ?? 34 }} Dosen Diundang
+                                        </span>
+                                        <div class="flex items-center gap-1.5">
+                                            <button type="button"
+                                                    wire:click="manageMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md bg-[#116a3c] px-2.5 text-[11px] font-semibold text-white transition hover:bg-[#0d542f] shadow-xs"
+                                                    title="Buka Presensi Sidang Ini">
+                                                <span>Kelola Presensi</span>
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="manageMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }}, 'Kuorum & Kehadiran Anggota')"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                                                    title="Pantau Kuorum Sidang Ini">
+                                                <span>Kuorum</span>
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="editMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                                                    title="Sunting Sidang">
+                                                <span>Edit</span>
+                                            </button>
+                                            <button type="button"
+                                                    wire:click="deleteMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
+                                                    onclick="return confirm('Hapus agenda sidang ini dari backend?') || event.stopImmediatePropagation()"
+                                                    class="rounded px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+                                                    title="Hapus Sidang">
+                                                <span>Hapus</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </li>
-                            @endforeach
+                            @empty
+                                <li class="py-6 text-center text-slate-400 text-xs">
+                                    Tidak ada sidang pada kategori filter ini.
+                                </li>
+                            @endforelse
                         </ul>
                     </section>
                 </div>
-
-            {{-- 3. SCREEN: Presensi & Verifikasi QR (Figma 13D) --}}
+{{-- 3. SCREEN: Presensi & Verifikasi QR (Figma 13D) --}}
             @elseif ($active === 'Presensi & Verifikasi QR')
                 <div wire:key="screen-presensi-qr"
                      wire:poll.15s.visible="refreshAttendance"
                      class="space-y-6">
+
+                    {{-- Meeting Selector Bar --}}
+                    <div class="rounded-[14px] border border-senat-sidebarLine bg-white p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-senat-primary/10 text-senat-primary font-bold">
+                                📅
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <label for="select-meeting-presensi" class="text-[10.5px] font-bold uppercase tracking-wider text-senat-muted block">Pilih Agenda Sidang (Aktif / Terjadwal / Riwayat):</label>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    <select id="select-meeting-presensi"
+                                            wire:change="selectMeeting($event.target.value)"
+                                            class="h-9 min-w-[280px] max-w-full rounded-lg border border-senat-border bg-slate-50 px-3 text-[12.5px] font-bold text-senat-ink focus:border-senat-link focus:bg-white focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                        @foreach ($availableMeetings as $m)
+                                            <option value="{{ $m['id'] ?? ($m['id_rapat'] ?? '') }}" {{ ($selectedMeetingId == ($m['id'] ?? ($m['id_rapat'] ?? null))) ? 'selected' : '' }}>
+                                                [{{ $m['status'] ?? 'Terjadwal' }}] {{ $m['title'] ?? ($m['nama_agenda'] ?? 'Sidang Senat') }} — ({{ \Illuminate\Support\Carbon::parse($m['date'] ?? now())->format('d M Y') }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <span class="rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-200 shrink-0">
+                                        {{ count($liveAnggota) }} Dosen Diundang
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a href="{{ route('admin.preview', ['tab' => 'Jadwal & Agenda Sidang']) }}"
+                               class="senat-tap inline-flex h-9 items-center gap-1.5 rounded-lg border border-senat-border bg-white px-3 text-[12px] font-semibold text-senat-body hover:bg-slate-50 shadow-2xs">
+                                <span>+ Buat Sidang Baru</span>
+                            </a>
+                        </div>
+                    </div>
                     <div class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
                         {{-- Kartu Status Presensi & Sidang Aktif --}}
                         <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
@@ -449,8 +844,9 @@
                                 <p class="text-[12px] text-senat-muted mt-0.5">Admin dapat mengubah status kehadiran peserta secara langsung. Perubahan akan memiliki cap verifikasi Admin.</p>
                             </div>
 
-                            {{-- Filter status --}}
-                            <div class="flex items-center gap-1.5 bg-senat-surface p-1 rounded-lg border border-senat-line text-xs">
+                            <div class="flex flex-wrap items-center gap-2">
+                                {{-- Filter status --}}
+                                <div class="flex items-center gap-1.5 bg-senat-surface p-1 rounded-lg border border-senat-line text-xs">
                                 @foreach (['semua' => 'Semua', 'hadir' => 'Hadir', 'izin' => 'Izin', 'tidak_hadir' => 'Tidak Hadir', 'menunggu' => 'Menunggu'] as $fKey => $fLabel)
                                     <button type="button"
                                             wire:key="filter-tab-{{ $fKey }}"
@@ -459,6 +855,22 @@
                                         {{ $fLabel }}
                                     </button>
                                 @endforeach
+                                </div>
+
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button"
+                                            wire:click="exportExcel"
+                                            class="inline-flex items-center justify-center h-8 px-3 rounded-lg text-[11px] font-semibold bg-[#116a3c] text-white hover:bg-[#0d542f] transition-colors shadow-xs"
+                                            title="Unduh Rekap Kehadiran Sidang ke Excel (.xls)">
+                                        <span>Ekspor Excel (.xls)</span>
+                                    </button>
+                                    <button type="button"
+                                            wire:click="exportCsv"
+                                            class="inline-flex items-center justify-center h-8 px-3 rounded-lg text-[11px] font-semibold bg-[#116a3c] text-white hover:bg-[#0d542f] transition-colors shadow-xs"
+                                            title="Unduh format CSV">
+                                        <span>Ekspor CSV</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -633,6 +1045,24 @@
             {{-- 4. SCREEN: Kuorum & Kehadiran Anggota --}}
             @elseif ($active === 'Kuorum & Kehadiran Anggota')
                 <section wire:key="screen-kuorum-kehadiran" wire:poll.15s.visible="refreshAttendance" class="rounded-[14px] border border-senat-sidebarLine bg-white p-6 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)] space-y-6">
+
+                    {{-- Meeting Selector Bar in Kuorum --}}
+                    <div class="rounded-xl border border-senat-border bg-slate-50/80 p-3.5 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                            <span class="text-[11px] font-bold text-senat-muted uppercase shrink-0">Agenda Sidang Kuorum:</span>
+                            <select wire:change="selectMeeting($event.target.value)"
+                                    class="h-8.5 rounded-md border border-senat-border bg-white px-2.5 text-[12px] font-bold text-senat-ink focus:border-senat-link focus:outline-none">
+                                @foreach ($availableMeetings as $m)
+                                    <option value="{{ $m['id'] ?? ($m['id_rapat'] ?? '') }}" {{ ($selectedMeetingId == ($m['id'] ?? ($m['id_rapat'] ?? null))) ? 'selected' : '' }}>
+                                        [{{ $m['status'] ?? 'Terjadwal' }}] {{ $m['title'] ?? ($m['nama_agenda'] ?? 'Sidang Senat') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <span class="text-xs font-semibold text-senat-primary bg-blue-50 px-2.5 py-1 rounded border border-blue-200">
+                            Undangan: {{ $liveKuorum['total_invited'] ?? count($liveAnggota) }} Dosen
+                        </span>
+                    </div>
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         <div>
                             @if ($liveKuorum['is_kuorum'] ?? false)
@@ -711,9 +1141,18 @@
                             <x-senat.button variant="secondary" size="sm" type="button" wire:click="saveAction('Sahkan Berita Acara Kuorum')">
                                 Sahkan Berita Acara Kuorum
                             </x-senat.button>
-                            <x-senat.button variant="primary" size="sm" type="button" wire:click="saveAction('Ekspor Daftar Hadir Kuorum (PDF)')">
-                                Ekspor Daftar Hadir
-                            </x-senat.button>
+                            <button type="button"
+                                    wire:click="exportExcel"
+                                    class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-3.5 text-[11.5px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm"
+                                    title="Unduh Rekap Kehadiran dan Status Kuorum ke Excel (.xls)">
+                                <span>Ekspor Excel (.xls)</span>
+                            </button>
+                            <button type="button"
+                                    wire:click="exportCsv"
+                                    class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-3.5 text-[11.5px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm"
+                                    title="Unduh format CSV">
+                                <span>Ekspor CSV</span>
+                            </button>
                         </div>
                     </div>
                 </section>
@@ -777,6 +1216,153 @@
                                 </p>
                             </div>
                         </div>
+                    </section>
+
+                    {{-- Notulensi Otomatis: rekaman audio/video → transkrip → draf notulensi --}}
+                    <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-senat-link text-white">
+                                    <x-senat.icon name="upload" class="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 class="text-[16px] font-bold text-senat-ink">Notulensi Otomatis dari Rekaman</h3>
+                                    <p class="mt-0.5 max-w-[620px] text-[12px] leading-relaxed text-senat-muted">
+                                        Unggah rekaman rapat (audio atau video). Sistem mentranskripsi lalu menyusun draf notulensi
+                                        secara otomatis. Maksimal <strong>1 GB</strong> dan <strong>4 jam</strong> per rekaman —
+                                        untuk rapat panjang unggah audio saja (M4A/MP3), bukan video.
+                                        Rekaman asli disimpan 90 hari, transkrip &amp; notulensi permanen.
+                                    </p>
+                                </div>
+                            </div>
+                            <x-senat.badge state="info">Whisper + Gemini</x-senat.badge>
+                        </div>
+
+                        <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <label class="block">
+                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Rapat</span>
+                                    <select wire:model.live="rekamanRapatId"
+                                            class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-2 text-[13px] text-senat-ink">
+                                        @foreach ($rapatList as $r)
+                                            <option value="{{ $r['id_rapat'] ?? '' }}">{{ $r['nama_agenda'] ?? ('Rapat #' . ($r['id_rapat'] ?? '')) }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+
+                                <label class="block">
+                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Berkas Rekaman</span>
+                                    <input type="file" wire:model="rekamanFile"
+                                           accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.mp4,.mov,.mkv,.webm,.3gp"
+                                           class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12.5px] text-senat-body file:mr-3 file:rounded-md file:border-0 file:bg-senat-badgeBg file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-senat-ink">
+                                </label>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button type="button" wire:click="mulaiRekaman" wire:loading.attr="disabled" wire:target="rekamanFile,mulaiRekaman"
+                                        class="inline-flex items-center gap-1.5 rounded-[10px] bg-senat-link px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
+                                    <x-senat.icon name="upload" class="h-4 w-4" />
+                                    <span wire:loading.remove wire:target="mulaiRekaman">Proses Jadi Notulensi</span>
+                                    <span wire:loading wire:target="mulaiRekaman">Mengunggah&hellip;</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        @error('rekamanFile') <p class="mt-2 text-[12px] text-rose-600">{{ $message }}</p> @enderror
+                        @error('rekamanRapatId') <p class="mt-2 text-[12px] text-rose-600">{{ $message }}</p> @enderror
+
+                        {{-- Progress selama proses berjalan --}}
+                        @if (in_array($rekamanStatus, ['unggah', 'transkripsi', 'menyusun']))
+                            <div wire:poll.2s="pollRekaman" class="mt-4 rounded-xl border border-senat-border bg-senat-badgeBg/40 p-4">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-[12.5px] font-semibold text-senat-ink">{{ $rekamanNama ?: 'Rekaman' }}</p>
+                                        <p class="mt-0.5 text-[11.5px] text-senat-muted">
+                                            @if ($rekamanStatus === 'transkripsi')
+                                                Mentranskripsi rekaman&hellip;
+                                            @elseif ($rekamanStatus === 'menyusun')
+                                                Menyusun draf notulensi&hellip;
+                                            @else
+                                                Menyiapkan berkas&hellip;
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <span class="shrink-0 font-mono text-[12px] font-bold text-senat-link">{{ $rekamanProgres }}%</span>
+                                </div>
+                                <div class="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-senat-border/60">
+                                    <div class="h-full rounded-full bg-senat-link transition-all duration-500" style="width: {{ max(3, $rekamanProgres) }}%"></div>
+                                </div>
+                                <p class="mt-2 text-[11px] text-senat-muted">Halaman ini memperbarui sendiri. Aman untuk ditinggal.</p>
+                            </div>
+                        @endif
+
+                        @if ($rekamanError !== '' && $rekamanStatus !== 'gagal')
+                            <p class="mt-3 text-[12px] text-rose-600">{{ $rekamanError }}</p>
+                        @endif
+
+                        {{-- Hasil --}}
+                        @if ($rekamanNotulen !== '')
+                            <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <p class="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-emerald-800">
+                                        <x-senat.icon name="check" class="h-4 w-4" /> Draf notulensi siap diperiksa
+                                    </p>
+                                    <span class="font-mono text-[11px] text-emerald-700">
+                                        {{ $rekamanDurasi > 0 ? floor($rekamanDurasi / 60) . ' mnt ' . ($rekamanDurasi % 60) . ' dtk audio' : '' }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-3 max-h-[360px] overflow-y-auto rounded-lg border border-emerald-200 bg-white p-4 text-[12.5px] leading-relaxed text-senat-ink [&_h1]:mt-3 [&_h1]:text-[14px] [&_h1]:font-bold [&_h2]:mt-3 [&_h2]:text-[12px] [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wide [&_h2]:text-senat-primary [&_h2:first-child]:mt-0 [&_h3]:mt-2 [&_h3]:font-semibold [&_li]:my-0.5 [&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1.5 [&_strong]:font-semibold [&_table]:my-2 [&_table]:w-full [&_td]:border-b [&_td]:border-senat-border/60 [&_td]:py-1 [&_td]:align-top [&_th]:border-b [&_th]:border-senat-border [&_th]:py-1 [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5">
+                                    {!! \Illuminate\Support\Str::markdown($rekamanNotulen, ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
+                                </div>
+
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <button type="button" wire:click="suntingHasilRekaman"
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-[12px] font-semibold text-white hover:opacity-90">
+                                        <x-senat.icon name="edit" class="h-3.5 w-3.5" /> Sunting &amp; Simpan ke Notulensi
+                                    </button>
+
+                                    @if ($rekamanAktifId)
+                                        <button type="button" wire:click="hapusRekaman({{ $rekamanAktifId }})"
+                                                class="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-[12px] font-semibold text-rose-700 hover:bg-rose-50">
+                                            <x-senat.icon name="trash" class="h-3.5 w-3.5" /> Hapus Rekaman
+                                        </button>
+                                    @endif
+                                </div>
+
+                                @if ($rekamanTranskrip !== '')
+                                    <details class="mt-3">
+                                        <summary class="cursor-pointer text-[11.5px] font-semibold text-senat-muted hover:text-senat-ink">Lihat transkrip mentah</summary>
+                                        <div class="mt-2 max-h-[240px] overflow-y-auto whitespace-pre-wrap rounded-lg border border-senat-border bg-white p-3 text-[12px] leading-relaxed text-senat-body">{{ $rekamanTranskrip }}</div>
+                                    </details>
+                                @endif
+                            </div>
+                        @endif
+
+                        {{-- Riwayat rekaman rapat ini --}}
+                        @if (!empty($rekamanList))
+                            <div class="mt-4 border-t border-senat-sidebarLine pt-3">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Riwayat Rekaman Rapat Ini</p>
+                                <ul class="mt-2 space-y-1.5">
+                                    @foreach ($rekamanList as $rk)
+                                        <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-senat-border bg-white px-3 py-2">
+                                            <div class="min-w-0">
+                                                <p class="truncate text-[12px] font-semibold text-senat-ink">{{ $rk['nama_asli'] }}</p>
+                                                <p class="font-mono text-[10.5px] text-senat-muted">
+                                                    {{ strtoupper($rk['status']) }} &middot; {{ $rk['progres'] }}%
+                                                    @if ($rk['durasi'] > 0) &middot; {{ floor($rk['durasi'] / 60) }} mnt @endif
+                                                    @if ($rk['id_notulensi']) &middot; notulensi #{{ $rk['id_notulensi'] }} @endif
+                                                </p>
+                                            </div>
+                                            <button type="button" wire:click="hapusRekaman({{ $rk['id_rekaman'] }})"
+                                                    class="shrink-0 rounded-md border border-senat-border px-2.5 py-1 text-[11px] font-semibold text-senat-muted hover:border-rose-300 hover:text-rose-700">
+                                                Hapus
+                                            </button>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                     </section>
 
                     {{-- Collapsible Form: Input / Edit Notulensi --}}
@@ -962,7 +1548,7 @@
 
                                 {{-- Excerpt / Ringkasan Jalannya Pembahasan --}}
                                 <div class="mt-4 rounded-[10px] bg-slate-50/70 p-3.5 text-[12.5px] leading-relaxed text-senat-ink border border-slate-100">
-                                    <p class="line-clamp-3 whitespace-pre-line">{{ $item['isi_notulensi'] }}</p>
+                                    <p class="line-clamp-3">{{ \Illuminate\Support\Str::of($item['isi_notulensi'])->replaceMatches('/^#{1,6}\s*/m', '')->replaceMatches('/\*\*(.+?)\*\*/', '$1')->replaceMatches('/^\s*[-*]\s+/m', '• ')->replace('|', ' ')->squish()->limit(240) }}</p>
                                 </div>
 
                                 {{-- Lampiran Dokumen & Quick Status Changer --}}
@@ -1050,8 +1636,8 @@
 
                                         <div>
                                             <h4 class="text-[13px] font-bold text-senat-ink">Jalannya Musyawarah &amp; Catatan Risalah:</h4>
-                                            <div class="mt-2 rounded-xl border border-senat-border bg-slate-50/50 p-4 text-[13px] leading-relaxed text-senat-ink whitespace-pre-line">
-                                                {{ $viewItem['isi_notulensi'] }}
+                                            <div class="mt-2 rounded-xl border border-senat-border bg-slate-50/50 p-4 text-[13px] leading-relaxed text-senat-ink [&_h2]:mt-3 [&_h2]:text-[12px] [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wide [&_h2]:text-senat-primary [&_h2:first-child]:mt-0 [&_li]:my-0.5 [&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1.5 [&_strong]:font-semibold [&_table]:my-2 [&_table]:w-full [&_td]:border-b [&_td]:border-senat-border/60 [&_td]:py-1 [&_th]:border-b [&_th]:border-senat-border [&_th]:py-1 [&_th]:text-left [&_th]:text-[11px] [&_th]:uppercase [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5">
+                                                {!! \Illuminate\Support\Str::markdown($viewItem['isi_notulensi'], ['html_input' => 'strip', 'allow_unsafe_links' => false]) !!}
                                             </div>
                                         </div>
 
@@ -1133,7 +1719,7 @@
                                 <span>{{ $votingStatus === 'dibuka' ? 'Kunci & Tutup Voting' : 'Buka Voting' }}</span>
                             </x-senat.button>
                             <x-senat.button variant="secondary" type="button"
-                                            onclick="document.getElementById('modal-voting-baru').style.display='flex'">Gelar Voting Baru</x-senat.button>
+                                            wire:click="openNewVotingModal">Gelar Voting Baru</x-senat.button>
                             <x-senat.button variant="secondary" type="button" wire:click="refreshVotingData">Muat Ulang</x-senat.button>
                         </div>
                     </section>
@@ -1163,17 +1749,107 @@
                         <x-senat.button variant="secondary" size="sm" class="mt-5" type="button" wire:click="saveAction('Cetak Berita Acara Voting')">Cetak Berita Acara</x-senat.button>
                     </section>
 
-                    {{-- Modal Form Gelar Voting Baru — handler native, tidak bergantung Livewire/Alpine --}}
-                    <div id="modal-voting-baru" style="display:none"
-                         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4"
-                         onclick="if (event.target === this) this.style.display='none'">
-                            <div class="w-full max-w-lg rounded-2xl border border-senat-sidebarLine bg-white p-6 shadow-2xl space-y-4">
+                    {{-- Riwayat & Daftar Sesi E-Voting Persidangan --}}
+                    <section class="lg:col-span-2 rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h2 class="text-[18px] font-bold text-senat-ink">Riwayat &amp; Daftar Sesi E-Voting Persidangan</h2>
+                                <p class="mt-1 text-[12px] text-senat-body">Pilih sesi voting untuk ditampilkan pada kartu monitor utama.</p>
+                            </div>
+                            <x-senat.badge state="info">{{ count($votingHistory) }} Sesi</x-senat.badge>
+                        </div>
+
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="min-w-full divide-y divide-senat-sidebarLine text-left">
+                                <thead>
+                                    <tr class="bg-senat-surface text-[11px] font-bold uppercase tracking-wider text-senat-muted">
+                                        <th class="px-3 py-3 whitespace-nowrap">ID</th>
+                                        <th class="px-3 py-3">Pokok Putusan / Judul Voting</th>
+                                        <th class="px-3 py-3">Sidang/Rapat</th>
+                                        <th class="px-3 py-3 whitespace-nowrap">Status</th>
+                                        <th class="px-3 py-3 text-center whitespace-nowrap">Total Suara</th>
+                                        <th class="px-3 py-3 whitespace-nowrap">Waktu</th>
+                                        <th class="px-3 py-3 text-right whitespace-nowrap">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-senat-sidebarLine">
+                                    @forelse ($votingHistory as $item)
+                                        @php
+                                            $itemId = (int) ($item['id_voting'] ?? $item['id'] ?? 0);
+                                            $itemTitle = $item['judul_voting'] ?? $item['judul'] ?? 'Sesi Voting Senat';
+                                            $itemStatus = strtolower($item['status'] ?? 'ditutup');
+                                            $itemTotal = (int) ($item['total_suara'] ?? $item['suara_votings_count'] ?? 0);
+                                            $itemRapat = $item['rapat'] ?? [];
+                                            $itemRapatName = is_array($itemRapat)
+                                                ? ($itemRapat['nama_agenda'] ?? $itemRapat['nama_rapat'] ?? $itemRapat['title'] ?? $itemRapat['kode'] ?? '-')
+                                                : ($itemRapat ?: '-');
+                                            $itemDate = ! empty($item['waktu_mulai'])
+                                                ? date('d M Y H:i', strtotime($item['waktu_mulai']))
+                                                : '-';
+                                            $isActive = $itemId === (int) $votingId;
+                                        @endphp
+                                        <tr class="{{ $isActive ? 'bg-senat-badgeBg/60' : 'hover:bg-senat-surface/60' }} transition-colors">
+                                            <td class="px-3 py-3 whitespace-nowrap text-[12px] font-mono font-semibold text-senat-ink">#{{ $itemId ?: '-' }}</td>
+                                            <td class="px-3 py-3 min-w-[200px]">
+                                                <p class="text-[13px] font-semibold text-senat-ink">{{ $itemTitle }}</p>
+                                                @if ($isActive)
+                                                    <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10.5px] font-bold text-emerald-700">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Sedang Dipantau
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-3 min-w-[140px] text-[12px] text-senat-body">{{ $itemRapatName }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">
+                                                @if ($itemStatus === 'dibuka')
+                                                    <x-senat.badge state="success">DIBUKA</x-senat.badge>
+                                                @else
+                                                    <x-senat.badge state="danger">DITUTUP</x-senat.badge>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-3 text-center whitespace-nowrap text-[13px] font-bold text-senat-ink">{{ $itemTotal }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap text-[12px] text-senat-body">{{ $itemDate }}</td>
+                                            <td class="px-3 py-3 text-right whitespace-nowrap">
+                                                <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                                                    <x-senat.button variant="{{ $isActive ? 'secondary' : 'primary' }}" size="sm" type="button" class="whitespace-nowrap" wire:click="selectVotingSession({{ $itemId }})">
+                                                        {{ $isActive ? 'Sedang Dipantau' : 'Pilih Sesi' }}
+                                                    </x-senat.button>
+                                                    <button type="button"
+                                                            wire:click="hapusSesiVoting({{ $itemId }})"
+                                                            wire:confirm="Yakin ingin menghapus sesi voting ini?"
+                                                            class="inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                                                            title="Hapus Sesi Voting">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="px-3 py-6 text-center text-[12px] text-senat-muted">
+                                                Belum ada riwayat sesi e-voting persidangan.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    {{-- Modal Form Gelar Voting Baru --}}
+                    @if ($showNewVotingModal)
+                        <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4"
+                             wire:keydown.escape="closeNewVotingModal"
+                             wire:click.self="closeNewVotingModal">
+                            <div class="w-full max-w-lg rounded-2xl border border-senat-sidebarLine bg-white p-6 shadow-2xl space-y-4"
+                                 wire:click.stop>
                                 <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-3">
                                     <div>
                                         <h3 class="text-[17px] font-bold text-senat-ink">Gelar Sesi Voting Baru</h3>
                                         <p class="text-[12px] text-senat-body">Inisialisasi pemungutan suara sidang untuk anggota Senat</p>
                                     </div>
-                                    <button type="button" onclick="document.getElementById('modal-voting-baru').style.display='none'" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" aria-label="Tutup">
+                                    <button type="button" wire:click="closeNewVotingModal" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" aria-label="Tutup">
                                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
@@ -1183,11 +1859,11 @@
                                 <div class="space-y-4">
                                     <div>
                                         <label class="block text-[12px] font-semibold text-senat-ink mb-1">Agenda Sidang / Rapat</label>
-                                        <select wire:model="newVotingMeetingId" class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink focus:border-senat-link focus:outline-none">
+                                        <select wire:model.live="newVotingMeetingId" class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink focus:border-senat-link focus:outline-none">
                                             @forelse ($availableMeetings as $meeting)
-                                                <option value="{{ $meeting['id_rapat'] ?? 1 }}">{{ $meeting['nama_agenda'] ?? 'Sidang Pleno Senat' }}</option>
+                                                <option value="{{ $meeting['id_rapat'] ?? ($meeting['id'] ?? '') }}">{{ $meeting['nama_agenda'] ?? 'Sidang Pleno Senat' }}</option>
                                             @empty
-                                                <option value="1">Sidang Pleno Penetapan Standar Akademik &amp; Kurikulum</option>
+                                                <option value="">Belum ada agenda rapat aktif</option>
                                             @endforelse
                                         </select>
                                     </div>
@@ -1201,7 +1877,7 @@
 
                                     <div>
                                         <label class="block text-[12px] font-semibold text-senat-ink mb-1">Penjelasan Draf / Keterangan Putusan</label>
-                                        <textarea wire:model="newVotingDescription" rows="3" placeholder="Uraikan materi atau pokok keputusan yang dimusyawarahkan..."
+                                        <textarea wire:model="newVotingDescription" rows="3" placeholder="Uraikan materi atau pokok keputusan yang dimusyawahkankan..."
                                                   class="w-full rounded-[10px] border border-senat-sidebarLine bg-white px-3.5 py-2.5 text-[13px] text-senat-ink placeholder-slate-400 focus:border-senat-link focus:outline-none"></textarea>
                                     </div>
 
@@ -1214,18 +1890,18 @@
                                         @if ($flashMessage)
                                             <p class="mr-auto text-[11.5px] font-medium text-rose-700">{{ $flashMessage }}</p>
                                         @endif
-                                        <button type="button" onclick="document.getElementById('modal-voting-baru').style.display='none'" class="inline-flex items-center justify-center rounded-md border border-senat-border bg-[#f8fafc] px-4 py-2 text-[12px] font-semibold text-senat-primary hover:border-senat-primary transition">
+                                        <button type="button" wire:click="closeNewVotingModal" class="inline-flex items-center justify-center rounded-md border border-senat-border bg-[#f8fafc] px-4 py-2 text-[12px] font-semibold text-senat-primary hover:border-senat-primary transition">
                                             Batal
                                         </button>
                                         <button type="button"
-                                                onclick="var t=document.getElementById('input-voting-judul'); if(!t.value.trim()){t.focus();return;} document.getElementById('modal-voting-baru').style.display='none';"
                                                 wire:click="deployNewVoting" class="inline-flex items-center justify-center rounded-md bg-senat-primary px-5 py-2 text-[12px] font-bold text-white transition hover:bg-senat-primaryHover">
                                             Buka Sesi Voting
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                    </div>
+                        </div>
+                    @endif
                 </div>
 
             {{-- 7. SCREEN: Pengaturan Informasi & Hero --}}
@@ -1367,44 +2043,558 @@
             {{-- 10. SCREEN: Manajemen Berita & Siaran Pers --}}
             @elseif ($active === 'Manajemen Berita & Siaran Pers')
                 <div wire:key="screen-berita-siaran-pers" class="grid gap-5 xl:grid-cols-[730px_minmax(0,1fr)]">
+                    {{-- Kolom Kiri: Publikasi Warta & Berita Senat --}}
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
-                        <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-4">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-senat-sidebarLine pb-4">
                             <div>
                                 <h2 class="text-[18px] font-bold text-senat-ink">Publikasi Warta & Berita Senat</h2>
                                 <p class="text-[12px] text-senat-body">Kanal siaran pers dan transparansi kegiatan persidangan</p>
                             </div>
-                            <x-senat.button variant="primary" size="sm" type="button" wire:click="saveAction('Tulis Berita Baru')">+ Tulis Berita</x-senat.button>
+                            <x-senat.button variant="primary" size="sm" type="button" wire:click="openCreatePostModal">
+                                <x-senat.icon name="plus" class="h-4 w-4" />
+                                <span>Tulis Berita</span>
+                            </x-senat.button>
                         </div>
+
+                        {{-- Bar Filter & Pencarian --}}
+                        <div class="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="relative flex-1">
+                                <x-senat.icon name="search" class="absolute left-3 top-2.5 h-4 w-4 text-senat-muted" />
+                                <input type="text"
+                                       wire:model.live.debounce.300ms="postSearch"
+                                       placeholder="Cari berita berdasarkan judul atau kategori..."
+                                       class="w-full rounded-lg border border-senat-border bg-senat-surface py-2 pl-9 pr-3 text-[12.5px] text-senat-ink placeholder-senat-muted focus:border-senat-primary focus:bg-white focus:outline-hidden">
+                            </div>
+                            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                                @foreach (['Semua', 'Warta Senat', 'Sidang Pleno', 'Pengawasan Akademik', 'Kerja Sama', 'Regulasi'] as $catOption)
+                                    <button type="button"
+                                            wire:click="$set('postFilterCategory', '{{ $catOption }}')"
+                                            class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors {{ $postFilterCategory === $catOption ? 'bg-senat-primary text-white' : 'bg-senat-surface text-senat-body hover:bg-slate-200' }}">
+                                        {{ $catOption }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Daftar Berita --}}
                         <ul class="mt-4 divide-y divide-senat-sidebarLine">
-                            @foreach ($posts as $post)
-                                <li class="py-4 first:pt-1">
+                            @forelse ($posts as $post)
+                                <li wire:key="post-item-{{ $post['id'] }}" class="py-4 first:pt-1">
                                     <div class="flex items-center justify-between gap-3">
-                                        <x-senat.badge state="neutral">{{ $post['category'] }}</x-senat.badge>
+                                        <div class="flex items-center gap-2">
+                                            <x-senat.badge state="neutral">{{ $post['category'] }}</x-senat.badge>
+                                            @if (($post['status'] ?? 'Terpublikasi') === 'Terpublikasi')
+                                                <x-senat.badge state="success">Terpublikasi</x-senat.badge>
+                                            @else
+                                                <x-senat.badge state="warning">Draf</x-senat.badge>
+                                            @endif
+                                        </div>
                                         <span class="text-[11px] text-senat-muted">{{ $post['date'] }}</span>
                                     </div>
-                                    <h3 class="mt-2 text-[15px] font-semibold text-senat-ink">{{ $post['title'] }}</h3>
-                                    <p class="mt-1 text-[12.5px] leading-relaxed text-senat-body">{{ $post['excerpt'] }}</p>
-                                    <div class="mt-3 flex items-center justify-end gap-2">
-                                        <x-senat.button variant="secondary" size="sm" type="button" wire:click="saveAction('Edit Berita {{ $post['id'] }}')">Edit</x-senat.button>
-                                        <x-senat.button variant="primary" size="sm" type="button" wire:click="saveAction('Publikasikan {{ $post['id'] }}')">Publikasikan</x-senat.button>
+
+                                    <div class="mt-3 flex items-start gap-5">
+                                        @if (!empty($post['thumbnail']))
+                                            <img src="{{ $post['thumbnail'] }}"
+                                                 alt="{{ $post['title'] }}"
+                                                 class="h-16 w-20 shrink-0 rounded-lg border border-senat-border object-cover">
+                                        @else
+                                            <div class="flex h-16 w-20 shrink-0 items-center justify-center rounded-lg border border-senat-border bg-senat-surface text-senat-muted">
+                                                <x-senat.icon name="image" class="h-6 w-6" />
+                                            </div>
+                                        @endif
+                                        <div class="min-w-0 flex-1">
+                                            <h3 class="text-[15px] font-semibold text-senat-ink leading-snug">{{ $post['title'] }}</h3>
+                                            <p class="mt-1 text-[12.5px] leading-relaxed text-senat-body line-clamp-2">{{ $post['excerpt'] }}</p>
+                                            <div class="mt-1 flex items-center gap-2 text-[11px] text-senat-muted">
+                                                <span>Penulis: {{ $post['author'] ?? 'Sekretariat Senat' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
+                                        {{-- Tombol Edit --}}
+                                        <x-senat.button variant="secondary" size="sm" type="button" wire:click="openEditPostModal({{ $post['id'] }})">
+                                            <x-senat.icon name="edit" class="h-3.5 w-3.5" />
+                                            <span>Edit</span>
+                                        </x-senat.button>
+
+                                        {{-- Tombol Publikasikan / Tarik ke Draf --}}
+                                        @if (($post['status'] ?? 'Terpublikasi') === 'Terpublikasi')
+                                            <x-senat.button variant="secondary" size="sm" type="button" wire:click="togglePublishPost({{ $post['id'] }})">
+                                                <span class="text-amber-700">Tarik ke Draf</span>
+                                            </x-senat.button>
+                                        @else
+                                            <x-senat.button variant="primary" size="sm" type="button" wire:click="togglePublishPost({{ $post['id'] }})">
+                                                <x-senat.icon name="check" class="h-3.5 w-3.5" />
+                                                <span>Publikasikan</span>
+                                            </x-senat.button>
+                                        @endif
+
+                                        {{-- Tombol Hapus Berita --}}
+                                        <button type="button"
+                                                wire:click="deletePost({{ $post['id'] }})"
+                                                wire:confirm="Apakah Anda yakin ingin menghapus berita ini?"
+                                                class="inline-flex h-9 items-center justify-center rounded-md border border-red-200 bg-red-50 px-2.5 text-[11.5px] font-semibold text-red-700 hover:bg-red-100 transition-colors">
+                                            <x-senat.icon name="trash" class="h-3.5 w-3.5" />
+                                        </button>
                                     </div>
                                 </li>
-                            @endforeach
+                            @empty
+                                <li class="py-8 text-center">
+                                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-senat-surface text-senat-muted">
+                                        <x-senat.icon name="file-text" class="h-6 w-6" />
+                                    </div>
+                                    <p class="mt-2 text-[13px] font-medium text-senat-ink">Tidak ada berita yang ditemukan</p>
+                                    <p class="text-[11px] text-senat-muted">Coba ubah kata kunci pencarian atau buat berita baru.</p>
+                                </li>
+                            @endforelse
                         </ul>
                     </section>
 
-                    <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
-                        <h2 class="text-[18px] font-bold text-senat-ink">Antrean Unggah Media</h2>
-                        <p class="mt-1 text-[12px] text-senat-body">Format PDF atau gambar dokumentasi maksimal 10MB</p>
-                        
-                        <div class="mt-5 rounded-[12px] border-2 border-dashed border-senat-border bg-senat-surface p-6 text-center">
-                            <span class="text-senat-link"><x-senat.icon name="file-text" class="mx-auto h-8 w-8 text-senat-link" /></span>
-                            <p class="mt-2 text-[13px] font-medium text-senat-ink">Tarik berkas dokumentasi ke sini</p>
-                            <p class="mt-1 text-[11px] text-senat-muted">Otomatis dioptimasi untuk portal publik</p>
-                            <x-senat.button variant="secondary" size="sm" class="mt-4" type="button" wire:click="saveAction('Pilih Berkas')">Pilih Berkas</x-senat.button>
+                    {{-- Kolom Kanan: Antrean Unggah Media & Berkas --}}
+                    <section class="space-y-5">
+                        <div class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                            <h2 class="text-[18px] font-bold text-senat-ink">Antrean Unggah Media</h2>
+                            <p class="mt-1 text-[12px] text-senat-body">Format PDF atau gambar dokumentasi maksimal 10MB</p>
+
+                            @if ($mediaFile)
+                                {{-- Berkas Terpilih & Siap Disimpan --}}
+                                <div class="mt-5 rounded-[12px] border-2 border-senat-primary/30 bg-[#f4f8fc] p-5 text-center">
+                                    @php
+                                        $isImg = in_array($mediaFile->getMimeType(), ['image/jpeg', 'image/png', 'image/webp'], true);
+                                    @endphp
+
+                                    @if ($isImg)
+                                        <div class="relative mx-auto max-w-[200px] overflow-hidden rounded-lg border border-senat-border bg-white shadow-xs">
+                                            <img src="{{ $mediaFile->temporaryUrl() }}" alt="Preview" class="h-28 w-full object-cover">
+                                        </div>
+                                    @else
+                                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-senat-surface text-senat-link">
+                                            <x-senat.icon name="file-text" class="h-8 w-8 text-senat-link" />
+                                        </div>
+                                    @endif
+
+                                    <p class="mt-3 text-[13px] font-semibold text-senat-ink truncate px-2">
+                                        {{ $mediaFile->getClientOriginalName() }}
+                                    </p>
+                                    <p class="text-[11px] text-senat-muted">
+                                        {{ number_format($mediaFile->getSize() / 1024, 0) }} KB · Siap disimpan ke server
+                                    </p>
+
+                                    <div class="mt-4 flex items-center justify-center gap-2">
+                                        <x-senat.button variant="primary" size="sm" type="button" wire:click="saveMediaFile" wire:loading.attr="disabled">
+                                            <span wire:loading.remove wire:target="saveMediaFile">Simpan Berkas</span>
+                                            <span wire:loading wire:target="saveMediaFile">Menyimpan...</span>
+                                        </x-senat.button>
+                                        <x-senat.button variant="secondary" size="sm" type="button" wire:click="cancelMediaFile">
+                                            Batal
+                                        </x-senat.button>
+                                    </div>
+                                </div>
+                            @else
+                                <div x-data="{ isDragging: false }"
+                                     @dragenter.prevent="isDragging = true"
+                                     @dragover.prevent="isDragging = true"
+                                     @dragleave.prevent="if (!$event.currentTarget.contains($event.relatedTarget)) isDragging = false"
+                                     @drop.prevent.stop="isDragging = false; if ($event.dataTransfer.files.length) $wire.upload('mediaFile', $event.dataTransfer.files[0])"
+                                     :class="isDragging ? 'border-senat-primary bg-blue-50 ring-2 ring-senat-primary/20' : ''"
+                                     class="mt-5 rounded-[12px] border-2 border-dashed border-senat-border bg-senat-surface p-6 text-center transition-colors hover:border-senat-primary hover:bg-[#f6f9fc]">
+                                    <input type="file"
+                                           wire:model="mediaFile"
+                                           id="media-file-input"
+                                           accept=".png,.jpg,.jpeg,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                                           class="hidden">
+                                    <label for="media-file-input" class="block cursor-pointer">
+                                        <span class="text-senat-link inline-block">
+                                            <x-senat.icon name="upload" class="mx-auto h-8 w-8 text-senat-link" />
+                                        </span>
+                                        <p class="mt-2 text-[13px] font-medium text-senat-ink">Tarik satu berkas ke sini</p>
+                                        <p class="mt-1 text-[11px] text-senat-muted">atau klik untuk memilih dari komputer · maksimal 10MB</p>
+                                        <div class="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-[10px] font-bold text-senat-muted uppercase">
+                                            @foreach (['PNG', 'JPG', 'WEBP', 'PDF', 'DOC', 'DOCX', 'XLS', 'XLSX', 'PPT', 'PPTX'] as $format)
+                                                <span class="rounded border border-senat-border bg-white px-2 py-0.5">{{ $format }}</span>
+                                            @endforeach
+                                        </div>
+                                        <div class="mt-4">
+                                            <span class="inline-flex items-center justify-center gap-1.5 rounded-md border border-senat-border bg-[#f8fafc] px-4 py-2 text-[11.5px] font-semibold text-senat-primary shadow-2xs hover:border-senat-primary">
+                                                <x-senat.icon name="file-text" class="h-3.5 w-3.5" />
+                                                <span>Pilih Berkas</span>
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
+                            @endif
+
+                            {{-- Loading Indikator File Livewire --}}
+                            <div wire:loading wire:target="mediaFile" class="mt-3 text-center text-[12px] font-medium text-senat-link">
+                                Membaca dan memproses berkas...
+                            </div>
+                            @error('mediaFile')
+                                <p class="mt-2 text-center text-[12px] font-semibold text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Repositori Berkas & Media Terunggah --}}
+                        <div class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
+                            <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-3">
+                                <div>
+                                    <h3 class="text-[14px] font-bold text-senat-ink">Media & Berkas Tersimpan</h3>
+                                    <p class="text-[11px] text-senat-muted">Dapat ditautkan ke warta &amp; berita</p>
+                                </div>
+                                <span class="rounded-full bg-senat-surface px-2 py-0.5 text-[10.5px] font-bold text-senat-ink border border-senat-border">
+                                    {{ count($mediaList) }} Berkas
+                                </span>
+                            </div>
+
+                            <div class="mt-3 max-h-[360px] overflow-y-auto space-y-2.5 pr-1">
+                                @forelse ($mediaList as $m)
+                                    <div wire:key="media-item-{{ $m['id'] }}" class="flex items-center justify-between gap-3 rounded-lg border border-senat-border bg-senat-surface p-2.5 transition-colors hover:bg-[#f6f9fc]">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            @if (($m['type'] ?? '') === 'image')
+                                                <button type="button"
+                                                        wire:click="openMediaPreview('{{ $m['id'] }}')"
+                                                        class="shrink-0 rounded-md focus:outline-hidden focus:ring-2 focus:ring-senat-primary"
+                                                        aria-label="Pratinjau {{ $m['original_name'] ?? $m['name'] }}">
+                                                    <img src="{{ $m['url'] }}" alt="" class="h-10 w-10 rounded-md border border-senat-border object-cover">
+                                                </button>
+                                            @else
+                                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white border border-senat-border text-senat-link">
+                                                    <x-senat.icon name="file-text" class="h-5 w-5" />
+                                                </div>
+                                            @endif
+                                            <div class="min-w-0">
+                                                <p class="truncate text-[12px] font-semibold text-senat-ink">{{ $m['original_name'] ?? $m['name'] }}</p>
+                                                <p class="text-[10px] text-senat-muted">{{ $m['size'] ?? '-' }} · {{ $m['uploaded_at'] ?? 'Baru saja' }}</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <button type="button"
+                                                    wire:click="openMediaPreview('{{ $m['id'] }}')"
+                                                    title="Pratinjau berkas"
+                                                    class="rounded-md border border-senat-border bg-white px-2 py-1 text-[10.5px] font-semibold text-senat-primary hover:border-senat-primary transition-colors">
+                                                Pratinjau
+                                            </button>
+                                            @if (($m['type'] ?? '') === 'image')
+                                                <button type="button"
+                                                        wire:click="useMediaAsPostImage('{{ $m['id'] }}')"
+                                                        title="Gunakan sebagai gambar berita"
+                                                        class="rounded-md border border-senat-border bg-white px-2 py-1 text-[10.5px] font-semibold text-senat-primary hover:border-senat-primary transition-colors">
+                                                    Pilih Gambar
+                                                </button>
+                                            @endif
+
+                                            @if (!empty($m['url']) && $m['url'] !== '#')
+                                                <a href="{{ $m['url'] }}" target="_blank" title="Buka berkas" class="rounded p-1 text-senat-muted hover:text-senat-primary">
+                                                    <x-senat.icon name="external" class="h-3.5 w-3.5" />
+                                                </a>
+                                            @endif
+
+                                            <button type="button"
+                                                    wire:click="deleteMediaFile('{{ $m['id'] }}')"
+                                                    title="Hapus berkas"
+                                                    class="rounded p-1 text-senat-muted hover:text-red-600 transition-colors">
+                                                <x-senat.icon name="trash" class="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="py-4 text-center text-[12px] text-senat-muted">Belum ada berkas media terunggah.</p>
+                                @endforelse
+                            </div>
                         </div>
                     </section>
                 </div>
+
+                {{-- MODAL DIALOG: Tulis & Edit Berita --}}
+                @if ($showPostModal)
+                    <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-2 backdrop-blur-xs sm:p-4"
+                         wire:click.self="closePostModal"
+                         wire:keydown.escape="closePostModal">
+                        <div class="relative my-auto flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-[16px] border border-senat-border bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
+                            {{-- Header Modal --}}
+                            <div class="flex shrink-0 items-center justify-between border-b border-senat-sidebarLine bg-[#f8fafc] px-4 py-4 sm:px-6">
+                                <div>
+                                    <h3 class="text-[17px] font-bold text-senat-ink">
+                                        {{ $editingPostId ? 'Edit Warta & Berita Senat' : 'Tulis Berita & Siaran Pers Baru' }}
+                                    </h3>
+                                    <p class="text-[11.5px] text-senat-muted">
+                                        {{ $editingPostId ? 'Perbarui konten berita dan status publikasi' : 'Buat naskah rilis pers resmi Senat Akademik Polines' }}
+                                    </p>
+                                </div>
+                                <button type="button" wire:click="closePostModal" class="rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors">
+                                    <x-senat.icon name="close" class="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            {{-- Form Isi Modal --}}
+                            <div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
+                                {{-- Alert jika ada validasi yang belum lengkap --}}
+                                @if ($errors->any())
+                                    <div class="rounded-lg bg-red-50 border border-red-200 p-3 text-[12px] text-red-700">
+                                        <p class="font-bold flex items-center gap-1.5">
+                                            <x-senat.icon name="warning" class="h-4 w-4 text-red-600" />
+                                            <span>Mohon lengkapi kolom yang wajib diisi:</span>
+                                        </p>
+                                        <ul class="list-disc list-inside mt-1.5 text-[11.5px] space-y-0.5">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+
+                                {{-- Judul Berita --}}
+                                <div>
+                                    <label class="block text-[12px] font-bold text-senat-ink">Judul Berita <span class="text-red-500">*</span></label>
+                                    <input type="text"
+                                           wire:model="postTitle"
+                                           placeholder="Contoh: Sidang Pleno Penetapan Standar Kompetensi Mahasiswa Vokasi 2026"
+                                           class="mt-1 w-full rounded-lg border border-senat-border px-3.5 py-2 text-[13px] text-senat-ink placeholder-senat-muted focus:border-senat-primary focus:outline-hidden">
+                                    @error('postTitle') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                {{-- Baris 2 Kolom: Kategori & Tanggal --}}
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="block text-[12px] font-bold text-senat-ink">Kategori Berita <span class="text-red-500">*</span></label>
+                                        <select wire:model="postCategory" class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3.5 py-2 text-[13px] text-senat-ink focus:border-senat-primary focus:outline-hidden">
+                                            <option value="Warta Senat">Warta Senat</option>
+                                            <option value="Sidang Pleno">Sidang Pleno</option>
+                                            <option value="Pengawasan Akademik">Pengawasan Akademik</option>
+                                            <option value="Kerja Sama">Kerja Sama</option>
+                                            <option value="Regulasi">Regulasi</option>
+                                            <option value="Siaran Pers">Siaran Pers</option>
+                                        </select>
+                                        @error('postCategory') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-[12px] font-bold text-senat-ink">Tanggal Publikasi</label>
+                                        <input type="date"
+                                               wire:model="postDate"
+                                               class="mt-1 w-full rounded-lg border border-senat-border px-3.5 py-2 text-[13px] text-senat-ink focus:border-senat-primary focus:outline-hidden">
+                                    </div>
+                                </div>
+
+                                {{-- Ringkasan Berita --}}
+                                <div>
+                                    <label class="block text-[12px] font-bold text-senat-ink">Ringkasan Berita (Excerpt)</label>
+                                    <textarea wire:model="postExcerpt"
+                                              rows="2"
+                                              placeholder="Ringkasan singkat 1-2 kalimat untuk kartu berita portal publik..."
+                                              class="mt-1 w-full rounded-lg border border-senat-border px-3.5 py-2 text-[13px] text-senat-ink placeholder-senat-muted focus:border-senat-primary focus:outline-hidden"></textarea>
+                                </div>
+
+                                {{-- Isi Berita Lengkap --}}
+                                <div>
+                                    <label class="block text-[12px] font-bold text-senat-ink">Isi Berita Lengkap <span class="text-red-500">*</span></label>
+                                    <textarea wire:model="postBody"
+                                              rows="6"
+                                              placeholder="Tuliskan naskah lengkap berita, hasil sidang, dokumentasi, atau siaran pers di sini..."
+                                              class="mt-1 w-full rounded-lg border border-senat-border px-3.5 py-2.5 text-[13px] text-senat-ink placeholder-senat-muted leading-relaxed focus:border-senat-primary focus:outline-hidden"></textarea>
+                                    @error('postBody') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                {{-- Galeri Gambar Berita --}}
+                                <div>
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <label class="block text-[12px] font-bold text-senat-ink">Galeri Gambar Berita</label>
+                                            <p class="mt-0.5 text-[11px] text-senat-muted">Pilih beberapa gambar tersimpan atau tambahkan lewat tautan gambar.</p>
+                                        </div>
+                                        <button type="button" wire:click="openMediaPicker" class="rounded-md border border-senat-border bg-white px-3 py-2 text-[11px] font-semibold text-senat-primary hover:border-senat-primary">
+                                            Pilih dari Media Tersimpan
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                                        <input type="url" wire:model="postImageUrl" placeholder="https://alamat-gambar.jpg"
+                                               class="min-w-0 flex-1 rounded-lg border border-senat-border px-3.5 py-2 text-[13px] text-senat-ink placeholder-senat-muted focus:border-senat-primary focus:outline-hidden">
+                                        <button type="button" wire:click="addPostImageFromUrl" class="rounded-lg border border-senat-border bg-senat-surface px-4 py-2 text-[12px] font-semibold text-senat-primary hover:border-senat-primary">
+                                            Tambahkan Tautan
+                                        </button>
+                                    </div>
+                                    @error('postImageUrl') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
+
+                                    @if (count($postImages) > 0)
+                                        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                            @foreach ($postImages as $index => $image)
+                                                <div wire:key="post-image-{{ $index }}" class="overflow-hidden rounded-lg border border-senat-border bg-senat-surface">
+                                                    <img src="{{ $image }}" alt="Gambar berita {{ $index + 1 }}" class="h-28 w-full object-cover">
+                                                    <div class="flex items-center justify-between gap-2 p-2">
+                                                        <span class="truncate text-[10px] font-medium text-senat-muted">{{ $index === 0 ? 'Gambar utama' : 'Gambar ' . ($index + 1) }}</span>
+                                                        <button type="button" wire:click="removePostImage({{ $index }})" class="shrink-0 text-[10px] font-semibold text-red-600 hover:underline">Hapus</button>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    @if ($errors->has('postImages') || $errors->has('postImages.*'))
+                                        <p class="text-[11px] font-semibold text-red-600">{{ $errors->first('postImages') ?: $errors->first('postImages.*') }}</p>
+                                    @endif
+                                </div>
+
+                                {{-- Lampiran berita --}}
+                                <div class="rounded-lg border border-senat-border bg-senat-surface p-3.5">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <h4 class="text-[12px] font-bold text-senat-ink">Lampiran Berita</h4>
+                                            <p class="mt-0.5 text-[11px] text-senat-muted">Dokumen atau berkas lain dari media tersimpan.</p>
+                                        </div>
+                                        <button type="button" wire:click="openMediaPicker" class="rounded-md border border-senat-border bg-white px-3 py-1.5 text-[11px] font-semibold text-senat-primary hover:border-senat-primary">Pilih Berkas</button>
+                                    </div>
+                                    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                                        <input type="text" wire:model="postAttachmentName" placeholder="Nama lampiran (opsional)"
+                                               class="min-w-0 rounded-lg border border-senat-border px-3 py-2 text-[12px] text-senat-ink sm:w-1/3">
+                                        <input type="url" wire:model="postAttachmentUrl" placeholder="Tautan dokumen atau berkas"
+                                               class="min-w-0 flex-1 rounded-lg border border-senat-border px-3 py-2 text-[12px] text-senat-ink">
+                                        <button type="button" wire:click="addPostAttachmentFromUrl" class="rounded-lg border border-senat-border bg-white px-3 py-2 text-[11px] font-semibold text-senat-primary">Tambah</button>
+                                    </div>
+                                    @error('postAttachmentUrl') <span class="text-[11px] font-semibold text-red-500">{{ $message }}</span> @enderror
+                                    @if (count($postAttachments) > 0)
+                                        <ul class="mt-3 space-y-2">
+                                            @foreach ($postAttachments as $index => $attachment)
+                                                <li wire:key="post-attachment-{{ $index }}" class="flex items-center justify-between gap-3 rounded-md border border-senat-border bg-white px-3 py-2">
+                                                    <a href="{{ $attachment['url'] }}" target="_blank" rel="noopener noreferrer" class="min-w-0 truncate text-[11px] font-medium text-senat-link hover:underline">{{ $attachment['name'] }}</a>
+                                                    <button type="button" wire:click="removePostAttachment({{ $index }})" class="shrink-0 text-[10px] font-semibold text-red-600">Hapus</button>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                </div>
+
+                                {{-- Status Publikasi --}}
+                                <div class="rounded-lg border border-senat-border bg-senat-surface p-3.5">
+                                    <label class="block text-[12px] font-bold text-senat-ink">Status Publikasi</label>
+                                    <div class="mt-2 flex items-center gap-5 text-[13px]">
+                                        <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-senat-ink">
+                                            <input type="radio" wire:model="postStatus" value="Terpublikasi" class="text-senat-primary focus:ring-senat-primary">
+                                            <span>Terpublikasi (Langsung tayang di portal)</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 cursor-pointer font-medium text-senat-ink">
+                                            <input type="radio" wire:model="postStatus" value="Draf" class="text-senat-primary focus:ring-senat-primary">
+                                            <span>Draf (Simpan internal terlebih dahulu)</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {{-- Footer Aksi Modal --}}
+                                <div class="flex flex-col-reverse items-stretch justify-between gap-3 border-t border-senat-sidebarLine pt-4 sm:flex-row sm:items-center">
+                                    <x-senat.button variant="secondary" size="md" type="button" wire:click="closePostModal">
+                                        Batal
+                                    </x-senat.button>
+
+                                    <div class="flex flex-col gap-2 sm:flex-row">
+                                        <x-senat.button variant="secondary" size="md" type="button" wire:click="savePost(false)" wire:loading.attr="disabled">
+                                            <span wire:loading.remove wire:target="savePost(false)">Simpan sebagai Draf</span>
+                                            <span wire:loading wire:target="savePost(false)">Menyimpan...</span>
+                                        </x-senat.button>
+
+                                        <x-senat.button variant="primary" size="md" type="button" wire:click="savePost(true)" wire:loading.attr="disabled">
+                                            <span wire:loading.remove wire:target="savePost(true)">{{ $editingPostId ? 'Simpan Perubahan' : 'Publikasikan Sekarang' }}</span>
+                                            <span wire:loading wire:target="savePost(true)">Memproses...</span>
+                                        </x-senat.button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($showMediaPicker)
+                    <div class="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 p-2 sm:p-4"
+                         wire:click.self="closeMediaPicker"
+                         wire:keydown.escape="closeMediaPicker">
+                        <section class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]"
+                                 role="dialog" aria-modal="true" aria-labelledby="media-picker-title">
+                            <header class="flex shrink-0 items-center justify-between border-b border-senat-sidebarLine px-4 py-4 sm:px-6">
+                                <div>
+                                    <h3 id="media-picker-title" class="text-[16px] font-bold text-senat-ink">Pilih Media untuk Berita</h3>
+                                    <p class="mt-1 text-[11px] text-senat-muted">Klik gambar untuk menambah atau menghapus dari galeri. Dokumen akan menjadi lampiran.</p>
+                                </div>
+                                <button type="button" wire:click="closeMediaPicker" class="rounded-md p-2 text-senat-muted hover:bg-senat-surface" aria-label="Tutup pemilih media">×</button>
+                            </header>
+                            <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+                                @if (count($mediaList) > 0)
+                                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                                        @foreach ($mediaList as $m)
+                                            @php
+                                                $selectedInPost = ($m['type'] ?? '') === 'image'
+                                                    ? in_array($m['url'] ?? '', $postImages, true)
+                                                    : collect($postAttachments)->contains('url', $m['url'] ?? '');
+                                            @endphp
+                                            <button type="button"
+                                                    wire:key="media-picker-item-{{ $m['id'] }}"
+                                                    wire:click="toggleMediaInPost('{{ $m['id'] }}')"
+                                                    class="overflow-hidden rounded-xl border text-left transition {{ $selectedInPost ? 'border-senat-primary ring-2 ring-senat-primary/20' : 'border-senat-border hover:border-senat-primary' }}">
+                                                @if (($m['type'] ?? '') === 'image')
+                                                    <img src="{{ $m['url'] }}" alt="{{ $m['original_name'] ?? $m['name'] }}" class="h-28 w-full bg-senat-surface object-cover">
+                                                @else
+                                                    <span class="flex h-28 items-center justify-center bg-senat-surface text-senat-link">
+                                                        <x-senat.icon name="file-text" class="h-9 w-9" />
+                                                    </span>
+                                                @endif
+                                                <span class="block p-2.5">
+                                                    <span class="block truncate text-[11px] font-semibold text-senat-ink">{{ $m['original_name'] ?? $m['name'] }}</span>
+                                                    <span class="mt-1 block text-[10px] font-medium {{ $selectedInPost ? 'text-senat-link' : 'text-senat-muted' }}">
+                                                        {{ $selectedInPost ? 'Dipilih · klik untuk batal' : (($m['type'] ?? '') === 'image' ? 'Gambar' : 'Lampiran') }}
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="rounded-lg border border-dashed border-senat-border p-8 text-center text-[12px] text-senat-muted">Belum ada media tersimpan. Unggah gambar atau dokumen terlebih dahulu.</p>
+                                @endif
+                            </div>
+                            <footer class="flex shrink-0 items-center justify-between gap-3 border-t border-senat-sidebarLine px-4 py-3 sm:px-6">
+                                <span class="text-[11px] text-senat-muted">{{ count($postImages) }} gambar · {{ count($postAttachments) }} lampiran dipilih</span>
+                                <button type="button" wire:click="closeMediaPicker" class="rounded-lg bg-senat-primary px-4 py-2 text-[12px] font-semibold text-white hover:bg-senat-primaryHover">Selesai</button>
+                            </footer>
+                        </section>
+                    </div>
+                @endif
+
+                @php
+                    $previewMedia = collect($mediaList)->firstWhere('id', $mediaPreviewId);
+                @endphp
+                @if ($showMediaPreviewModal && $previewMedia)
+                    <div class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/70 p-2 sm:p-4"
+                         wire:click.self="closeMediaPreview"
+                         wire:keydown.escape="closeMediaPreview">
+                        <section class="flex max-h-[calc(100dvh-1rem)] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]"
+                                 role="dialog" aria-modal="true" aria-labelledby="media-preview-title">
+                            <header class="flex shrink-0 items-center justify-between gap-3 border-b border-senat-sidebarLine px-4 py-3 sm:px-6">
+                                <div class="min-w-0">
+                                    <h3 id="media-preview-title" class="truncate text-[14px] font-bold text-senat-ink">{{ $previewMedia['original_name'] ?? $previewMedia['name'] }}</h3>
+                                    <p class="text-[10px] text-senat-muted">{{ $previewMedia['size'] ?? '-' }} · {{ $previewMedia['uploaded_at'] ?? 'Baru saja' }}</p>
+                                </div>
+                                <button type="button" wire:click="closeMediaPreview" class="rounded-md p-2 text-senat-muted hover:bg-senat-surface" aria-label="Tutup pratinjau">×</button>
+                            </header>
+                            <div class="min-h-0 flex-1 overflow-auto bg-senat-surface p-3 sm:p-5">
+                                @if (($previewMedia['type'] ?? '') === 'image')
+                                    <img src="{{ $previewMedia['url'] }}" alt="{{ $previewMedia['original_name'] ?? $previewMedia['name'] }}" class="mx-auto max-h-[65dvh] max-w-full rounded-lg object-contain">
+                                @elseif (str_ends_with(strtolower($previewMedia['name'] ?? ''), '.pdf'))
+                                    <iframe src="{{ $previewMedia['url'] }}" title="Pratinjau {{ $previewMedia['original_name'] ?? $previewMedia['name'] }}" class="h-[65dvh] min-h-[300px] w-full rounded-lg border border-senat-border bg-white"></iframe>
+                                @else
+                                    <div class="flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-lg border border-senat-border bg-white p-6 text-center">
+                                        <x-senat.icon name="file-text" class="h-12 w-12 text-senat-link" />
+                                        <p class="text-[12px] font-semibold text-senat-ink">Pratinjau tidak tersedia untuk tipe berkas ini.</p>
+                                        <a href="{{ $previewMedia['url'] }}" target="_blank" rel="noopener noreferrer" class="text-[12px] font-semibold text-senat-link hover:underline">Buka atau unduh berkas</a>
+                                    </div>
+                                @endif
+                            </div>
+                            <footer class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-senat-sidebarLine px-4 py-3 sm:px-6">
+                                <a href="{{ $previewMedia['url'] }}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-semibold text-senat-link hover:underline">Buka berkas</a>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" wire:click="addMediaToPost('{{ $previewMedia['id'] }}')" class="rounded-lg border border-senat-border bg-white px-3 py-2 text-[11px] font-semibold text-senat-primary hover:border-senat-primary">Gunakan di Berita</button>
+                                    <button type="button" wire:click="closeMediaPreview" class="rounded-lg bg-senat-primary px-4 py-2 text-[11px] font-semibold text-white hover:bg-senat-primaryHover">Tutup</button>
+                                </div>
+                            </footer>
+                        </section>
+                    </div>
+                @endif
 
             {{-- 11. SCREEN: Katalog Regulasi & Produk Hukum (Backend API) --}}
             @elseif ($active === 'Katalog Regulasi & Produk Hukum')

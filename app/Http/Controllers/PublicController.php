@@ -31,7 +31,7 @@ class PublicController extends Controller
     public function home(): View
     {
         return view('public.home', [
-            'posts' => $this->posts->all(),
+            'posts' => $this->publishedPosts(),
             'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'committees' => $this->committees->all(),
@@ -268,7 +268,7 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
     public function news(): View
     {
         return view('public.news', [
-            'posts' => $this->posts->all(),
+            'posts' => $this->publishedPosts(),
         ]);
     }
 
@@ -289,5 +289,23 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
             'post' => $post,
             'related' => $related,
         ]);
+    }
+
+    private function publishedPosts(): array
+    {
+        $published = array_values(array_filter(
+            $this->posts->all(),
+            fn ($post) => ($post['status'] ?? 'Terpublikasi') === 'Terpublikasi'
+        ));
+
+        usort($published, function ($a, $b): int {
+            $dateOrder = strcmp(
+                $b['published_at'] ?? $b['date'] ?? '',
+                $a['published_at'] ?? $a['date'] ?? ''
+            );
+            return $dateOrder !== 0 ? $dateOrder : ((int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
+        });
+
+        return $published;
     }
 }

@@ -52,9 +52,10 @@
         role="dialog"
         aria-label="Asisten Virtual Senat Polines"
         :aria-hidden="isOpen ? 'false' : 'true'"
-        :style="panelStyle"
-        style="opacity:0;visibility:hidden;pointer-events:none;"
-        class="absolute right-0 bottom-20 flex h-[min(520px,calc(100dvh-7rem))] w-[92vw] max-w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-senat-line bg-white shadow-2xl sm:max-w-[400px]"
+        :class="isOpen
+            ? 'pointer-events-auto visible translate-y-0 scale-100 opacity-100'
+            : 'pointer-events-none invisible translate-y-3 scale-95 opacity-0'"
+        class="absolute right-0 bottom-20 flex h-[min(520px,calc(100dvh-7rem))] w-[92vw] max-w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-senat-line bg-white shadow-2xl transition-all duration-300 ease-out sm:max-w-[400px]"
     >
         {{-- Header Widget --}}
         <div class="flex items-center justify-between border-b border-senat-primaryHover/20 bg-senat-primary px-4 py-3.5 text-white">
@@ -187,12 +188,6 @@ function senatChatWidget() {
             if (this.isOpen) {
                 this.$nextTick(() => this.scrollToBottom());
             }
-        },
-        get panelStyle() {
-            const base = 'transition:opacity 300ms cubic-bezier(0.16,1,0.3,1),transform 300ms cubic-bezier(0.16,1,0.3,1),visibility 300ms;will-change:opacity,transform;';
-            return base + (this.isOpen
-                ? 'opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scale(1);'
-                : 'opacity:0;visibility:hidden;pointer-events:none;transform:translateY(12px) scale(.96);');
         },
         sendPrompt(text) {
             this.inputMessage = text;

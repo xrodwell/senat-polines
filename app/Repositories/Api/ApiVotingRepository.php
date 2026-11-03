@@ -23,27 +23,29 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $apiUrl = $this->getBaseUrl();
 
         try {
-            $response = Http::timeout(3)->get("{$apiUrl}/voting?active=1");
+            $response = Http::timeout(3)->acceptJson()->get("{$apiUrl}/voting?active=1");
 
             if ($response->successful()) {
                 $data = $response->json('data') ?? $response->json();
                 $items = isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
 
                 if (is_array($items) && !empty($items)) {
+                    // Jika mengembalikan 1 object langsung
                     if (isset($items['id_voting']) || isset($items['id'])) {
-                        return $this->formatVoting($items);
+                        if (in_array(strtolower($items['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
+                            return $this->formatVoting($items);
+                        }
+                        return null;
                     }
 
+                    // Jika array of items
                     foreach ($items as $item) {
                         if (is_array($item) && in_array(strtolower($item['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
                             return $this->formatVoting($item);
                         }
                     }
-
-                    if (isset($items[0]) && is_array($items[0])) {
-                        return $this->formatVoting($items[0]);
-                    }
                 }
+                return null;
             }
         } catch (\Throwable $e) {
             Log::warning('Interoperabilitas API Voting getActive fallback: ' . $e->getMessage());
@@ -57,7 +59,7 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $apiUrl = $this->getBaseUrl();
 
         try {
-            $response = Http::timeout(3)->get("{$apiUrl}/voting");
+            $response = Http::timeout(3)->acceptJson()->get("{$apiUrl}/voting");
 
             if ($response->successful()) {
                 $data = $response->json('data') ?? $response->json();
@@ -77,10 +79,10 @@ class ApiVotingRepository implements VotingRepositoryInterface
     public function castVote(int $votingId, int $optionId, ?int $userId = null): array
     {
         $apiUrl = $this->getBaseUrl();
-        $userId = $userId ?? auth()->id() ?? 1;
+        $userId = $userId ?? auth()->id() ?? 2;
 
         try {
-            $response = Http::timeout(3)->post("{$apiUrl}/suara-voting", [
+            $response = Http::timeout(3)->acceptJson()->post("{$apiUrl}/suara-voting", [
                 'id_voting' => $votingId,
                 'id_opsi' => $optionId,
                 'id_user' => $userId,
@@ -113,18 +115,18 @@ class ApiVotingRepository implements VotingRepositoryInterface
 
         try {
             if ($statusNormalized === 'dibuka') {
-                $res = Http::timeout(3)->post("{$apiUrl}/voting/{$votingId}/buka");
+                $res = Http::timeout(3)->acceptJson()->post("{$apiUrl}/voting/{$votingId}/buka");
                 if ($res->successful()) {
                     return ['success' => true, 'status' => 'dibuka', 'data' => $res->json()];
                 }
             } elseif ($statusNormalized === 'ditutup') {
-                $res = Http::timeout(3)->post("{$apiUrl}/voting/{$votingId}/tutup");
+                $res = Http::timeout(3)->acceptJson()->post("{$apiUrl}/voting/{$votingId}/tutup");
                 if ($res->successful()) {
                     return ['success' => true, 'status' => 'ditutup', 'data' => $res->json()];
                 }
             }
 
-            $putRes = Http::timeout(3)->put("{$apiUrl}/voting/{$votingId}", [
+            $putRes = Http::timeout(3)->acceptJson()->put("{$apiUrl}/voting/{$votingId}", [
                 'status' => $status,
             ]);
 
@@ -143,7 +145,7 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $apiUrl = $this->getBaseUrl();
 
         try {
-            $response = Http::timeout(3)->get("{$apiUrl}/voting/{$votingId}/rekap");
+            $response = Http::timeout(3)->acceptJson()->get("{$apiUrl}/voting/{$votingId}/rekap");
 
             if ($response->successful()) {
                 return $response->json('data') ?? $response->json();
@@ -160,16 +162,35 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $id = $v['id_voting'] ?? $v['id'] ?? null;
         $judul = $v['judul_voting'] ?? $v['judul'] ?? $v['title'] ?? 'Voting Senat';
         $deskripsi = $v['deskripsi'] ?? $v['description'] ?? '';
-        $status = $v['status'] ?? 'draft';
+        $status = strtolower($v['status'] ?? 'draft');
         $waktuMulai = $v['waktu_mulai'] ?? null;
+        $waktuSelesai = $v['waktu_selesai'] ?? null;
 
-        $rapat = $v['rapat'] ?? [
-            'id_rapat' => $v['id_rapat'] ?? 1,
-            'title' => 'Sidang Pleno Kurikulum MBKM',
-            'nama_rapat' => 'Sidang Pleno Kurikulum MBKM',
+        $rapatRaw = $v['rapat'] ?? [];
+        $anggotaRapats = is_array($rapatRaw['anggota_rapats'] ?? $rapatRaw['anggotaRapats'] ?? null)
+            ? ($rapatRaw['anggota_rapats'] ?? $rapatRaw['anggotaRapats'])
+            : [];
+        $rapatId = $rapatRaw['id_rapat'] ?? $v['id_rapat'] ?? 1;
+        $rapat = array_merge([
+            'id_rapat' => $rapatId,
+            'title' => $rapatRaw['nama_agenda'] ?? $rapatRaw['title'] ?? 'Sidang Pleno Senat Akademik',
+            'nama_rapat' => $rapatRaw['nama_agenda'] ?? $rapatRaw['nama_rapat'] ?? 'Sidang Pleno Senat Akademik',
             'type' => 'Sidang Pleno',
-            'kode' => 'PLN-892',
+            'kode' => $rapatRaw['kode_sesi'] ?? $rapatRaw['kode'] ?? ('PLN-' . str_pad((string) $rapatId, 3, '0', STR_PAD_LEFT)),
+            'tanggal' => isset($rapatRaw['tanggal']) ? substr((string) $rapatRaw['tanggal'], 0, 10) : '2026-10-27',
+        ], is_array($rapatRaw) ? $rapatRaw : []);
+
+        $totalInvited = count($anggotaRapats);
+        $totalHadir = collect($anggotaRapats)->filter(
+            fn ($a) => strtolower((string) ($a['status_kehadiran'] ?? '')) === 'hadir' || !empty($a['waktu_presensi'])
+        )->count();
+        $kuorumData = $v['kuorum'] ?? [
+            'hadir' => $totalHadir,
+            'total' => $totalInvited,
+            'terpenuhi' => $totalInvited > 0 && $totalHadir >= (int) ceil(($totalInvited * 2) / 3),
         ];
+
+        $suaraVotings = $v['suara_votings'] ?? $v['suaraVotings'] ?? [];
 
         $opsiRaw = $v['opsi_votings'] ?? $v['opsiVotings'] ?? $v['opsi'] ?? [];
         $totalSuara = (int) ($v['total_suara'] ?? 0);
@@ -179,7 +200,8 @@ class ApiVotingRepository implements VotingRepositoryInterface
         if (!empty($opsiRaw) && is_array($opsiRaw)) {
             $sumSuara = 0;
             foreach ($opsiRaw as $opt) {
-                $sumSuara += (int) ($opt['total'] ?? (isset($opt['suara_votings']) && is_array($opt['suara_votings']) ? count($opt['suara_votings']) : 0));
+                $suaraCount = (int) ($opt['jumlah_suara'] ?? $opt['total'] ?? (isset($opt['suara_votings']) && is_array($opt['suara_votings']) ? count($opt['suara_votings']) : 0));
+                $sumSuara += $suaraCount;
             }
             if ($totalSuara === 0 && $sumSuara > 0) {
                 $totalSuara = $sumSuara;
@@ -188,7 +210,7 @@ class ApiVotingRepository implements VotingRepositoryInterface
             foreach ($opsiRaw as $opt) {
                 $optId = $opt['id_opsi'] ?? $opt['id'] ?? null;
                 $namaOpsi = $opt['nama_opsi'] ?? $opt['label'] ?? '';
-                $suara = (int) ($opt['total'] ?? (isset($opt['suara_votings']) && is_array($opt['suara_votings']) ? count($opt['suara_votings']) : 0));
+                $suara = (int) ($opt['jumlah_suara'] ?? $opt['total'] ?? (isset($opt['suara_votings']) && is_array($opt['suara_votings']) ? count($opt['suara_votings']) : 0));
                 $persen = $totalSuara > 0 ? round(($suara / $totalSuara) * 100, 1) : 0;
                 if (isset($opt['persentase'])) {
                     $persen = (float) $opt['persentase'];
@@ -200,6 +222,8 @@ class ApiVotingRepository implements VotingRepositoryInterface
                     'label' => $namaOpsi,
                     'nama_opsi' => $namaOpsi,
                     'total' => $suara,
+                    'suara' => $suara,
+                    'jumlah_suara' => $suara,
                     'persentase' => $persen,
                 ];
 
@@ -209,9 +233,9 @@ class ApiVotingRepository implements VotingRepositoryInterface
             }
         } else {
             $opsiFormatted = [
-                ['id' => 1, 'id_opsi' => 1, 'label' => 'Setuju', 'nama_opsi' => 'Setuju', 'total' => 24, 'persentase' => 85.7],
-                ['id' => 2, 'id_opsi' => 2, 'label' => 'Tidak Setuju', 'nama_opsi' => 'Tidak Setuju', 'total' => 2, 'persentase' => 7.1],
-                ['id' => 3, 'id_opsi' => 3, 'label' => 'Abstain', 'nama_opsi' => 'Abstain', 'total' => 2, 'persentase' => 7.1],
+                ['id' => 1, 'id_opsi' => 1, 'label' => 'Setuju', 'nama_opsi' => 'Setuju', 'total' => 24, 'jumlah_suara' => 24, 'persentase' => 85.7],
+                ['id' => 2, 'id_opsi' => 2, 'label' => 'Tidak Setuju', 'nama_opsi' => 'Tidak Setuju', 'total' => 2, 'jumlah_suara' => 2, 'persentase' => 7.1],
+                ['id' => 3, 'id_opsi' => 3, 'label' => 'Abstain', 'nama_opsi' => 'Abstain', 'total' => 2, 'jumlah_suara' => 2, 'persentase' => 7.1],
             ];
             $totalSuara = 28;
             $hasilRekap = ['Setuju' => 24, 'Tidak Setuju' => 2, 'Abstain' => 2];
@@ -226,10 +250,13 @@ class ApiVotingRepository implements VotingRepositoryInterface
             'deskripsi' => $deskripsi,
             'status' => $status,
             'waktu_mulai' => $waktuMulai,
+            'waktu_selesai' => $waktuSelesai,
             'rapat' => $rapat,
+            'kuorum' => $kuorumData,
             'opsi' => $opsiFormatted,
             'total_suara' => $totalSuara,
             'hasil_rekap' => $hasilRekap,
+            'suara_votings' => $suaraVotings,
         ];
     }
 }
