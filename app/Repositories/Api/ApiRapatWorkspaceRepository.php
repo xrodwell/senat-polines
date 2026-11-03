@@ -73,7 +73,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
 
     public function unggahLampiran(int $idRapat, int $idUser, UploadedFile $file): array
     {
-        $res = Http::timeout(30)->acceptJson()
+        $res = Http::timeout(600)->acceptJson()
             ->attach('file', file_get_contents($file->getRealPath()), $file->getClientOriginalName(), [
                 'Content-Type' => $file->getClientMimeType() ?: 'application/octet-stream',
             ])
@@ -112,7 +112,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
         if (! empty($payload['file']) && $payload['file'] instanceof UploadedFile) {
             $file = $payload['file'];
 
-            $res = Http::timeout(30)->acceptJson()
+            $res = Http::timeout(600)->acceptJson()
                 ->attach('file', file_get_contents($file->getRealPath()), $file->getClientOriginalName(), [
                     'Content-Type' => $file->getClientMimeType() ?: 'application/octet-stream',
                 ])

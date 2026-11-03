@@ -55,7 +55,7 @@ class RapatWorkspaceController extends Controller
     public function unggahLampiran(Request $request, int $rapat)
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:10240'],
+            'file' => ['required', 'file', 'max:1024000'],
         ]);
 
         try {
@@ -79,7 +79,7 @@ class RapatWorkspaceController extends Controller
     public function bagikan(Request $request, int $rapat)
     {
         $data = $request->validate([
-            'file' => ['nullable', 'file', 'max:10240'],
+            'file' => ['nullable', 'file', 'max:1024000'],
             'url' => ['nullable', 'string', 'max:2048'],
             'nama' => ['nullable', 'string', 'max:255'],
         ]);
