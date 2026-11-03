@@ -23,3 +23,5 @@ yarn-error.log
 /markitdown
 /docs/
 .env.testing
+
+/storage/app/private/livewire-tmp/*
