@@ -52,11 +52,19 @@ class ApiAspirationRepository implements AspirationRepositoryInterface
             if (strcasecmp($item['ticket_code'], $ticket) === 0) {
                 return $item;
             }
+            // Dukung pencocokan variasi kode tiket (misal ASP-0005 vs ASP-POLINES-2026-0005)
+            $shortCode = 'ASP-' . str_pad((string) $item['id'], 4, '0', STR_PAD_LEFT);
+            $longCode = 'ASP-POLINES-2026-' . str_pad((string) $item['id'], 4, '0', STR_PAD_LEFT);
+            if (strcasecmp($shortCode, $ticket) === 0 || strcasecmp($longCode, $ticket) === 0) {
+                return $item;
+            }
         }
 
-        // 2. Parse ID numerik dari format kode tiket (misal: "ASP-0001", "ASP-POLINES-2026-0001", "1")
+        // 2. Parse ID numerik dari format kode tiket (ambil digit terakhir: "ASP-POLINES-2026-0005" -> 5)
         $numericId = null;
-        if (preg_match('/(\d+)/', $ticket, $matches)) {
+        if (preg_match('/(\d+)$/', $ticket, $matches)) {
+            $numericId = (int) $matches[1];
+        } elseif (preg_match('/(\d+)/', $ticket, $matches)) {
             $numericId = (int) $matches[1];
         }
 
@@ -70,7 +78,7 @@ class ApiAspirationRepository implements AspirationRepositoryInterface
             // Coba tembak langsung endpoint single /aspirasi/{id}
             try {
                 $base = $this->getBackendUrl();
-                $response = Http::timeout(3)->get("{$base}/aspirasi/{$numericId}");
+                $response = Http::acceptJson()->timeout(3)->get("{$base}/aspirasi/{$numericId}");
                 if ($response->successful()) {
                     $item = $response->json('data') ?? $response->json();
                     if (!empty($item) && isset($item['id_aspirasi'])) {
@@ -90,7 +98,10 @@ class ApiAspirationRepository implements AspirationRepositoryInterface
     {
         $id = $item['id_aspirasi'] ?? 1;
         $tanggapans = $item['tanggapans'] ?? [];
-        $lastTanggapan = !empty($tanggapans) ? end($tanggapans)['pesan'] : 'Belum ada tanggapan resmi dari komisi.';
+        $lastTanggapan = !empty($tanggapans) ? (is_array(end($tanggapans)) ? end($tanggapans)['pesan'] ?? '' : '') : 'Belum ada tanggapan resmi dari komisi.';
+        if (empty($lastTanggapan)) {
+            $lastTanggapan = 'Menunggu telaah dan tanggapan dari komisi Senat.';
+        }
 
         $statusRaw = strtolower($item['status'] ?? 'pending');
         $statusFormatted = match ($statusRaw) {
@@ -114,7 +125,7 @@ class ApiAspirationRepository implements AspirationRepositoryInterface
 
         return [
             'id' => $id,
-            'ticket_code' => 'ASP-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT),
+            'ticket_code' => 'ASP-POLINES-2026-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT),
             'sender_category' => !empty($item['anonim']) ? 'Mahasiswa (Anonim)' : ($item['user']['nama'] ?? 'Mahasiswa'),
             'jurusan' => $kategoriNama,
             'committee_target' => $committeeTarget,

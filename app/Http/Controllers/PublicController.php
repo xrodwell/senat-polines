@@ -203,7 +203,7 @@ class PublicController extends Controller
 Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validated['jurusan'] ?? 'Umum');
 
         try {
-            $response = Http::timeout(5)->post("{$apiUrl}/aspirasi", [
+            $response = Http::acceptJson()->timeout(5)->post("{$apiUrl}/aspirasi", [
                 'id_user' => 1,
                 'id_kategori' => $idKategori,
                 'isi_aspirasi' => $isiFormatted,
@@ -214,7 +214,7 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
             if ($response->successful()) {
                 $created = $response->json('data') ?? $response->json();
                 $id = $created['id_aspirasi'] ?? 1;
-                $ticketCode = 'ASP-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
+                $ticketCode = 'ASP-POLINES-2026-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
 
                 return response()->json([
                     'success' => true,
@@ -226,12 +226,10 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
             \Illuminate\Support\Facades\Log::error('Gagal kirim aspirasi ke API: ' . $e->getMessage());
         }
 
-        $fallbackTicket = 'ASP-POLINES-2026-' . rand(1000, 9999);
         return response()->json([
-            'success' => true,
-            'ticket' => $fallbackTicket,
-            'message' => 'Aspirasi berhasil dicatat secara lokal.',
-        ]);
+            'success' => false,
+            'message' => 'Layanan database Senat sedang tidak dapat dijangkau. Mohon pastikan backend aktif dan coba lagi.',
+        ], 500);
     }
 
     public function trackAspiration(Request $request): View

@@ -111,6 +111,8 @@
         <div class="rounded-2xl border border-[#d9e3f0] bg-white p-6 sm:p-8"
              x-data="{
                  submitted: false,
+                 loading: false,
+                 errorMessage: '',
                  ticket: '',
                  copied: false,
                  formData: {
@@ -122,12 +124,36 @@
                      subject: '',
                      description: ''
                  },
-                 submitForm() {
+                 async submitForm() {
                      if (!this.formData.name || !this.formData.email || !this.formData.committee || !this.formData.subject || !this.formData.description) {
+                         this.errorMessage = 'Mohon lengkapi semua kolom bertanda * sebelum mengirim.';
                          return;
                      }
-                     this.ticket = 'ASP-POLINES-2026-' + Math.floor(1000 + Math.random() * 9000);
-                     this.submitted = true;
+                     this.loading = true;
+                     this.errorMessage = '';
+                     try {
+                         const response = await fetch('{{ route('public.aspirations.submit') }}', {
+                             method: 'POST',
+                             headers: {
+                                 'Content-Type': 'application/json',
+                                 'Accept': 'application/json',
+                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                             },
+                             body: JSON.stringify(this.formData)
+                         });
+                         const data = await response.json();
+                         if (response.ok && data.success && data.ticket) {
+                             this.ticket = data.ticket;
+                             this.submitted = true;
+                         } else {
+                             this.errorMessage = data.message || 'Gagal mengirimkan aspirasi ke database. Silakan coba kembali.';
+                         }
+                     } catch (err) {
+                         console.error('Submit aspirasi error:', err);
+                         this.errorMessage = 'Terjadi kesalahan jaringan saat mengirimkan aspirasi.';
+                     } finally {
+                         this.loading = false;
+                     }
                  },
                  copyTicket() {
                      navigator.clipboard.writeText(this.ticket);
@@ -144,6 +170,10 @@
                 <p class="mt-2 text-[11px] leading-[1.2] text-senat-body">
                     Isilah formulir berikut dengan informasi yang benar. Kolom bertanda * wajib diisi.
                 </p>
+
+                <div x-show="errorMessage" x-cloak class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-[12px] text-red-700">
+                    <span x-text="errorMessage"></span>
+                </div>
 
                 <form @submit.prevent="submitForm" class="mt-10 space-y-8">
 
