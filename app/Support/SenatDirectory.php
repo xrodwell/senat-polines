@@ -31,6 +31,7 @@ class SenatDirectory
             'nip' => '197101172003121001',
             'organ' => 'Pimpinan Senat',
             'focus' => 'Memimpin persidangan pleno, menetapkan agenda normatif, dan merepresentasikan Senat kepada Direktur serta Kemendiktisaintek.',
+            'photo' => 'images/members/sukamto.jpg',
         ];
     }
 

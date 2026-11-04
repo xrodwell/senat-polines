@@ -289,7 +289,11 @@
                             <a href="{{ route('public.directory.member', $leader['slug']) }}"
                                class="group rounded-[12px] border border-[#d6e0ed] bg-white p-5 transition-colors duration-150 hover:border-senat-link">
                                 <span class="flex items-center gap-3">
-                                    <span class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[12px] font-bold text-senat-link">{{ $initialsOf($leader['name']) }}</span>
+                                    @if (! empty($leader['photo']))
+                                        <img src="{{ asset($leader['photo']) }}" alt="{{ $leader['name'] }}" class="h-[44px] w-[44px] shrink-0 rounded-full border border-senat-badgeLine/60 object-cover object-top shadow-sm">
+                                    @else
+                                        <span class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[12px] font-bold text-senat-link">{{ $initialsOf($leader['name']) }}</span>
+                                    @endif
                                     <span class="min-w-0">
                                         <span class="block text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ $leader['role'] }}</span>
                                         <span class="mt-1 block text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-link">{{ $leader['name'] }}</span>
