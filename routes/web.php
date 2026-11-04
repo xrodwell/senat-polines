@@ -28,6 +28,12 @@ Route::get('/regulasi/standar-pedoman', [PublicController::class, 'standards'])-
 
 // 06 / 09 — Kanal Aspirasi & Pelacak
 Route::get('/aspirasi', [PublicController::class, 'aspirations'])->name('public.aspirations');
+Route::post('/aspirasi/send-otp', [PublicController::class, 'sendOtp'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('public.aspirations.send-otp');
+Route::post('/aspirasi/verify-otp', [PublicController::class, 'verifyOtp'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('public.aspirations.verify-otp');
 Route::post('/aspirasi/kirim', [PublicController::class, 'submitAspiration'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('public.aspirations.submit');

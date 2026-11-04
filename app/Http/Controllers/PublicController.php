@@ -10,7 +10,11 @@ use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use App\Support\SenatDirectory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Http;
 
@@ -171,8 +175,110 @@ class PublicController extends Controller
         ]);
     }
 
-    /** 09 — Pelacak Status Tiket */
-    /** 06B — Kirim Aspirasi ke Backend API */
+    /** 06A — Kirim Kode OTP Verifikasi Email Aspirasi */
+    public function sendOtp(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:100',
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email'    => 'Format email tidak valid.',
+        ]);
+
+        $email = strtolower(trim($validated['email']));
+        $otp = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
+        $cacheKey = 'otp_aspiration_' . md5($email);
+        Cache::put($cacheKey, [
+            'otp' => $otp,
+            'verified' => false,
+            'expires_at' => now()->addMinutes(10),
+        ], now()->addMinutes(10));
+
+        $mailSent = false;
+        $mailError = null;
+        try {
+            Mail::html("
+                <div style='font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;'>
+                    <div style='text-align: center; border-bottom: 2px solid #003c75; padding-bottom: 16px;'>
+                        <h2 style='color: #003c75; margin: 0; font-size: 20px;'>SENAT AKADEMIK POLINES</h2>
+                        <p style='color: #64748b; margin: 4px 0 0; font-size: 12px;'>Kanal Aspirasi Sivitas Akademika</p>
+                    </div>
+                    <div style='padding: 24px 0;'>
+                        <p style='color: #334155; font-size: 14px; line-height: 1.5;'>Halo Civitas Akademika,</p>
+                        <p style='color: #334155; font-size: 14px; line-height: 1.5;'>Berikut adalah kode verifikasi OTP Anda untuk pengajuan aspirasi ke Senat Akademik Politeknik Negeri Semarang:</p>
+                        <div style='text-align: center; margin: 24px 0;'>
+                            <div style='display: inline-block; background-color: #f0f7ff; border: 2px dashed #00509d; border-radius: 8px; padding: 12px 32px; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #003c75;'>
+                                {$otp}
+                            </div>
+                        </div>
+                        <p style='color: #64748b; font-size: 12px; line-height: 1.5;'>Kode ini berlaku selama <strong>10 menit</strong>. Jangan berikan kode ini kepada siapa pun.</p>
+                    </div>
+                    <div style='border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center;'>
+                        <p style='color: #94a3b8; font-size: 11px; margin: 0;'>Pesan otomatis dari Sistem Informasi Senat Akademik Polines.</p>
+                    </div>
+                </div>
+            ", function ($message) use ($email) {
+                $message->to($email)
+                    ->subject('Kode Verifikasi OTP Aspirasi - Senat Akademik POLINES');
+            });
+            $mailSent = true;
+        } catch (\Throwable $e) {
+            $mailError = $e->getMessage();
+            Log::error("Kirim email OTP ke {$email} gagal: " . $mailError);
+        }
+
+        $msg = $mailSent
+            ? "Kode verifikasi 6 digit telah dikirim ke {$email}."
+            : "Gagal mengirim email: " . ($mailError ?: "Periksa konfigurasi SMTP");
+
+        return response()->json([
+            'success' => $mailSent,
+            'message' => $msg,
+            'mail_sent' => $mailSent,
+            'mail_error' => $mailError,
+        ]);
+    }
+
+    /** 06A2 — Verifikasi Kode OTP Email */
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:100',
+            'otp'   => 'required|string|size:6',
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'otp.required'   => 'Kode OTP wajib diisi.',
+            'otp.size'       => 'Kode OTP harus berupa 6 digit angka.',
+        ]);
+
+        $email = strtolower(trim($validated['email']));
+        $otp = trim($validated['otp']);
+        $cacheKey = 'otp_aspiration_' . md5($email);
+
+        $cached = Cache::get($cacheKey);
+
+        if (!$cached || ($cached['otp'] ?? '') !== $otp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode OTP salah atau telah kedaluwarsa. Silakan periksa kembali atau minta kode baru.',
+            ], 422);
+        }
+
+        Cache::put($cacheKey, [
+            'otp' => $otp,
+            'verified' => true,
+            'verified_at' => now(),
+        ], now()->addHour());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Alamat email berhasil diverifikasi.',
+            'email'   => $email,
+        ]);
+    }
+
+    /** 06B — Kirim Aspirasi ke Backend API (Terproteksi Verifikasi OTP) */
     public function submitAspiration(Request $request)
     {
         $validated = $request->validate([
@@ -184,6 +290,19 @@ class PublicController extends Controller
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
         ]);
+
+        $email = strtolower(trim($validated['email']));
+        $cacheKey = 'otp_aspiration_' . md5($email);
+        $cached = Cache::get($cacheKey);
+
+        if (!$cached || empty($cached['verified'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Alamat email belum diverifikasi dengan kode OTP. Silakan lakukan verifikasi email Anda terlebih dahulu.',
+            ], 422);
+        } 
+
+
 
         $apiUrl = rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
 
