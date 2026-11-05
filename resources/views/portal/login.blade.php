@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk ke Portal Senat — Senat Akademik Politeknik Negeri Semarang</title>
 
+    {{-- Favicon --}}
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-polines.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo-polines.png') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,9 +20,9 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-{{-- 11 — Login Portal Senat · Full Screen Split Layout --}}
-<body class="min-h-screen bg-white font-sans text-senat-body antialiased" x-data="{
+<body class="relative min-h-screen w-full bg-slate-50 font-sans text-slate-700 antialiased flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8" x-data="{
     show: false,
+    showResetNotice: false,
     fillDemo(ident, pass) {
         const elId = document.getElementById('identifier');
         const elPass = document.getElementById('password');
@@ -33,205 +37,214 @@
     }
 }">
 
-    {{-- Full width & full height flex container --}}
-    <div class="flex min-h-screen w-full flex-col lg:flex-row">
+    {{-- Background subtle ambient gradient --}}
+    <div class="fixed inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/50 via-slate-50 to-slate-100"></div>
 
-        {{-- ================= BRAND PANEL (LEFT) ================= --}}
-        <aside class="relative isolate flex flex-col justify-between overflow-hidden bg-senat-hero text-white lg:w-[460px] xl:w-[520px] 2xl:w-[580px] lg:shrink-0 p-8 sm:p-12 lg:p-14 xl:p-16">
-            {{-- Decorative pattern --}}
-            <div class="pointer-events-none absolute inset-0" aria-hidden="true">
-                <div class="absolute inset-y-0 right-[25px] w-[245px] bg-[#05305c]"></div>
-                <div class="absolute inset-y-0 right-[104px] w-[28px] bg-[#0a457d]"></div>
-                <div class="absolute bottom-0 left-0 h-[310px] w-full bg-[#002447]"></div>
-            </div>
+    {{-- Top Navigation: Back to Home (Clean Modern Pill in Top Left) --}}
+    <header class="absolute top-0 inset-x-0 p-4 sm:p-6 lg:p-8 flex items-center justify-between pointer-events-none z-10">
+        <a href="{{ route('public.home') }}" class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/90 px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-xs backdrop-blur transition-all hover:bg-white hover:text-slate-900 hover:border-slate-300 hover:shadow group">
+            <span class="text-slate-400 group-hover:-translate-x-0.5 group-hover:text-slate-700 transition-transform">←</span>
+            <span>Kembali ke Halaman Utama</span>
+        </a>
+    </header>
 
-            <div class="relative z-10 flex h-full min-h-full flex-col justify-between">
-                <div>
-                    {{-- Brand Header --}}
-                    <div class="flex items-center gap-4">
-                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-xs">
-                            <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-[38px] w-[38px] rounded-[18px] object-contain">
-                        </span>
-                        <span class="leading-none">
-                            <span class="block text-[15px] font-bold tracking-tight text-white">SENAT AKADEMIK</span>
-                            <span class="mt-1 block text-[12px] font-normal text-[#bad6f5]">Politeknik Negeri Semarang</span>
-                        </span>
-                    </div>
-
-                    {{-- Headline Text --}}
-                    <div class="mt-12 lg:mt-[64px]">
-                        <div class="h-1 w-16 rounded-[2px] bg-senat-orange"></div>
-                        <p class="mt-6 text-[11px] font-bold uppercase tracking-[0.1em] text-[#94c9ff]">Portal Terlindungi</p>
-                        <h1 class="mt-3 max-w-[430px] text-[34px] font-bold leading-[1.08] text-white lg:text-[40px]">
-                            Ruang kerja<br>Senat Akademik.
-                        </h1>
-                        <p class="mt-6 max-w-[400px] text-[14px] leading-[1.5] text-[#cce0ff]">
-                            Akses terverifikasi untuk anggota Senat dan Sekretariat dalam mendukung persidangan, presensi, e-voting, risalah, serta pengelolaan agenda.
-                        </p>
-                    </div>
-                </div>
-
-                {{-- Footer notes --}}
-                <div class="mt-12 pt-8">
-                    <p class="text-[11px] font-medium text-[#a1c2e5]">Akses hanya untuk akun institusional yang terverifikasi.</p>
-                    <p class="mt-4 text-[10px] font-bold uppercase tracking-[0.08em] text-[#669cd1]">Portal Senat • 2026</p>
-                </div>
-            </div>
-        </aside>
-
-        {{-- ================= LOGIN SURFACE (RIGHT) ================= --}}
-        <main class="flex flex-1 flex-col justify-center bg-white px-8 py-10 sm:px-12 lg:px-16 xl:px-24">
-            <div class="mx-auto w-full max-w-[620px] py-4">
-                <a href="{{ route('public.home') }}" class="inline-flex w-fit items-center gap-2 text-[11px] font-bold text-senat-link hover:underline">
-                    <span aria-hidden="true">←</span> Kembali ke laman publik
+    {{-- Main Container Card (Fluid, Center, Simple & Minimalist) --}}
+    <main class="w-full max-w-[440px] my-auto">
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/60">
+            {{-- Header & Branding --}}
+            <div class="text-center">
+                <a href="{{ route('public.home') }}" class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-slate-50 border border-slate-100 p-2 shadow-xs transition hover:scale-105">
+                    <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-full w-full object-contain">
                 </a>
+                <h1 class="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                    Masuk ke Portal Senat
+                </h1>
+                <p class="mt-1 text-xs text-slate-500">
+                    Gunakan kredensial institusional untuk mengakses akun
+                </p>
+            </div>
 
-                <div class="mt-8 w-full">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-senat-orange">Akses Portal</p>
-                    <h2 class="mt-2 text-[28px] font-bold leading-tight tracking-tight text-senat-ink lg:text-[32px]">Masuk ke Portal Senat</h2>
-                    <p class="mt-2 text-[12px] leading-relaxed text-senat-body">
-                        Gunakan akun institusional. Hak akses portal ditentukan otomatis oleh sistem.
-                    </p>
-                    <p class="mt-1 text-[12px] font-medium text-senat-body">
-                        Setelah autentikasi, sistem mengarahkan Anda ke ruang kerja sesuai peran akun.
-                    </p>
+            {{-- Error & Info Alerts --}}
+            @if ($errors->any())
+                <div class="mt-5 rounded-lg bg-rose-50 border border-rose-200/80 p-3 text-xs text-rose-800">
+                    <div class="font-semibold">Autentikasi Gagal</div>
+                    <p class="mt-0.5 text-rose-700 leading-snug">{{ $errors->first('login') ?: $errors->first() }}</p>
+                </div>
+            @endif
 
-                    {{-- Feedback messages (Red, No Border) --}}
-                    @if ($errors->any())
-                        <div class="mt-6 rounded-xl p-4 shadow-xs"
-                             style="background-color: #fee2e2 !important; border: none !important; outline: none !important;">
-                            <div class="text-[12.5px] font-bold" style="color: #991b1b !important;">Autentikasi Gagal</div>
-                            <p class="mt-1 text-[11.5px] leading-relaxed" style="color: #b91c1c !important;">{{ $errors->first('login') ?: $errors->first() }}</p>
-                        </div>
-                    @endif
+            @if (session('info'))
+                <div class="mt-5 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                    {{ session('info') }}
+                </div>
+            @endif
 
-                    @if (session('info'))
-                        <div class="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-3.5 text-[12px] text-blue-800 shadow-sm">
-                            {{ session('info') }}
-                        </div>
-                    @endif
+            {{-- Form Login --}}
+            <form method="POST" action="{{ route('portal.login.submit') }}" class="mt-6 space-y-4">
+                @csrf
 
-                    <form method="POST" action="{{ route('portal.login.submit') }}" class="mt-6 space-y-4">
-                        @csrf
-
-                        {{-- Email institusi / NIP --}}
-                        <div>
-                            <label for="identifier" class="block text-[10px] font-bold uppercase tracking-[0.08em] text-senat-ink">
-                                Email Institusi atau ID Anggota / NIP
-                            </label>
-                            <div class="mt-2">
-                                <input
-                                    id="identifier"
-                                    name="identifier"
-                                    type="text"
-                                    required
-                                    value="{{ old('identifier') }}"
-                                    autocomplete="username"
-                                    placeholder="contoh: nama@polines.ac.id atau NIP"
-                                    class="h-12 w-full rounded-lg border border-[#d6e0ed] bg-white px-4 text-[12px] text-senat-ink placeholder:text-senat-body focus:border-senat-link focus:outline-none focus:ring-2 focus:ring-senat-badgeBg">
-                            </div>
-                        </div>
-
-                        {{-- Kata sandi --}}
-                        <div>
-                            <label for="password" class="block text-[10px] font-bold uppercase tracking-[0.08em] text-senat-ink">
-                                Kata Sandi
-                            </label>
-                            <div class="relative mt-2">
-                                <input
-                                    id="password"
-                                    name="password"
-                                    required
-                                    :type="show ? 'text' : 'password'"
-                                    autocomplete="current-password"
-                                    placeholder="Masukkan kata sandi Anda"
-                                    class="h-12 w-full rounded-lg border border-[#d6e0ed] bg-white px-4 pr-12 text-[12px] text-senat-ink placeholder:text-senat-body focus:border-senat-link focus:outline-none focus:ring-2 focus:ring-senat-badgeBg">
-                                <button
-                                    type="button"
-                                    @click="show = !show"
-                                    :aria-label="show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
-                                    class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-[13px] text-senat-body hover:text-senat-link">
-                                    <span x-show="!show" aria-hidden="true"><x-senat.icon name="eye" class="h-[18px] w-[18px]" /></span>
-                                    <span x-cloak x-show="show" aria-hidden="true"><x-senat.icon name="eye-off" class="h-[18px] w-[18px]" /></span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {{-- Remember / forgot --}}
-                        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-                            <label class="flex cursor-pointer items-center gap-3 text-[11px] text-senat-body">
-                                <input type="checkbox" name="remember" value="1"
-                                       class="h-[18px] w-[18px] rounded border-[#d6e0ed] text-senat-link focus:ring-senat-link">
-                                Ingat saya di perangkat ini
-                            </label>
-                            <a href="{{ route('public.home') }}" class="text-[11px] font-bold text-senat-link hover:underline">Lupa kata sandi?</a>
-                        </div>
-
-                        {{-- Submit --}}
-                        <div class="pt-2">
-                            <button type="submit"
-                                    class="h-[46px] w-full rounded-lg bg-[#155ead] text-[12px] font-semibold text-white transition-colors hover:bg-senat-primaryHover shadow-sm">
-                                Masuk ke Portal
-                            </button>
-                            <p class="mt-2.5 text-[10px] text-senat-muted">Hak akses ditentukan otomatis setelah autentikasi.</p>
-                        </div>
-                    </form>
-
-                    {{-- Demo Quick Fill Section --}}
-                    <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-600">⚡ Akun Demo / Uji Coba:</span>
-                            <span class="text-[10px] text-slate-500">Klik untuk isi otomatis</span>
-                        </div>
-                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <button
-                                type="button"
-                                @click="fillDemo('admin@senat.test', 'password')"
-                                class="flex items-center justify-between rounded-lg border border-indigo-200 bg-white px-3 py-2 text-left text-[11px] font-medium text-slate-700 transition hover:border-indigo-400 hover:bg-indigo-50/50 shadow-xs">
-                                <div>
-                                    <span class="font-bold text-indigo-700 block">Sekretariat (Admin)</span>
-                                    <span class="text-[10px] text-slate-500">admin@senat.test</span>
-                                </div>
-                                <span class="text-[10px] font-semibold text-indigo-600">Pilih →</span>
-                            </button>
-                            <button
-                                type="button"
-                                @click="fillDemo('197405191999031001', 'password')"
-                                class="flex items-center justify-between rounded-lg border border-blue-200 bg-white px-3 py-2 text-left text-[11px] font-medium text-slate-700 transition hover:border-blue-400 hover:bg-blue-50/50 shadow-xs">
-                                <div>
-                                    <span class="font-bold text-blue-700 block">Anggota Senat</span>
-                                    <span class="text-[10px] text-slate-500">NIP: 197405191999031001</span>
-                                </div>
-                                <span class="text-[10px] font-semibold text-blue-600">Pilih →</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {{-- Security line --}}
-                    <p class="mt-6 text-center text-[10px] text-senat-body">
-                        <span aria-hidden="true"><x-senat.icon name="folder" class="h-[18px] w-[18px]" /></span> Koneksi aman • Akses tercatat pada sistem Sekretariat Senat
-                    </p>
-
-                    <div class="mt-5 h-px w-full bg-[#d6e0ed]"></div>
-
-                    {{-- Help --}}
-                    <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-[11px] text-senat-body">Butuh bantuan akses?</p>
-                        <a href="{{ route('public.home') }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-senat-link hover:underline">
-                            Hubungi Sekretariat Senat <span aria-hidden="true">→</span>
-                        </a>
-                    </div>
-
-                    {{-- Privacy note --}}
-                    <div class="mt-6 rounded-lg bg-[#f2f9ff] px-4 py-2.5">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-hero">Keamanan akun</p>
-                        <p class="mt-1 text-[9px] leading-relaxed text-senat-body">
-                            Gunakan kredensial institusional. Jangan bagikan kata sandi atau kode verifikasi kepada siapa pun.
-                        </p>
+                {{-- Email / NIP Input --}}
+                <div>
+                    <label for="identifier" class="block text-xs font-semibold text-slate-700">
+                        Email Institusi atau NIP
+                    </label>
+                    <div class="mt-1.5">
+                        <input
+                            id="identifier"
+                            name="identifier"
+                            type="text"
+                            required
+                            autofocus
+                            value="{{ old('identifier') }}"
+                            autocomplete="username"
+                            placeholder="nama@polines.ac.id atau NIP"
+                            class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition">
                     </div>
                 </div>
+
+                {{-- Password Input --}}
+                <div>
+                    <label for="password" class="block text-xs font-semibold text-slate-700">
+                        Kata Sandi
+                    </label>
+                    <div class="relative mt-1.5">
+                        <input
+                            id="password"
+                            name="password"
+                            required
+                            :type="show ? 'text' : 'password'"
+                            autocomplete="current-password"
+                            placeholder="Masukkan kata sandi"
+                            class="h-11 w-full rounded-lg border border-slate-300 bg-white pl-3.5 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition">
+                        <button
+                            type="button"
+                            @click="show = !show"
+                            :aria-label="show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                            class="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-400 hover:text-slate-600 transition">
+                            <span x-show="!show" aria-hidden="true"><x-senat.icon name="eye" class="h-4 w-4" /></span>
+                            <span x-cloak x-show="show" aria-hidden="true"><x-senat.icon name="eye-off" class="h-4 w-4" /></span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Remember Me & Forgot Password --}}
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <label class="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            name="remember"
+                            value="1"
+                            class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        Ingat saya
+                    </label>
+                    <button
+                        type="button"
+                        @click="showResetNotice = true"
+                        class="font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer">
+                        Lupa kata sandi?
+                    </button>
+                </div>
+
+                {{-- Submit Button --}}
+                <div class="pt-2">
+                    <button
+                        type="submit"
+                        class="h-11 w-full rounded-lg bg-[#003366] hover:bg-[#00284d] text-white text-sm font-semibold transition-all duration-150 shadow-sm hover:shadow active:scale-[0.99] flex items-center justify-center gap-2">
+                        Masuk ke Portal
+                    </button>
+                    <p class="mt-2 text-center text-[10.5px] text-slate-400">
+                        Hak akses diarahkan otomatis sesuai peran akun
+                    </p>
+                </div>
+            </form>
+
+            {{-- Compact Quick Fill Demo --}}
+            <div class="mt-6 pt-5 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Akun Uji Coba:</span>
+                    <span class="text-[10px] text-slate-400">Klik untuk isi cepat</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        @click="fillDemo('admin@senat.test', 'password')"
+                        class="rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-2 text-left transition hover:bg-blue-50 hover:border-blue-300">
+                        <span class="block text-[11px] font-bold text-slate-800">Sekretariat</span>
+                        <span class="block text-[10px] text-slate-500 truncate">admin@senat.test</span>
+                    </button>
+                    <button
+                        type="button"
+                        @click="fillDemo('197405191999031001', 'password')"
+                        class="rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-2 text-left transition hover:bg-blue-50 hover:border-blue-300">
+                        <span class="block text-[11px] font-bold text-slate-800">Anggota Senat</span>
+                        <span class="block text-[10px] text-slate-500 truncate">197405191999031001</span>
+                    </button>
+                </div>
             </div>
-        </main>
+        </div>
+    </main>
+
+    {{-- Modal Pemberitahuan Reset Kata Sandi --}}
+    <div
+        x-cloak
+        x-show="showResetNotice"
+        @keydown.escape.window="showResetNotice = false"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+        role="dialog"
+        aria-modal="true">
+        {{-- Backdrop Overlay --}}
+        <div
+            x-show="showResetNotice"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="showResetNotice = false"
+            class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+
+        {{-- Dialog Box --}}
+        <div
+            x-show="showResetNotice"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            @click.outside="showResetNotice = false"
+            class="relative w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl z-10">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#003366]">
+                    <x-senat.icon name="lock" class="h-5 w-5" />
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Pemulihan Kata Sandi</h3>
+                    <p class="text-[11px] text-slate-500">Kebijakan Akses Institusional</p>
+                </div>
+            </div>
+
+            <div class="mt-4 text-xs text-slate-600 leading-relaxed space-y-3">
+                <p>
+                    Akun Portal Senat Akademik Polines diterbitkan dan dikelola secara terpusat untuk menjaga keamanan hak suara dan dokumen sidang.
+                </p>
+                <div class="rounded-xl bg-blue-50/70 border border-blue-200/80 p-3 text-slate-800">
+                    <p class="font-semibold text-[11.5px] text-[#003366]">Cara Pemulihan Akun:</p>
+                    <p class="mt-1 text-[11px] text-slate-600 leading-snug">
+                        Silakan hubungi <strong>Admin Sekretariat Senat</strong> atau personel yang memiliki wewenang akses administratif untuk verifikasi dan penerbitan ulang kata sandi.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+                <button
+                    type="button"
+                    @click="showResetNotice = false"
+                    class="h-9 px-4 rounded-lg bg-[#003366] hover:bg-[#002244] text-white text-xs font-semibold transition shadow-xs cursor-pointer">
+                    Saya Mengerti
+                </button>
+            </div>
+        </div>
     </div>
 
     @livewireScripts

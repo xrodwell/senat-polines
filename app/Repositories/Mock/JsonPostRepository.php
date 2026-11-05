@@ -25,6 +25,12 @@ class JsonPostRepository implements PostRepositoryInterface
             if (!isset($p['status'])) {
                 $p['status'] = 'Terpublikasi';
             }
+            $p['images'] = array_values(array_unique(array_filter(
+                [$p['thumbnail'] ?? null, ...(is_array($p['images'] ?? null) ? $p['images'] : [])],
+                fn ($image) => is_string($image) && $image !== ''
+            )));
+            $p['attachments'] = is_array($p['attachments'] ?? null) ? $p['attachments'] : [];
+
             return $p;
         }, $posts);
 
@@ -69,6 +75,11 @@ class JsonPostRepository implements PostRepositoryInterface
             'status' => $data['status'] ?? 'Terpublikasi',
             'excerpt' => !empty($data['excerpt']) ? $data['excerpt'] : Str::limit(strip_tags($bodyText), 180),
             'thumbnail' => !empty($data['thumbnail']) ? $data['thumbnail'] : 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+            'images' => array_values(array_unique(array_filter(
+                [$data['thumbnail'] ?? null, ...(is_array($data['images'] ?? null) ? $data['images'] : [])],
+                fn ($image) => is_string($image) && $image !== ''
+            ))),
+            'attachments' => is_array($data['attachments'] ?? null) ? array_values($data['attachments']) : [],
             'author' => $data['author'] ?? 'Sekretariat Senat Polines',
             'body' => is_array($data['body'] ?? null) ? $data['body'] : explode("\n\n", $bodyText),
         ];
@@ -115,6 +126,20 @@ class JsonPostRepository implements PostRepositoryInterface
                 }
                 if (isset($data['thumbnail'])) {
                     $post['thumbnail'] = $data['thumbnail'];
+                }
+                if (isset($data['images'])) {
+                    $post['images'] = array_values(array_unique(array_filter(
+                        [$data['thumbnail'] ?? $post['thumbnail'] ?? null, ...(is_array($data['images']) ? $data['images'] : [])],
+                        fn ($image) => is_string($image) && $image !== ''
+                    )));
+                } elseif (isset($data['thumbnail'])) {
+                    $post['images'] = array_values(array_unique(array_filter(
+                        [$data['thumbnail']],
+                        fn ($image) => is_string($image) && $image !== ''
+                    )));
+                }
+                if (isset($data['attachments'])) {
+                    $post['attachments'] = is_array($data['attachments']) ? array_values($data['attachments']) : [];
                 }
                 if (isset($data['author'])) {
                     $post['author'] = $data['author'];

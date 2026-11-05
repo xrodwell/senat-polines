@@ -22,20 +22,21 @@
 
 {{-- ============================ HERO (Figma 2013:16) ============================ --}}
 <section class="relative overflow-hidden bg-senat-hero">
-    {{-- Latar foto gedung dengan lapisan biru pekat sesuai desain (bg #003c75) --}}
+    {{-- Latar foto gedung dengan gradasi biru tua & biru Polines yang proporsional --}}
     <div class="absolute inset-0 z-0 select-none overflow-hidden">
-        <img src="{{ asset('images/gedung-polines.jpg') }}" alt=""
-             class="h-full w-full object-cover object-center" loading="eager">
-        <div class="absolute inset-0 bg-gradient-to-r from-senat-hero via-senat-hero/95 to-senat-hero/85"></div>
+        <img src="{{ asset('images/gedung-polines.jpg') }}" alt="Gedung Kuliah Terpadu Polines"
+             class="h-full w-full object-cover object-[80%_10%] lg:object-[82%_15%]" loading="eager">
+        <div class="absolute inset-0 bg-gradient-to-r from-senat-primary via-senat-primary/85 to-senat-hero/35"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-senat-primary/95 via-transparent to-transparent"></div>
     </div>
 
     <div class="senat-shell relative z-10 pb-4 pt-[72px]">
 
         {{-- Info Sidang (2013:17 / 2013:18) --}}
         @if ($hasActive)
-            <div class="inline-flex h-[38px] max-w-full items-center gap-2 rounded-[12px] border border-[#cc9421] bg-[#1c334d] px-4">
-                <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-[#ffd66b]" aria-hidden="true"></span>
-                <p class="truncate text-[11px] font-bold leading-none text-[#ffd66b]">
+            <div class="inline-flex h-[38px] max-w-full items-center gap-2 rounded-[12px] border border-senat-orange/40 bg-senat-primary/80 backdrop-blur-sm px-4">
+                <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-senat-orange animate-pulse" aria-hidden="true"></span>
+                <p class="truncate text-[11px] font-bold leading-none text-senat-orange">
                     INFO SIDANG: Sedang berlangsung {{ $activeSession['title'] }}
                 </p>
             </div>
@@ -62,19 +63,19 @@
             {{-- CTA (2013:23 / 2013:25) --}}
             <div class="mt-10 flex flex-wrap items-center gap-[18px]">
                 <a href="{{ route('public.profile') }}"
-                   class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-senat-orange px-5 text-[12px] font-bold text-white transition-colors duration-150 hover:bg-senat-orangeHover">
+                   class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-senat-orange px-5 text-[12px] font-bold text-senat-primary transition-colors duration-150 hover:bg-senat-orangeHover shadow-sm">
                     Profil &amp; Komisi
                     <span aria-hidden="true">›</span>
                 </a>
                 <a href="{{ route('public.regulations') }}"
-                   class="inline-flex h-10 items-center rounded-lg bg-[#1f3859] px-6 text-[12px] font-bold text-white transition-colors duration-150 hover:bg-[#274568]">
+                   class="inline-flex h-10 items-center rounded-lg border border-white/20 bg-white/10 px-6 text-[12px] font-bold text-white backdrop-blur-sm transition-colors duration-150 hover:bg-white/20">
                     Repositori Produk Hukum
                 </a>
             </div>
         </div>
 
         {{-- Statistik (2013:27) --}}
-        <dl class="mt-[46px] grid grid-cols-2 rounded-[14px] border border-[#33577a] bg-[#05264d] lg:grid-cols-4">
+        <dl class="mt-[46px] grid grid-cols-2 rounded-[14px] border border-white/10 bg-senat-primary/80 backdrop-blur-sm lg:grid-cols-4">
             @php
                 $stats = [
                     ['label' => 'ANGGOTA SENAT',   'value' => $memberCount,     'hint' => 'Guru Besar & Pendidik'],
@@ -84,12 +85,12 @@
                 ];
             @endphp
             @foreach ($stats as $i => $stat)
-                <div class="px-[22px] py-[21px] border-[#33577a]
+                <div class="px-[22px] py-[21px] border-white/10
                             {{ $i % 2 === 1 ? 'border-l' : '' }}
                             lg:border-l lg:first:border-l-0">
                     <dt class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-sky">{{ $stat['label'] }}</dt>
                     <dd class="mt-[6px] text-[19px] font-bold leading-none text-white tabular-nums sm:text-[22px] lg:text-[27px]">{{ $stat['value'] }}</dd>
-                    <dd class="mt-[7px] text-[10px] leading-[1.1] text-[#adcff0]">{{ $stat['hint'] }}</dd>
+                    <dd class="mt-[7px] text-[10px] leading-[1.1] text-senat-skySoft/80">{{ $stat['hint'] }}</dd>
                 </div>
             @endforeach
         </dl>
@@ -101,7 +102,7 @@
     <div class="senat-shell">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Kalender Senat</p>
+                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-link">Kalender Senat</p>
                 <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
                     Agenda Sidang Terdekat
                 </h2>
@@ -149,7 +150,7 @@
     <div class="senat-shell">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Siaran Pers</p>
+                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-link">Siaran Pers</p>
                 <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
                     Warta &amp; Keputusan Senat Terbaru
                 </h2>
@@ -197,7 +198,7 @@
 <section class="pb-[50px] pt-[68px]">
     <div class="senat-shell">
         <div>
-            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Struktur Kerja</p>
+            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-link">Struktur Kerja</p>
             <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
                 Lima Komisi Senat Polines
             </h2>

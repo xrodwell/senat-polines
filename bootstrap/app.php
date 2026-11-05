@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'portal/presensi/submit',
+            'aspirasi/kirim',
+            'aspirasi/send-otp',
+            'aspirasi/verify-otp',
             'api/*',
         ]);
     })

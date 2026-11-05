@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\RapatWorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +28,15 @@ Route::get('/regulasi/standar-pedoman', [PublicController::class, 'standards'])-
 
 // 06 / 09 — Kanal Aspirasi & Pelacak
 Route::get('/aspirasi', [PublicController::class, 'aspirations'])->name('public.aspirations');
+Route::post('/aspirasi/send-otp', [PublicController::class, 'sendOtp'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('public.aspirations.send-otp');
+Route::post('/aspirasi/verify-otp', [PublicController::class, 'verifyOtp'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('public.aspirations.verify-otp');
+Route::post('/aspirasi/kirim', [PublicController::class, 'submitAspiration'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('public.aspirations.submit');
 Route::get('/aspirasi/track', [PublicController::class, 'trackAspiration'])->name('public.aspirations.track');
 Route::get('/aspirasi/track/{ticket}', [PublicController::class, 'trackAspiration'])->name('public.aspirations.show');
 
@@ -67,6 +77,21 @@ Route::prefix('portal')->group(function (): void {
 
     // Layar operasional lama (dipertahankan)
     Route::get('/attendance', [PortalController::class, 'memberAttendance'])->name('portal.attendance');
+
+    // Workspace rapat anggota: catatan, lampiran notulensi, berbagi dokumen/tautan
+    Route::get('/attendance/{rapat}/workspace', [RapatWorkspaceController::class, 'show'])
+        ->name('portal.attendance.workspace');
+    Route::post('/attendance/{rapat}/catatan', [RapatWorkspaceController::class, 'simpanCatatan'])
+        ->name('portal.attendance.catatan');
+    Route::post('/attendance/{rapat}/lampiran', [RapatWorkspaceController::class, 'unggahLampiran'])
+        ->name('portal.attendance.lampiran.store');
+    Route::delete('/attendance/{rapat}/lampiran/{lampiran}', [RapatWorkspaceController::class, 'hapusLampiran'])
+        ->name('portal.attendance.lampiran.destroy');
+    Route::post('/attendance/{rapat}/berbagi', [RapatWorkspaceController::class, 'bagikan'])
+        ->name('portal.attendance.berbagi.store');
+    Route::delete('/attendance/{rapat}/berbagi/{berbagi}', [RapatWorkspaceController::class, 'hapusBerbagi'])
+        ->name('portal.attendance.berbagi.destroy');
+
     Route::get('/session', [PortalController::class, 'adminMeetingSession'])->name('portal.session');
 
     // 13 — Sekretariat (dialihkan ke /admin sesuai arsitektur panel terpadu)

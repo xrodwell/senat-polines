@@ -46,28 +46,71 @@ class ApiPostRepository implements PostRepositoryInterface
                             'slug' => Str::slug($b['judul'] ?? 'berita-' . ($b['id_berita'] ?? 1)),
                             'category' => 'Warta Senat',
                             'date' => $isPublished ? substr($b['tanggal_publish'], 0, 10) : date('Y-m-d'),
+                            'published_at' => $isPublished ? $b['tanggal_publish'] : null,
                             'status' => $isPublished ? 'Terpublikasi' : 'Draf',
                             'excerpt' => Str::limit(strip_tags($b['isi'] ?? ''), 180),
                             'thumbnail' => !empty($b['gambar']) ? $b['gambar'] : 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+                            'images' => array_values(array_unique(array_filter(
+                                [$b['gambar'] ?? null, ...(is_array($b['galeri'] ?? null) ? $b['galeri'] : [])],
+                                fn ($image) => is_string($image) && $image !== ''
+                            ))),
+                            'attachments' => is_array($b['lampiran'] ?? null) ? $b['lampiran'] : [],
                             'author' => $b['user']['nama'] ?? 'Sekretariat Senat Polines',
                             'body' => explode("\n\n", $b['isi'] ?? '')
                         ];
                     }, $items);
 
-                    // Sinkronisasi/merge dengan data lokal agar berita dokumentasi bawaan tetap utuh
+                    // Retain local media for backend records created before gallery fields were added.
                     $fallbackPosts = $this->fallback->all();
-                    $seenSlugs = array_filter(array_column($backendPosts, 'slug'));
-                    $seenIds = array_filter(array_column($backendPosts, 'id'));
+                    $fallbackBySlug = [];
+                    foreach ($fallbackPosts as $fallbackPost) {
+                        $fallbackBySlug[$fallbackPost['slug'] ?? ''] = $fallbackPost;
+                    }
 
-                    foreach ($fallbackPosts as $fp) {
-                        if (!in_array($fp['slug'], $seenSlugs) && !in_array($fp['id'], $seenIds)) {
-                            $backendPosts[] = $fp;
+                    foreach ($backendPosts as &$backendPost) {
+                        $localPost = $fallbackBySlug[$backendPost['slug'] ?? ''] ?? null;
+                        if ($localPost) {
+                            $backendPost['images'] = array_values(array_unique(array_filter(
+                                [
+                                    ...(is_array($backendPost['images'] ?? null) ? $backendPost['images'] : []),
+                                    ...(is_array($localPost['images'] ?? null) ? $localPost['images'] : []),
+                                ],
+                                fn ($image) => is_string($image) && $image !== ''
+                            )));
+
+                            $backendAttachments = is_array($backendPost['attachments'] ?? null)
+                                ? $backendPost['attachments']
+                                : [];
+                            $localAttachments = is_array($localPost['attachments'] ?? null)
+                                ? $localPost['attachments']
+                                : [];
+                            $backendAttachmentUrls = array_column($backendAttachments, 'url');
+                            $backendPost['attachments'] = [
+                                ...$backendAttachments,
+                                ...array_values(array_filter(
+                                    $localAttachments,
+                                    fn ($attachment) => is_array($attachment)
+                                        && ! in_array($attachment['url'] ?? null, $backendAttachmentUrls, true)
+                                )),
+                            ];
+                        }
+                    }
+                    unset($backendPost);
+
+                    // Pertahankan konten lokal yang belum tersedia di backend.
+                    $backendSlugs = array_filter(array_column($backendPosts, 'slug'));
+                    foreach ($fallbackPosts as $fallbackPost) {
+                        if (! in_array($fallbackPost['slug'] ?? '', $backendSlugs, true)) {
+                            $backendPosts[] = $fallbackPost;
                         }
                     }
 
                     // Urutkan berita: tanggal terbaru di posisi paling atas
                     usort($backendPosts, function ($a, $b) {
-                        $cmp = strcmp($b['date'] ?? '', $a['date'] ?? '');
+                        $cmp = strcmp(
+                            $b['published_at'] ?? $b['date'] ?? '',
+                            $a['published_at'] ?? $a['date'] ?? ''
+                        );
                         if ($cmp !== 0) {
                             return $cmp;
                         }
@@ -107,6 +150,8 @@ class ApiPostRepository implements PostRepositoryInterface
                 'judul' => $data['title'] ?? 'Warta Senat',
                 'isi' => $bodyText,
                 'gambar' => $data['thumbnail'] ?? null,
+                'galeri' => $data['images'] ?? [],
+                'lampiran' => $data['attachments'] ?? [],
                 'tanggal_publish' => $isPublished ? ($data['date'] ?? date('Y-m-d')) . ' ' . date('H:i:s') : null,
             ]);
 
@@ -136,6 +181,12 @@ class ApiPostRepository implements PostRepositoryInterface
         }
         if (isset($data['thumbnail'])) {
             $payload['gambar'] = $data['thumbnail'];
+        }
+        if (isset($data['images'])) {
+            $payload['galeri'] = $data['images'];
+        }
+        if (isset($data['attachments'])) {
+            $payload['lampiran'] = $data['attachments'];
         }
         if (isset($data['status'])) {
             $payload['tanggal_publish'] = $data['status'] === 'Terpublikasi' ? date('Y-m-d H:i:s') : null;
