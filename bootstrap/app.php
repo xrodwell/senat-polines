@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // http:// sehingga di halaman https:// browser memblokir CSS/JS (mixed content).
         $middleware->trustProxies(at: '*');
 
+        $middleware->alias([
+            'portal.auth'  => \App\Http\Middleware\PortalAuthMiddleware::class,
+            'portal.role'  => \App\Http\Middleware\PortalRoleMiddleware::class,
+            'portal.guest' => \App\Http\Middleware\PortalGuestMiddleware::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             'portal/presensi/submit',
             'aspirasi/kirim',

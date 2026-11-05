@@ -7,6 +7,17 @@ use Tests\TestCase;
 
 class UserDashboardNewsTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        session([
+            'auth_token'     => 'test-token-anggota',
+            'auth_user'      => ['id_user' => 2, 'nama' => 'Anggota Senat', 'role' => 'anggota'],
+            'auth_user_id'   => 2,
+            'auth_user_role' => 'anggota',
+        ]);
+    }
+
     public function test_user_dashboard_displays_published_news(): void
     {
         $response = $this->get(route('portal.dashboard'));

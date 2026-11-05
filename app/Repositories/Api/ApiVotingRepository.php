@@ -13,6 +13,13 @@ class ApiVotingRepository implements VotingRepositoryInterface
         private JsonVotingRepository $fallback = new JsonVotingRepository()
     ) {}
 
+    private function http()
+    {
+        $token = session('auth_token');
+        $client = Http::acceptJson();
+        return $token ? $client->withToken($token) : $client;
+    }
+
     private function getBaseUrl(): string
     {
         return rtrim(env('SENAT_BACKEND_API_URL', 'http://127.0.0.1:8001/api'), '/');
@@ -82,7 +89,7 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $userId = $userId ?? auth()->id() ?? 2;
 
         try {
-            $response = Http::timeout(3)->acceptJson()->post("{$apiUrl}/suara-voting", [
+            $response = $this->http()->timeout(3)->post("{$apiUrl}/suara-voting", [
                 'id_voting' => $votingId,
                 'id_opsi' => $optionId,
                 'id_user' => $userId,
@@ -115,18 +122,18 @@ class ApiVotingRepository implements VotingRepositoryInterface
 
         try {
             if ($statusNormalized === 'dibuka') {
-                $res = Http::timeout(3)->acceptJson()->post("{$apiUrl}/voting/{$votingId}/buka");
+                $res = $this->http()->timeout(3)->post("{$apiUrl}/voting/{$votingId}/buka");
                 if ($res->successful()) {
                     return ['success' => true, 'status' => 'dibuka', 'data' => $res->json()];
                 }
             } elseif ($statusNormalized === 'ditutup') {
-                $res = Http::timeout(3)->acceptJson()->post("{$apiUrl}/voting/{$votingId}/tutup");
+                $res = $this->http()->timeout(3)->post("{$apiUrl}/voting/{$votingId}/tutup");
                 if ($res->successful()) {
                     return ['success' => true, 'status' => 'ditutup', 'data' => $res->json()];
                 }
             }
 
-            $putRes = Http::timeout(3)->acceptJson()->put("{$apiUrl}/voting/{$votingId}", [
+            $putRes = $this->http()->timeout(3)->put("{$apiUrl}/voting/{$votingId}", [
                 'status' => $status,
             ]);
 
@@ -145,7 +152,7 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $apiUrl = $this->getBaseUrl();
 
         try {
-            $response = Http::timeout(3)->acceptJson()->get("{$apiUrl}/voting/{$votingId}/rekap");
+            $response = $this->http()->timeout(3)->get("{$apiUrl}/voting/{$votingId}/rekap");
 
             if ($response->successful()) {
                 return $response->json('data') ?? $response->json();
