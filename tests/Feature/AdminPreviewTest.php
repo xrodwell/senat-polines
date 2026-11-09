@@ -8,6 +8,17 @@ use Tests\TestCase;
 
 class AdminPreviewTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        session([
+            'auth_token'     => 'test-token-admin',
+            'auth_user'      => ['id_user' => 1, 'nama' => 'Admin Senat', 'role' => 'admin'],
+            'auth_user_id'   => 1,
+            'auth_user_role' => 'admin',
+        ]);
+    }
+
     public function test_admin_route_renders_preview(): void
     {
         $this->get('/admin')

@@ -19,10 +19,17 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
         return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
     }
 
+    private function http()
+    {
+        $token = session('auth_token');
+        $client = Http::acceptJson();
+        return $token ? $client->withToken($token) : $client;
+    }
+
     public function catatan(int $idRapat, int $idUser): ?array
     {
         try {
-            $res = Http::timeout(4)->acceptJson()
+            $res = $this->http()->timeout(4)
                 ->get($this->base() . "/rapat/{$idRapat}/catatan", ['id_user' => $idUser]);
 
             if (! $res->successful()) {
@@ -45,7 +52,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
 
     public function simpanCatatan(int $idRapat, int $idUser, string $isi): array
     {
-        $res = Http::timeout(4)->acceptJson()
+        $res = $this->http()->timeout(4)
             ->put($this->base() . "/rapat/{$idRapat}/catatan", [
                 'id_user' => $idUser,
                 'isi' => $isi,
@@ -61,7 +68,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
     public function lampiran(int $idRapat): array
     {
         try {
-            $res = Http::timeout(4)->acceptJson()->get($this->base() . "/rapat/{$idRapat}/lampiran");
+            $res = $this->http()->timeout(4)->get($this->base() . "/rapat/{$idRapat}/lampiran");
 
             return $res->successful() ? (array) $res->json() : [];
         } catch (\Throwable $e) {
@@ -73,7 +80,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
 
     public function unggahLampiran(int $idRapat, int $idUser, UploadedFile $file): array
     {
-        $res = Http::timeout(600)->acceptJson()
+        $res = $this->http()->timeout(600)
             ->attach('file', file_get_contents($file->getRealPath()), $file->getClientOriginalName(), [
                 'Content-Type' => $file->getClientMimeType() ?: 'application/octet-stream',
             ])
@@ -88,7 +95,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
 
     public function hapusLampiran(int $idRapat, int $idLampiran): bool
     {
-        $res = Http::timeout(4)->acceptJson()
+        $res = $this->http()->timeout(4)
             ->delete($this->base() . "/rapat/{$idRapat}/lampiran/{$idLampiran}");
 
         return $res->successful();
@@ -97,7 +104,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
     public function berbagi(int $idRapat): array
     {
         try {
-            $res = Http::timeout(4)->acceptJson()->get($this->base() . "/rapat/{$idRapat}/berbagi");
+            $res = $this->http()->timeout(4)->get($this->base() . "/rapat/{$idRapat}/berbagi");
 
             return $res->successful() ? (array) $res->json() : [];
         } catch (\Throwable $e) {
@@ -112,13 +119,13 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
         if (! empty($payload['file']) && $payload['file'] instanceof UploadedFile) {
             $file = $payload['file'];
 
-            $res = Http::timeout(600)->acceptJson()
+            $res = $this->http()->timeout(600)
                 ->attach('file', file_get_contents($file->getRealPath()), $file->getClientOriginalName(), [
                     'Content-Type' => $file->getClientMimeType() ?: 'application/octet-stream',
                 ])
                 ->post($this->base() . "/rapat/{$idRapat}/berbagi", ['id_user' => $idUser]);
         } else {
-            $res = Http::timeout(4)->acceptJson()
+            $res = $this->http()->timeout(4)
                 ->post($this->base() . "/rapat/{$idRapat}/berbagi", [
                     'id_user' => $idUser,
                     'jenis' => 'link',
@@ -138,7 +145,7 @@ class ApiRapatWorkspaceRepository implements RapatWorkspaceRepositoryInterface
 
     public function hapusBerbagi(int $idRapat, int $idBerbagi): bool
     {
-        $res = Http::timeout(4)->acceptJson()
+        $res = $this->http()->timeout(4)
             ->delete($this->base() . "/rapat/{$idRapat}/berbagi/{$idBerbagi}");
 
         return $res->successful();

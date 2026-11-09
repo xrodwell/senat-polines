@@ -107,6 +107,17 @@ class PortalController extends Controller
     /** Logout dari Portal */
     public function logout(Request $request): RedirectResponse
     {
+        $token = session('auth_token');
+        if ($token) {
+            try {
+                \Illuminate\Support\Facades\Http::timeout(3)
+                    ->withToken($token)
+                    ->post('http://127.0.0.1:8001/api/logout');
+            } catch (\Throwable) {
+                // Ignore failure if backend is unreachable
+            }
+        }
+
         session()->forget(['auth_token', 'auth_user', 'auth_user_id', 'auth_user_name', 'auth_user_role', 'auth_user_nip', 'auth_user_email']);
         session()->flush();
 
