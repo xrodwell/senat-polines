@@ -53,7 +53,9 @@ Route::prefix('portal')->group(function (): void {
     // Rute Tamu (Hanya dapat diakses jika belum login)
     Route::middleware('portal.guest')->group(function (): void {
         Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
-        Route::post('/login', [PortalController::class, 'authenticate'])->name('portal.login.submit');
+        Route::post('/login', [PortalController::class, 'authenticate'])
+            ->middleware('throttle:6,1')
+            ->name('portal.login.submit');
     });
 
     Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('portal.logout');
@@ -111,4 +113,5 @@ Route::get('/admin', \App\Livewire\AdminPreview::class)
 
 // API Proxy Frontend -> Backend untuk Chatbot Aspirasi
 Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])
+    ->middleware('throttle:20,1')
     ->name('api.chatbot.send');
