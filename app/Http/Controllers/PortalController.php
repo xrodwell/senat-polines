@@ -118,10 +118,109 @@ class PortalController extends Controller
             }
         }
 
-        session()->forget(['auth_token', 'auth_user', 'auth_user_id', 'auth_user_name', 'auth_user_role', 'auth_user_nip', 'auth_user_email']);
+        session()->forget(['auth_token', 'auth_user', 'auth_user_id', 'auth_user_name', 'auth_user_role', 'auth_user_nip', 'auth_user_email', 'impersonator']);
         session()->flush();
 
         return redirect()->route('portal.login')->with('info', 'Anda telah berhasil keluar dari akun.');
+    }
+
+    /** Impersonate Member User (Admin Only) */
+    public function impersonate(Request $request, $id): RedirectResponse
+    {
+        $isAdmin = (session('auth_user_role') === 'admin')
+            || (session()->has('impersonator') && (session('impersonator.role') === 'admin'));
+
+        if (! $isAdmin) {
+            return redirect()->route('portal.dashboard')
+                ->with('error', 'Aksi ditolak. Hanya administrator yang dapat menggunakan fitur impersonasi.');
+        }
+
+        // Backup sesi admin jika belum dalam mode impersonasi
+        if (! session()->has('impersonator')) {
+            session([
+                'impersonator' => [
+                    'token' => session('auth_token'),
+                    'user' => session('auth_user'),
+                    'id' => session('auth_user_id'),
+                    'name' => session('auth_user_name'),
+                    'role' => session('auth_user_role'),
+                    'nip' => session('auth_user_nip'),
+                    'email' => session('auth_user_email'),
+                ],
+            ]);
+        }
+
+        $adminToken = session('impersonator.token') ?: session('auth_token');
+
+        try {
+            $backendUrl = env('BACKEND_API_URL', 'http://127.0.0.1:8001/api');
+            $response = \Illuminate\Support\Facades\Http::timeout(5)
+                ->withToken($adminToken)
+                ->post("{$backendUrl}/admin/impersonate/{$id}");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $targetUser = $data['user'] ?? [];
+                $targetToken = $data['token'] ?? null;
+
+                session([
+                    'auth_token' => $targetToken,
+                    'auth_user' => $targetUser,
+                    'auth_user_id' => $targetUser['id_user'] ?? $id,
+                    'auth_user_name' => $targetUser['nama'] ?? 'Anggota Senat',
+                    'auth_user_role' => $targetUser['role'] ?? 'anggota',
+                    'auth_user_nip' => $targetUser['nim_nip'] ?? '',
+                    'auth_user_email' => $targetUser['email'] ?? '',
+                ]);
+
+                return redirect()->route('portal.dashboard')
+                    ->with('success', 'Berhasil beralih akun ke ' . ($targetUser['nama'] ?? 'Anggota Senat') . '.');
+            }
+
+            $errorMessage = $response->json('message') ?? 'Gagal melakukan impersonasi user.';
+            return back()->with('error', $errorMessage);
+        } catch (\Throwable $e) {
+            \Log::error('Portal impersonation failed: ' . $e->getMessage());
+            return back()->with('error', 'Gagal terhubung ke backend API (' . $e->getMessage() . ').');
+        }
+    }
+
+    /** Kembali dari Mode Impersonasi ke Akun Admin */
+    public function leaveImpersonate(Request $request): RedirectResponse
+    {
+        if (! session()->has('impersonator')) {
+            return redirect()->route('portal.dashboard');
+        }
+
+        $impersonator = session('impersonator');
+        $currentToken = session('auth_token');
+
+        if ($currentToken) {
+            try {
+                $backendUrl = env('BACKEND_API_URL', 'http://127.0.0.1:8001/api');
+                \Illuminate\Support\Facades\Http::timeout(3)
+                    ->withToken($currentToken)
+                    ->post("{$backendUrl}/logout");
+            } catch (\Throwable) {
+                // Abaikan kegagalan backend logout
+            }
+        }
+
+        // Kembalikan sesi admin awal
+        session([
+            'auth_token' => $impersonator['token'] ?? null,
+            'auth_user' => $impersonator['user'] ?? null,
+            'auth_user_id' => $impersonator['id'] ?? null,
+            'auth_user_name' => $impersonator['name'] ?? 'Admin Senat',
+            'auth_user_role' => $impersonator['role'] ?? 'admin',
+            'auth_user_nip' => $impersonator['nip'] ?? '',
+            'auth_user_email' => $impersonator['email'] ?? '',
+        ]);
+
+        session()->forget('impersonator');
+
+        return redirect()->route('admin.preview')
+            ->with('success', 'Kembali ke sesi Administrator Senat.');
     }
 
     /** 12A — Dashboard Anggota · Ringkasan */

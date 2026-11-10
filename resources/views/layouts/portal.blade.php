@@ -60,6 +60,31 @@
 <body x-data="{ nav: false }" @keydown.escape.window="nav = false"
       class="bg-senat-surface font-sans text-senat-body antialiased">
 
+    {{-- Impersonation Alert Banner (No Emojis) --}}
+    @if (session()->has('impersonator'))
+        <aside aria-label="Notifikasi Impersonasi" class="relative z-50 border-b border-amber-500/40 bg-amber-400 px-4 py-2.5 text-slate-950 shadow-sm">
+            <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+                <div class="flex items-center gap-2.5 font-medium">
+                    <span class="inline-flex items-center rounded bg-amber-950/90 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-200">
+                        Mode Impersonasi
+                    </span>
+                    <span>
+                        Sedang mengakses portal sebagai <strong class="font-bold text-slate-950">{{ session('auth_user_name') }}</strong> (NIP: {{ session('auth_user_nip') ?: '-' }}).
+                    </span>
+                </div>
+                <form method="POST" action="{{ route('portal.leave-impersonate') }}" class="m-0 shrink-0">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-1.5 rounded-md bg-slate-950 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 focus:ring-offset-amber-400 cursor-pointer">
+                        <svg class="h-3.5 w-3.5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                        </svg>
+                        <span>Kembali ke Akun Admin</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+    @endif
+
     {{-- Topbar (2269:728) — 60px mobile, 64px ≥1024 --}}
     <header class="sticky top-0 z-40 flex h-[60px] items-center bg-senat-primary text-white lg:h-16">
         <div class="relative flex w-full items-center gap-3 px-5 lg:px-6">

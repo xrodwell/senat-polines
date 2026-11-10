@@ -15,6 +15,27 @@
         ['label' => 'Ketua Senat', 'person' => $chair],
         ['label' => 'Sekretaris Senat', 'person' => $secretary],
     ];
+
+    $currentName = session('auth_user_name', 'Anggota Senat');
+    $currentNip = session('auth_user_nip', '-');
+    $currentEmail = session('auth_user_email', '-');
+    $currentRole = session('auth_user_role', 'anggota');
+
+    $memberInfo = null;
+    foreach (\App\Support\SenatDirectory::members() as $m) {
+        if (!empty($m['name']) && (
+            strcasecmp($m['name'], $currentName) === 0 ||
+            str_contains(strtolower($m['name']), strtolower($currentName)) ||
+            str_contains(strtolower($currentName), strtolower($m['name']))
+        )) {
+            $memberInfo = $m;
+            break;
+        }
+    }
+
+    $organLabel = $memberInfo['organ'] ?? ($currentRole === 'admin' ? 'Sekretariat Senat' : 'Komisi Senat Akademik');
+    $jabatanLabel = $memberInfo['role'] ?? ($currentRole === 'admin' ? 'Administrator Sistem' : 'Anggota Senat');
+    $focusDesc = $memberInfo['focus'] ?? 'Menjalankan fungsi pengawasan normatif, penetapan kurikulum, dan pertimbangan akademik Politeknik Negeri Semarang.';
 @endphp
 
 <div class="mx-auto w-full max-w-[1116px] space-y-6">
@@ -28,11 +49,20 @@
     {{-- ================= PROFIL ================= --}}
     <section class="rounded-[14px] border border-senat-line bg-white p-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
         <div class="flex flex-wrap items-center gap-5">
-            <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-[42px] bg-[#eaf3fe] text-[30px] font-bold text-senat-link" aria-hidden="true"><x-senat.icon name="eye-off" class="h-[18px] w-[18px]" /></span>
+            <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-[42px] bg-[#eaf3fe] text-[28px] font-bold text-senat-primary shadow-xs" aria-hidden="true">
+                <svg class="h-10 w-10 text-senat-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </span>
             <div class="min-w-0">
-                <h2 class="text-[22px] font-bold leading-snug text-senat-ink">{{ $chair['name'] ?? 'Data anggota internal' }}</h2>
+                <h2 class="text-[22px] font-bold leading-snug text-senat-ink">{{ $currentName }}</h2>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
-                    <x-senat.badge state="info" :dot="false">{{ $chair['role'] ?? 'Anggota Senat' }}</x-senat.badge>
+                    <x-senat.badge state="info" :dot="false">{{ $jabatanLabel }}</x-senat.badge>
+                    @if (session()->has('impersonator'))
+                        <span class="inline-flex items-center rounded border border-amber-300 bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
+                            Mode Impersonasi
+                        </span>
+                    @endif
                     <x-senat.badge state="neutral" :dot="false">Periode {{ $periode }}</x-senat.badge>
                 </div>
                 <p class="mt-2 text-[13px] text-senat-body">Politeknik Negeri Semarang</p>
@@ -42,15 +72,15 @@
         <dl class="mt-6 grid grid-cols-1 gap-x-8 gap-y-5 border-t border-senat-line pt-5 sm:grid-cols-2">
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">NIP</dt>
-                <dd class="mt-1.5 text-[14px] font-medium tabular-nums text-senat-ink">{{ $chair['nip'] ?? 'Data anggota internal' }}</dd>
+                <dd class="mt-1.5 text-[14px] font-medium tabular-nums text-senat-ink">{{ $currentNip ?: '-' }}</dd>
             </div>
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Organ</dt>
-                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $chair['organ'] ?? 'Pimpinan Senat' }}</dd>
+                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $organLabel }}</dd>
             </div>
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Jabatan</dt>
-                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $chair['role'] ?? 'Anggota Komisi' }}</dd>
+                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $jabatanLabel }}</dd>
             </div>
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Periode</dt>
@@ -61,13 +91,13 @@
                 <dd class="mt-1.5 text-[14px] font-medium tabular-nums text-senat-ink">{{ $stats['attendance_rate'] }}% periode berjalan</dd>
             </div>
             <div>
-                <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Laporan</dt>
-                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">Belum ada LPJ individual</dd>
+                <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Email</dt>
+                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $currentEmail ?: '-' }}</dd>
             </div>
         </dl>
 
-        @if (! empty($chair['focus']))
-            <p class="mt-5 border-t border-senat-line pt-5 text-[13px] leading-relaxed text-senat-muted">{{ $chair['focus'] }}</p>
+        @if (! empty($focusDesc))
+            <p class="mt-5 border-t border-senat-line pt-5 text-[13px] leading-relaxed text-senat-muted">{{ $focusDesc }}</p>
         @endif
     </section>
 
