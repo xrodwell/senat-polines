@@ -1,13 +1,53 @@
 [
     {
-        "id": 15,
-        "title": "Berita Utama Terkini 6ae1890adcfc8",
-        "slug": "berita-utama-terkini-6ae1890adcfc8",
+        "id": 17,
+        "title": "Berita Utama Terkini 6af1d58e0de30",
+        "slug": "berita-utama-terkini-6af1d58e0de30",
         "category": "Warta Senat",
-        "date": "2026-10-28",
+        "date": "2026-11-09",
         "status": "Terpublikasi",
         "excerpt": "Naskah rilis pers terverifikasi untuk dashboard anggota.",
         "thumbnail": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": [],
+        "author": "Sekretariat Senat Polines",
+        "body": [
+            "Naskah rilis pers terverifikasi untuk dashboard anggota."
+        ]
+    },
+    {
+        "id": 16,
+        "title": "Judul Hasil Edit 6af1d5872bbf9",
+        "slug": "judul-hasil-edit-6af1d5872bbf9",
+        "category": "Warta Senat",
+        "date": "2026-11-09",
+        "status": "Draf",
+        "excerpt": "Isi berita lengkap untuk pengujian publikasi warta senat polines.",
+        "thumbnail": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": [],
+        "author": "Administrator Senat",
+        "body": [
+            "Isi berita lengkap untuk pengujian publikasi warta senat polines."
+        ]
+    },
+    {
+        "id": 15,
+        "title": "Berita Utama Terkini 6af1d55252e67",
+        "slug": "berita-utama-terkini-6af1d55252e67",
+        "category": "Warta Senat",
+        "date": "2026-11-09",
+        "status": "Terpublikasi",
+        "excerpt": "Naskah rilis pers terverifikasi untuk dashboard anggota.",
+        "thumbnail": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": [],
         "author": "Sekretariat Senat Polines",
         "body": [
             "Naskah rilis pers terverifikasi untuk dashboard anggota."
@@ -15,14 +55,18 @@
     },
     {
         "id": 14,
-        "title": "Judul Hasil Edit 6ae1890654232",
-        "slug": "judul-hasil-edit-6ae1890654232",
+        "title": "Judul Hasil Edit 6af1d54af260a",
+        "slug": "judul-hasil-edit-6af1d54af260a",
         "category": "Warta Senat",
-        "date": "2026-10-28",
+        "date": "2026-11-09",
         "status": "Draf",
         "excerpt": "Isi berita lengkap untuk pengujian publikasi warta senat polines.",
         "thumbnail": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
-        "author": "Sekretariat Senat Polines",
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": [],
+        "author": "Administrator Senat",
         "body": [
             "Isi berita lengkap untuk pengujian publikasi warta senat polines."
         ]
@@ -39,7 +83,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "mahasisw jadi wisudawan"
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 12,
@@ -53,7 +101,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Naskah rilis pers terverifikasi untuk dashboard anggota."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 11,
@@ -67,7 +119,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Isi berita lengkap untuk pengujian publikasi warta senat polines."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 10,
@@ -81,7 +137,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Naskah rilis pers terverifikasi untuk dashboard anggota."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 9,
@@ -95,7 +155,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Isi berita lengkap untuk pengujian publikasi warta senat polines."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 8,
@@ -109,7 +173,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Naskah rilis pers terverifikasi untuk dashboard anggota."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 7,
@@ -123,7 +191,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Isi berita lengkap untuk pengujian publikasi warta senat polines."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 6,
@@ -137,7 +209,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Naskah rilis pers terverifikasi untuk dashboard anggota."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 5,
@@ -151,7 +227,11 @@
         "author": "Sekretariat Senat Polines",
         "body": [
             "Isi berita lengkap untuk pengujian publikasi warta senat polines."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 1,
@@ -167,7 +247,11 @@
             "Senat Akademik Politeknik Negeri Semarang menyelenggarakan Sidang Pleno Terbuka dalam rangka penetapan pembaruan kurikulum vokasi semester ganjil tahun akademik 2026/2027.",
             "Ketua Senat menegaskan pentingnya kolaborasi strategis antara program studi dengan mitra dunia usaha dan dunia industri (DUDI) demi menjamin keterserapan lulusan yang unggul dan adaptif.",
             "Keputusan resmi persidangan dapat diakses dan diunduh oleh civitas akademika melalui menu Produk Hukum dan Regulasi Senat."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 2,
@@ -183,7 +267,11 @@
             "Komisi I Senat Akademik Polines melaksanakan peninjauan lapangan berkala guna mengevaluasi efektivitas laboratorium praktik dan rasio instruktur vokasi terhadap mahasiswa tingkat akhir.",
             "Rilis resmi Senat Akademik Politeknik Negeri Semarang. Pembahasan dan evaluasi capaian pembelajaran di jurusan teknik elektro dan teknik mesin oleh komisi i berlangsung dalam forum Sidang Pleno Senat dan dicatat dalam risalah resmi oleh Sekretariat Senat.",
             "Dokumen lengkap, risalah sidang, dan lampiran keputusan dapat diakses melalui menu Arsip & Produk Hukum pada portal publik Senat Akademik Polines."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 3,
@@ -199,7 +287,11 @@
             "Ketua Senat Akademik Polines menyambut hangat delegasi Senat Polban dalam rangka sinkronisasi regulasi peraturan internal dan sistem pengawasan tata pamong perguruan tinggi vokasi.",
             "Rilis resmi Senat Akademik Politeknik Negeri Semarang. Pembahasan studi banding tata kelola senat akademik politeknik negeri bandung ke senat akademik polines berlangsung dalam forum Sidang Pleno Senat dan dicatat dalam risalah resmi oleh Sekretariat Senat.",
             "Dokumen lengkap, risalah sidang, dan lampiran keputusan dapat diakses melalui menu Arsip & Produk Hukum pada portal publik Senat Akademik Polines."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     },
     {
         "id": 4,
@@ -215,6 +307,10 @@
             "Komisi V Senat Akademik mengundang perwakilan serikat dosen dan tenaga kependidikan untuk menelaah naskah akademik regulasi penegakan integritas ilmiah dan paten terapan.",
             "Rilis resmi Senat Akademik Politeknik Negeri Semarang. Pembahasan publik rencana peraturan senat mengenai kode etik dosen dan pembimbingan riset terapan vokasi berlangsung dalam forum Sidang Pleno Senat dan dicatat dalam risalah resmi oleh Sekretariat Senat.",
             "Dokumen lengkap, risalah sidang, dan lampiran keputusan dapat diakses melalui menu Arsip & Produk Hukum pada portal publik Senat Akademik Polines."
-        ]
+        ],
+        "images": [
+            "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": []
     }
 ]

@@ -30,6 +30,13 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::$cachedLiveTime = [];
     }
 
+    private function http()
+    {
+        $token = session('auth_token');
+        $client = Http::acceptJson();
+        return $token ? $client->withToken($token) : $client;
+    }
+
     private function getBaseUrl(): string
     {
         return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
@@ -167,7 +174,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::clearCache();
         $apiUrl = $this->getBaseUrl();
         try {
-            $response = Http::timeout(5)->post("{$apiUrl}/rapat/{$id}/generate-qr");
+            $response = $this->http()->timeout(5)->post("{$apiUrl}/rapat/{$id}/generate-qr");
             if ($response->successful()) {
                 return $response->json('data');
             }
@@ -185,7 +192,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::clearCache();
         $apiUrl = $this->getBaseUrl();
         try {
-            $response = Http::timeout(5)->post("{$apiUrl}/rapat/{$id}/freeze-presensi");
+            $response = $this->http()->timeout(5)->post("{$apiUrl}/rapat/{$id}/freeze-presensi");
             if ($response->successful()) {
                 return $response->json('data');
             }
@@ -203,7 +210,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::clearCache();
         $apiUrl = $this->getBaseUrl();
         try {
-            $response = Http::timeout(5)->post("{$apiUrl}/rapat/presensi", [
+            $response = $this->http()->timeout(5)->post("{$apiUrl}/rapat/presensi", [
                 'id_user' => $userId,
                 'token_qr' => $tokenQr,
                 'kode_sesi' => $sessionCode,

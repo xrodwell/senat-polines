@@ -56,13 +56,17 @@ class ApiCommitteeRepository implements CommitteeRepositoryInterface
                 $fallbackData = $this->fallback->all();
 
                 if (!empty($apiData)) {
-                    return array_map(function ($fb, $index) use ($apiData) {
-                        if (isset($apiData[$index])) {
-                            $fb['name'] = $apiData[$index]['nama_komisi'] ?? $fb['name'];
-                            $fb['focus'] = $apiData[$index]['deskripsi'] ?? $fb['focus'];
+                    // Interoperabilitas: Sinkronkan nama dan deskripsi komisi langsung dari Backend API berdasarkan ID komisi
+                    $apiById = collect($apiData)->keyBy('id_komisi');
+
+                    return array_map(function ($fb) use ($apiById) {
+                        $matched = $apiById->get($fb['id']);
+                        if ($matched) {
+                            $fb['name'] = $matched['nama_komisi'] ?? $fb['name'];
+                            $fb['focus'] = $matched['deskripsi'] ?? $fb['focus'];
                         }
                         return $fb;
-                    }, $fallbackData, array_keys($fallbackData));
+                    }, $fallbackData);
                 }
             }
         } catch (\Throwable $e) {
