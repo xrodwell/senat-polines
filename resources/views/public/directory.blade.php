@@ -312,9 +312,9 @@
                         <div class="mt-6 grid gap-5 lg:grid-cols-2">
                             @if (! empty($panel['lead']))
                                 <div class="group relative flex items-center gap-5 rounded-[12px] border border-[#a3c2e3] bg-senat-badgeBg p-6 transition-colors duration-150 hover:border-senat-link">
-                                    <span class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link">
+                                    <a href="{{ route('public.directory.member', $panel['lead']['slug']) }}" class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link hover:scale-105 transition-transform">
                                         <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['lead']['name']) }}</span>
-                                    </span>
+                                    </a>
                                     <span class="min-w-0 flex-1">
                                         <span class="flex items-center justify-between gap-2">
                                             <span class="block text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">Ketua {{ $panel['label'] }}</span>
@@ -328,8 +328,14 @@
                                                 Edit
                                             </button>
                                         </span>
-                                        <span class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink">{{ $panel['lead']['name'] }}</span>
-                                        <span class="mt-1.5 block text-[11px] text-senat-body">{{ $panel['lead']['organ'] }}</span>
+                                        <a href="{{ route('public.directory.member', $panel['lead']['slug']) }}" class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink hover:text-senat-link transition-colors">{{ $panel['lead']['name'] }}</a>
+                                        @if (! empty($panel['lead']['nip']))
+                                            <span class="mt-1 block font-mono text-[11px] font-medium text-slate-500">NIP {{ $panel['lead']['nip'] }}</span>
+                                        @endif
+                                        @if (! empty($panel['lead']['jurusan']))
+                                            <span class="mt-0.5 block text-[10.5px] font-medium text-senat-primary">{{ $panel['lead']['jurusan'] }}</span>
+                                        @endif
+                                        <span class="mt-1 block text-[11px] text-senat-body">{{ $panel['lead']['organ'] }}</span>
                                         <a href="{{ route('public.directory.member', $panel['lead']['slug']) }}" class="mt-3 inline-block text-[11px] font-bold text-senat-link hover:underline">Lihat profil anggota &nbsp;›</a>
                                     </span>
                                 </div>
@@ -341,9 +347,9 @@
 
                             @if (! empty($panel['secretary']))
                                 <div class="group relative flex items-center gap-5 rounded-[12px] border border-[#d6e0ed] bg-white p-6 transition-colors duration-150 hover:border-senat-link">
-                                    <span class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link">
+                                    <a href="{{ route('public.directory.member', $panel['secretary']['slug']) }}" class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link hover:scale-105 transition-transform">
                                         <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['secretary']['name']) }}</span>
-                                    </span>
+                                    </a>
                                     <span class="min-w-0 flex-1">
                                         <span class="flex items-center justify-between gap-2">
                                             <span class="block text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">Sekretaris {{ $panel['label'] }}</span>
@@ -357,8 +363,14 @@
                                                 Edit
                                             </button>
                                         </span>
-                                        <span class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink">{{ $panel['secretary']['name'] }}</span>
-                                        <span class="mt-1.5 block text-[11px] text-senat-body">{{ $panel['secretary']['organ'] }}</span>
+                                        <a href="{{ route('public.directory.member', $panel['secretary']['slug']) }}" class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink hover:text-senat-link transition-colors">{{ $panel['secretary']['name'] }}</a>
+                                        @if (! empty($panel['secretary']['nip']))
+                                            <span class="mt-1 block font-mono text-[11px] font-medium text-slate-500">NIP {{ $panel['secretary']['nip'] }}</span>
+                                        @endif
+                                        @if (! empty($panel['secretary']['jurusan']))
+                                            <span class="mt-0.5 block text-[10.5px] font-medium text-senat-primary">{{ $panel['secretary']['jurusan'] }}</span>
+                                        @endif
+                                        <span class="mt-1 block text-[11px] text-senat-body">{{ $panel['secretary']['organ'] }}</span>
                                         <a href="{{ route('public.directory.member', $panel['secretary']['slug']) }}" class="mt-3 inline-block text-[11px] font-bold text-senat-link hover:underline">Lihat profil anggota &nbsp;›</a>
                                     </span>
                                 </div>
@@ -386,13 +398,19 @@
                                 @foreach ($panel['anggota'] as $person)
                                     <article class="flex flex-col rounded-[13px] border border-[#d6e0ed] bg-white p-6 shadow-2xs hover:shadow-xs transition-shadow">
                                         <div class="flex items-start gap-4">
-                                            <span class="relative flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[14px] font-bold text-senat-link">
+                                            <a href="{{ route('public.directory.member', $person['slug']) }}" class="relative flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[14px] font-bold text-senat-link hover:scale-105 transition-transform">
                                                 <span class="flex h-[62px] w-[62px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($person['name']) }}</span>
-                                            </span>
+                                            </a>
                                             <div class="min-w-0">
                                                 <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ strtoupper($person['role']) }}</p>
-                                                <p class="mt-1.5 text-[15px] font-bold leading-snug text-senat-ink">{{ $person['name'] }}</p>
-                                                <p class="mt-1.5 text-[10px] text-senat-body">{{ $person['organ'] }}</p>
+                                                <a href="{{ route('public.directory.member', $person['slug']) }}" class="mt-1.5 block text-[15px] font-bold leading-snug text-senat-ink hover:text-senat-link transition-colors">{{ $person['name'] }}</a>
+                                                @if (! empty($person['nip']))
+                                                    <p class="mt-1 font-mono text-[11px] font-medium text-slate-500">NIP {{ $person['nip'] }}</p>
+                                                @endif
+                                                @if (! empty($person['jurusan']))
+                                                    <p class="mt-0.5 text-[10.5px] font-medium text-senat-primary">{{ $person['jurusan'] }}</p>
+                                                @endif
+                                                <p class="mt-1 text-[10px] text-senat-body">{{ $person['organ'] }}</p>
                                             </div>
                                         </div>
 

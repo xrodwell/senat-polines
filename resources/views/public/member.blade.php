@@ -100,7 +100,10 @@
                 <p class="mt-1 text-[11px] text-senat-body">{{ $metaLine }}</p>
 
                 @if (! empty($member['nip']))
-                    <p class="mt-1 text-[11px] font-medium text-slate-500">NIP {{ $member['nip'] }}</p>
+                    <p class="mt-1 font-mono text-[11px] font-medium text-slate-500">NIP {{ $member['nip'] }}</p>
+                @endif
+                @if (! empty($member['email']))
+                    <p class="mt-0.5 text-[11px] font-medium text-slate-500">Email: <a href="mailto:{{ $member['email'] }}" class="text-senat-link hover:underline">{{ $member['email'] }}</a></p>
                 @endif
 
                 <div class="mt-6 h-px w-full bg-[#d9e3f0]" aria-hidden="true"></div>
@@ -111,8 +114,14 @@
                         <dd class="mt-1 text-[11px] font-bold leading-snug text-senat-ink">{{ $member['organ'] }}</dd>
                     </div>
                     <div class="rounded-xl bg-[#f8fafc] p-3.5 border border-[#eef2f6]">
-                        <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Afiliasi</dt>
-                        <dd class="mt-1 text-[11px] font-bold leading-snug text-senat-ink">Politeknik Negeri Semarang</dd>
+                        <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Jurusan &amp; Afiliasi</dt>
+                        <dd class="mt-1 text-[11px] font-bold leading-snug text-senat-ink">
+                            @if (! empty($member['jurusan']))
+                                {{ $member['jurusan'] }}<br><span class="font-normal text-slate-500">Politeknik Negeri Semarang</span>
+                            @else
+                                Politeknik Negeri Semarang
+                            @endif
+                        </dd>
                     </div>
                     <div class="rounded-xl bg-[#f8fafc] p-3.5 border border-[#eef2f6]">
                         <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Masa Bakti</dt>
@@ -275,6 +284,9 @@
                         <span class="min-w-0">
                             <span class="block text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ strtoupper($peer['role']) }}</span>
                             <span class="mt-1 block text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-link transition-colors">{{ $peer['name'] }}</span>
+                            @if (! empty($peer['nip']))
+                                <span class="mt-0.5 block font-mono text-[10.5px] text-slate-500">NIP {{ $peer['nip'] }}</span>
+                            @endif
                             <span class="mt-1 block text-[10px] text-senat-body">{{ $peer['organ'] }}</span>
                         </span>
                     </a>
