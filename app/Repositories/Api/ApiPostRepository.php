@@ -211,6 +211,11 @@ class ApiPostRepository implements PostRepositoryInterface
 
         $localUpdated = $this->fallback->update($id, $data);
 
+        if (! $localUpdated && ! $backendUpdated) {
+            $this->fallback->create(['id' => $id, ...$data]);
+            $localUpdated = true;
+        }
+
         return $backendUpdated || $localUpdated;
     }
 
