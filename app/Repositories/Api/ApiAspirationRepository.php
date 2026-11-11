@@ -27,8 +27,11 @@ class ApiAspirationRepository implements AspirationRepositoryInterface
             $response = Http::timeout(3)->get("{$base}/aspirasi");
 
             if ($response->successful()) {
-                $items = $response->json('data', []);
-                if (!empty($items)) {
+                $items = $response->json('data');
+                if ($items === null) {
+                    $items = $response->json();
+                }
+                if (is_array($items)) {
                     return array_map([$this, 'transformItem'], $items);
                 }
             }

@@ -8,143 +8,150 @@
         <div>
             <div class="flex items-center gap-2">
                 <h2 class="text-[18px] font-bold text-senat-ink">Pusat Aspirasi & Disposisi Komisi</h2>
-                <span class="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-mono font-bold text-emerald-700 border border-emerald-200">
-                    ● Tersambung Database Backend
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    Sinkron Database Backend
                 </span>
             </div>
             <p class="text-[12px] text-senat-body">Penyerapan, telaah, dan disposisi aspirasi sivitas akademika ke komisi terkait</p>
         </div>
         <div class="flex items-center gap-2">
             <button type="button" wire:click="loadAspirationsFromApi"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-senat-ink shadow-xs hover:bg-slate-50 transition">
-                <span wire:loading.remove wire:target="loadAspirationsFromApi">🔄 Refresh Data</span>
+                    class="inline-flex items-center gap-1.5 rounded-[10px] border border-senat-border bg-white px-3 py-1.5 text-[12px] font-semibold text-senat-ink shadow-2xs hover:bg-slate-50 transition">
+                <x-senat.icon name="refresh" class="h-3.5 w-3.5 text-slate-500" wire:loading.class="animate-spin" wire:target="loadAspirationsFromApi" />
+                <span wire:loading.remove wire:target="loadAspirationsFromApi">Refresh</span>
                 <span wire:loading wire:target="loadAspirationsFromApi">Memuat...</span>
             </button>
         </div>
     </div>
 
     {{-- Filter Bar: Status, Komisi & Pencarian --}}
-    <div class="mt-4 space-y-3 rounded-[12px] bg-slate-50/70 p-3.5 border border-slate-200">
+    <div class="mt-4 space-y-3 rounded-[12px] bg-slate-50/80 p-3.5 border border-slate-200">
         {{-- Baris 1: Pencarian & Filter Status --}}
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             {{-- Kotak Pencarian --}}
             <div class="relative flex-1">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-xs">
-                    🔍
-                </span>
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <x-senat.icon name="search" class="h-4 w-4" />
+                </div>
                 <input type="text"
                        wire:model.live.debounce.300ms="aspirationSearch"
                        placeholder="Cari nomor tiket, judul, isi, pengirim, atau jurusan..."
-                       class="w-full rounded-lg border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-[12px] text-slate-900 placeholder:text-slate-400 focus:border-senat-primary focus:outline-none focus:ring-1 focus:ring-senat-primary">
+                       class="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-8 py-1.5 text-[12px] text-slate-900 placeholder:text-slate-400 focus:border-senat-primary focus:outline-none focus:ring-1 focus:ring-senat-primary">
                 @if(!empty($aspirationSearch))
                     <button type="button" wire:click="$set('aspirationSearch', '')"
-                            class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 text-xs">
-                        ✕
+                            class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600">
+                        <x-senat.icon name="close" class="h-3.5 w-3.5" />
                     </button>
                 @endif
             </div>
 
             {{-- Filter Status --}}
-            <div class="flex items-center gap-1 shrink-0 overflow-x-auto">
+            <div class="flex items-center gap-1 shrink-0 flex-wrap">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 hidden md:inline">Status:</span>
                 <button type="button" wire:click="setFilterStatus('all')"
-                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'all' ? 'bg-senat-primary text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100' }}">
+                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'all' ? 'bg-senat-primary text-white shadow-2xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100' }}">
                     Semua ({{ $stats['total'] }})
                 </button>
                 <button type="button" wire:click="setFilterStatus('pending')"
-                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-50' }}">
+                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'pending' ? 'bg-amber-600 text-white shadow-2xs' : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-50' }}">
                     Pending ({{ $stats['pending'] }})
                 </button>
                 <button type="button" wire:click="setFilterStatus('diproses')"
-                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'diproses' ? 'bg-blue-600 text-white shadow-xs' : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50' }}">
+                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'diproses' ? 'bg-blue-600 text-white shadow-2xs' : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50' }}">
                     Diproses ({{ $stats['diproses'] }})
                 </button>
                 <button type="button" wire:click="setFilterStatus('selesai')"
-                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'selesai' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50' }}">
+                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold transition {{ $aspirationFilterStatus === 'selesai' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50' }}">
                     Selesai ({{ $stats['selesai'] }})
                 </button>
             </div>
         </div>
 
-        {{-- Baris 2: Pengelompokan Tab Disposisi Komisi --}}
-        <div>
-            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 shrink-0">Disposisi Komisi:</span>
-                <button type="button" wire:click="setFilterKomisi('all')"
-                        class="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === 'all' ? 'bg-[#003c75] text-white shadow-xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100' }}">
-                    Semua Komisi
-                </button>
-                <button type="button" wire:click="setFilterKomisi('1')"
-                        class="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '1' ? 'bg-blue-700 text-white shadow-xs' : 'bg-white text-blue-800 border border-blue-200 hover:bg-blue-50' }}">
-                    Komisi I (Pendidikan) <span class="ml-1 opacity-75">({{ $stats['komisi_1'] }})</span>
-                </button>
-                <button type="button" wire:click="setFilterKomisi('2')"
-                        class="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '2' ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50' }}">
-                    Komisi II (Penelitian/Sarana) <span class="ml-1 opacity-75">({{ $stats['komisi_2'] }})</span>
-                </button>
-                <button type="button" wire:click="setFilterKomisi('3')"
-                        class="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '3' ? 'bg-purple-700 text-white shadow-xs' : 'bg-white text-purple-800 border border-purple-200 hover:bg-purple-50' }}">
-                    Komisi III (SDM & Kemahasiswaan) <span class="ml-1 opacity-75">({{ $stats['komisi_3'] }})</span>
-                </button>
-                <button type="button" wire:click="setFilterKomisi('4')"
-                        class="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '4' ? 'bg-amber-700 text-white shadow-xs' : 'bg-white text-amber-800 border border-amber-200 hover:bg-amber-50' }}">
-                    Komisi IV (Kerja Sama) <span class="ml-1 opacity-75">({{ $stats['komisi_4'] }})</span>
-                </button>
-                <button type="button" wire:click="setFilterKomisi('5')"
-                        class="shrink-0 rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '5' ? 'bg-rose-700 text-white shadow-xs' : 'bg-white text-rose-800 border border-rose-200 hover:bg-rose-50' }}">
-                    Komisi V (Etik) <span class="ml-1 opacity-75">({{ $stats['komisi_5'] }})</span>
-                </button>
-            </div>
+        {{-- Baris 2: Pengelompokan Tab Disposisi Komisi (Responsif Wrap Tanpa Scrollbar Jelek) --}}
+        <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/80">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 shrink-0">Disposisi Komisi:</span>
+            <button type="button" wire:click="setFilterKomisi('all')"
+                    class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === 'all' ? 'bg-[#003c75] text-white shadow-2xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100' }}">
+                Semua Komisi
+            </button>
+            <button type="button" wire:click="setFilterKomisi('1')"
+                    class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '1' ? 'bg-blue-700 text-white shadow-2xs' : 'bg-white text-blue-800 border border-blue-200 hover:bg-blue-50' }}">
+                Komisi I (Pendidikan) <span class="ml-0.5 opacity-75 font-normal">({{ $stats['komisi_1'] }})</span>
+            </button>
+            <button type="button" wire:click="setFilterKomisi('2')"
+                    class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '2' ? 'bg-emerald-700 text-white shadow-2xs' : 'bg-white text-emerald-800 border border-emerald-200 hover:bg-emerald-50' }}">
+                Komisi II (Penelitian/Sarana) <span class="ml-0.5 opacity-75 font-normal">({{ $stats['komisi_2'] }})</span>
+            </button>
+            <button type="button" wire:click="setFilterKomisi('3')"
+                    class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '3' ? 'bg-purple-700 text-white shadow-2xs' : 'bg-white text-purple-800 border border-purple-200 hover:bg-purple-50' }}">
+                Komisi III (SDM & Kemahasiswaan) <span class="ml-0.5 opacity-75 font-normal">({{ $stats['komisi_3'] }})</span>
+            </button>
+            <button type="button" wire:click="setFilterKomisi('4')"
+                    class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '4' ? 'bg-amber-700 text-white shadow-2xs' : 'bg-white text-amber-800 border border-amber-200 hover:bg-amber-50' }}">
+                Komisi IV (Kerja Sama) <span class="ml-0.5 opacity-75 font-normal">({{ $stats['komisi_4'] }})</span>
+            </button>
+            <button type="button" wire:click="setFilterKomisi('5')"
+                    class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '5' ? 'bg-rose-700 text-white shadow-2xs' : 'bg-white text-rose-800 border border-rose-200 hover:bg-rose-50' }}">
+                Komisi V (Etik) <span class="ml-0.5 opacity-75 font-normal">({{ $stats['komisi_5'] }})</span>
+            </button>
         </div>
     </div>
 
     {{-- Daftar Kartu Aspirasi --}}
     <div class="mt-4 space-y-4">
         @forelse ($listAspirasi as $asp)
-            <div wire:key="aspirasi-card-{{ $asp['id'] }}" class="rounded-[12px] border border-senat-sidebarLine bg-senat-surface p-4 transition hover:border-senat-badgeLine shadow-xs">
+            <div wire:key="aspirasi-card-{{ $asp['id'] }}" class="rounded-[12px] border border-senat-sidebarLine bg-white p-4 transition hover:border-senat-badgeLine shadow-2xs">
                 {{-- Header Kartu --}}
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5">
                     <div class="flex flex-wrap items-center gap-2">
                         {{-- Kode Tiket --}}
-                        <span class="rounded-[6px] bg-senat-badgeBg px-2 py-0.5 text-[11.5px] font-mono font-bold text-senat-ink border border-senat-badgeLine/50">
+                        <span class="rounded-[6px] bg-slate-100 px-2 py-0.5 text-[11.5px] font-mono font-bold text-slate-800 border border-slate-200">
                             {{ $asp['ticket_code'] }}
                         </span>
 
                         {{-- Badge Disposisi Komisi --}}
-                        <span class="rounded-[6px] px-2.5 py-0.5 text-[11px] font-semibold border {{ $asp['committee_badge'] ?? 'bg-blue-50 text-blue-700 border-blue-200' }}">
-                            🎯 {{ $asp['committee_name'] ?? 'Komisi I — Bidang Pendidikan' }}
+                        <span class="inline-flex items-center gap-1.5 rounded-[6px] px-2.5 py-0.5 text-[11px] font-semibold border {{ $asp['committee_badge'] ?? 'bg-blue-50 text-blue-700 border-blue-200' }}">
+                            <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
+                            {{ $asp['committee_name'] ?? 'Komisi I — Bidang Pendidikan' }}
                         </span>
 
                         {{-- Waktu Masuk --}}
-                        <span class="text-[11px] text-senat-muted">
-                            🕒 {{ $asp['submitted_at'] }}
+                        <span class="inline-flex items-center gap-1 text-[11px] text-senat-muted">
+                            <x-senat.icon name="clock" class="h-3 w-3 text-slate-400" />
+                            <span>{{ $asp['submitted_at'] }} WIB</span>
                         </span>
                     </div>
 
-                    {{-- Tombol Ubah Status Langsung --}}
+                    {{-- Tombol Ubah Status Langsung (Segmented Button Bersih) --}}
                     <div class="flex items-center gap-1.5">
                         <span class="text-[11px] font-semibold text-senat-muted mr-1">Status:</span>
-                        <button type="button" wire:key="status-pending-{{ $asp['id'] }}" wire:click="setAspirasiStatus({{ $asp['id'] }}, 'pending')"
-                                class="rounded px-2.5 py-1 text-[11px] font-semibold transition {{ ($asp['raw_status'] ?? '') === 'pending' ? 'bg-amber-100 text-amber-800 font-bold ring-1 ring-amber-300' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200' }}">
-                            Pending
-                        </button>
-                        <button type="button" wire:key="status-diproses-{{ $asp['id'] }}" wire:click="setAspirasiStatus({{ $asp['id'] }}, 'diproses')"
-                                class="rounded px-2.5 py-1 text-[11px] font-semibold transition {{ ($asp['raw_status'] ?? '') === 'diproses' ? 'bg-blue-100 text-blue-800 font-bold ring-1 ring-blue-300' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200' }}">
-                            Diproses
-                        </button>
-                        <button type="button" wire:key="status-selesai-{{ $asp['id'] }}" wire:click="setAspirasiStatus({{ $asp['id'] }}, 'selesai')"
-                                class="rounded px-2.5 py-1 text-[11px] font-semibold transition {{ ($asp['raw_status'] ?? '') === 'selesai' ? 'bg-emerald-100 text-emerald-800 font-bold ring-1 ring-emerald-300' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200' }}">
-                            Selesai
-                        </button>
+                        <div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
+                            <button type="button" wire:key="status-pending-{{ $asp['id'] }}" wire:click="setAspirasiStatus({{ $asp['id'] }}, 'pending')"
+                                    class="rounded-md px-2.5 py-0.5 text-[11px] font-semibold transition {{ ($asp['raw_status'] ?? '') === 'pending' ? 'bg-amber-500 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                                Pending
+                            </button>
+                            <button type="button" wire:key="status-diproses-{{ $asp['id'] }}" wire:click="setAspirasiStatus({{ $asp['id'] }}, 'diproses')"
+                                    class="rounded-md px-2.5 py-0.5 text-[11px] font-semibold transition {{ ($asp['raw_status'] ?? '') === 'diproses' ? 'bg-blue-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                                Diproses
+                            </button>
+                            <button type="button" wire:key="status-selesai-{{ $asp['id'] }}" wire:click="setAspirasiStatus({{ $asp['id'] }}, 'selesai')"
+                                    class="rounded-md px-2.5 py-0.5 text-[11px] font-semibold transition {{ ($asp['raw_status'] ?? '') === 'selesai' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                                Selesai
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 {{-- Baris Identitas Pengirim & Jurusan Asli --}}
                 <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[12px]">
-                    <div class="flex items-center gap-2 text-senat-ink font-medium">
-                        <span>👤 <strong>{{ $asp['sender_name'] }}</strong></span>
+                    <div class="flex flex-wrap items-center gap-2 text-senat-ink font-medium">
+                        <span class="inline-flex items-center gap-1.5 text-slate-800">
+                            <x-senat.icon name="user" class="h-3.5 w-3.5 text-slate-400" />
+                            <strong>{{ $asp['sender_name'] }}</strong>
+                        </span>
                         @if(!empty($asp['sender_email']) && $asp['sender_email'] !== '-')
-                            <span class="text-senat-muted font-normal">({{ $asp['sender_email'] }})</span>
+                            <span class="text-senat-muted font-normal text-[11.5px]">({{ $asp['sender_email'] }})</span>
                         @endif
                         <span class="text-slate-300">•</span>
                         <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">Jurusan: {{ $asp['jurusan'] }}</span>
@@ -153,9 +160,10 @@
                     {{-- Tombol Alihkan / Ubah Disposisi Komisi --}}
                     <div class="relative">
                         <button type="button" wire:click="toggleDisposisiDropdown({{ $asp['id'] }})"
-                                class="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition shadow-2xs">
-                            <span>🔀</span>
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs">
+                            <x-senat.icon name="filter" class="h-3 w-3 text-slate-500" />
                             <span>Alihkan Disposisi</span>
+                            <x-senat.icon name="chevron-down" class="h-3 w-3 text-slate-400" />
                         </button>
 
                         @if($editingDisposisiId === $asp['id'])
@@ -190,19 +198,19 @@
 
                 {{-- Judul dan Isi Keluhan Bersih --}}
                 <div class="mt-2.5">
-                    <h3 class="text-[14px] font-bold text-senat-ink">{{ $asp['subject'] }}</h3>
+                    <h3 class="text-[14.5px] font-bold text-senat-ink">{{ $asp['subject'] }}</h3>
                     <p class="mt-1 text-[12.5px] text-senat-body leading-relaxed whitespace-pre-line">{{ $asp['description'] }}</p>
                 </div>
                 
                 {{-- Kotak Tanggapan Resmi Komisi --}}
-                <div class="mt-3 rounded-[10px] bg-white p-3 border border-senat-sidebarLine text-[12px] shadow-2xs">
+                <div class="mt-3 rounded-[10px] bg-slate-50 p-3.5 border border-slate-200 text-[12px]">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-senat-ink flex items-center gap-1.5">
-                            <span>🏛️</span>
+                            <span class="h-1.5 w-1.5 rounded-full bg-senat-primary"></span>
                             <span>Tanggapan Resmi {{ $asp['committee_code'] ?? 'Komisi' }}:</span>
                         </span>
                     </div>
-                    <p class="text-senat-body mt-1 leading-relaxed">{{ $asp['response'] }}</p>
+                    <p class="text-senat-body mt-1.5 leading-relaxed">{{ $asp['response'] }}</p>
                 </div>
 
                 {{-- Form Input Balasan / Tindak Lanjut --}}
@@ -265,8 +273,8 @@
                     <div wire:key="tanggapan-btn-box-{{ $asp['id'] }}" class="mt-3 flex justify-end">
                         <button type="button"
                                 wire:click="openTanggapanForm({{ $asp['id'] }})"
-                                class="inline-flex items-center gap-1.5 rounded-md bg-senat-primary px-3.5 py-1.5 text-[11.5px] font-semibold text-white shadow-xs transition hover:bg-senat-primaryHover">
-                            <span>✍️</span>
+                                class="inline-flex items-center gap-1.5 rounded-[8px] bg-senat-primary px-3.5 py-1.5 text-[11.5px] font-semibold text-white shadow-xs transition hover:bg-senat-primaryHover">
+                            <x-senat.icon name="edit" class="h-3.5 w-3.5" />
                             <span>Tindak Lanjuti / Beri Tanggapan Resmi</span>
                         </button>
                     </div>
@@ -274,8 +282,10 @@
             </div>
         @empty
             <div class="rounded-xl border border-dashed border-slate-300 p-8 text-center bg-slate-50/50">
-                <span class="text-3xl">📭</span>
-                <h4 class="mt-2 text-sm font-bold text-senat-ink">Tidak ada aspirasi yang cocok</h4>
+                <div class="flex justify-center text-slate-400">
+                    <x-senat.icon name="inbox" class="h-10 w-10 text-slate-400" />
+                </div>
+                <h4 class="mt-3 text-sm font-bold text-senat-ink">Tidak ada aspirasi yang cocok</h4>
                 <p class="mt-1 text-xs text-senat-muted">Coba ubah kata kunci pencarian atau pilih filter komisi / status lainnya.</p>
                 @if($aspirationFilterKomisi !== 'all' || $aspirationFilterStatus !== 'all' || !empty($aspirationSearch))
                     <button type="button" wire:click="$set('aspirationFilterKomisi', 'all'); $set('aspirationFilterStatus', 'all'); $set('aspirationSearch', '');"
