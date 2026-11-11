@@ -39,6 +39,42 @@
             </span>
 
             <div class="ml-auto flex items-center gap-2 lg:gap-4">
+                {{-- Quick Impersonate Dropdown --}}
+                <div class="relative hidden sm:block" x-data="{ openImpersonate: false }">
+                    <button type="button" @click="openImpersonate = !openImpersonate" :aria-expanded="openImpersonate.toString()"
+                            class="senat-tap flex h-9 items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-500/20 px-3 text-[12px] font-semibold text-amber-200 transition hover:bg-amber-500/30 cursor-pointer"
+                            title="Beralih akun ke anggota Senat">
+                        <svg class="h-3.5 w-3.5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Login Sebagai</span>
+                        <x-senat.icon name="chevron-down" class="h-3 w-3 text-amber-200/70" />
+                    </button>
+                    <div x-cloak x-show="openImpersonate" @click.outside="openImpersonate = false" x-transition.opacity
+                         class="absolute right-0 top-full z-50 mt-2 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-2xl text-slate-800">
+                        <div class="px-2.5 py-1.5 border-b border-slate-100 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+                            Pilih Anggota Senat
+                        </div>
+                        <div class="divide-y divide-slate-100">
+                            @forelse ($allLecturers ?? [] as $lecturer)
+                                @if (($lecturer['id_user'] ?? 0) != session('auth_user_id'))
+                                    <form method="POST" action="{{ route('admin.impersonate', $lecturer['id_user']) }}" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="w-full text-left px-2.5 py-2 rounded-lg hover:bg-slate-50 transition flex flex-col cursor-pointer">
+                                            <span class="text-xs font-semibold text-slate-900 truncate">{{ $lecturer['nama'] }}</span>
+                                            <span class="text-[11px] text-slate-500">{{ $lecturer['komisi'] ?? 'Komisi Senat' }} &middot; {{ $lecturer['nim_nip'] ?: '-' }}</span>
+                                        </button>
+                                    </form>
+                                @endif
+                            @empty
+                                <div class="px-2.5 py-3 text-center text-xs text-slate-500">
+                                    Tidak ada data anggota
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Badge Status Sistem --}}
                 <div class="hidden items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11.5px] font-medium text-white sm:flex">
                     <span class="h-2 w-2 rounded-full bg-emerald-400"></span>

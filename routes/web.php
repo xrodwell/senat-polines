@@ -95,6 +95,7 @@ Route::prefix('portal')->group(function (): void {
             ->name('portal.attendance.berbagi.destroy');
 
         Route::get('/session', [PortalController::class, 'adminMeetingSession'])->name('portal.session');
+        Route::match(['get', 'post'], '/leave-impersonate', [PortalController::class, 'leaveImpersonate'])->name('portal.leave-impersonate');
 
         // 13 — Sekretariat (dialihkan ke /admin) — Khusus role: admin
         Route::prefix('sekretariat')->middleware('portal.role:admin')->group(function (): void {
@@ -113,6 +114,10 @@ Route::prefix('portal')->group(function (): void {
 Route::get('/admin', \App\Livewire\AdminPreview::class)
     ->middleware(['portal.auth', 'portal.role:admin'])
     ->name('admin.preview');
+
+Route::post('/admin/impersonate/{id}', [PortalController::class, 'impersonate'])
+    ->middleware('portal.auth')
+    ->name('admin.impersonate');
 
 // API Proxy Frontend -> Backend untuk Chatbot Aspirasi
 Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])
