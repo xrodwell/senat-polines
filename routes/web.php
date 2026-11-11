@@ -19,6 +19,9 @@ Route::get('/profil/struktur-organisasi', [PublicController::class, 'structure']
 
 // 03 / 04 — Direktori Komisi & Anggota
 Route::get('/direktori-komisi', [PublicController::class, 'directory'])->name('public.directory');
+Route::post('/direktori-komisi/anggota', [PublicController::class, 'storeMember'])->name('public.directory.store');
+Route::put('/direktori-komisi/anggota/{id}', [PublicController::class, 'updateMember'])->name('public.directory.update');
+Route::delete('/direktori-komisi/anggota/{id}', [PublicController::class, 'destroyMember'])->name('public.directory.destroy');
 Route::get('/direktori-komisi/{slug}', [PublicController::class, 'member'])->name('public.directory.member');
 
 // 05A / 05B / 05C — Produk Hukum
