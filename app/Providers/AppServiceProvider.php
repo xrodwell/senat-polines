@@ -53,8 +53,9 @@ class AppServiceProvider extends ServiceProvider
         Http::globalRequestMiddleware(function ($request) {
             $token = session('auth_token');
             $backend = rtrim((string) config('services.backend_api.url', ''), '/');
+            $url = method_exists($request, 'url') ? (string) $request->url() : (string) $request->getUri();
 
-            if ($token && $backend && str_starts_with((string) $request->url(), $backend)) {
+            if ($token && $backend && str_starts_with($url, $backend)) {
                 return $request->withHeader('Authorization', 'Bearer ' . $token);
             }
 
