@@ -25,3 +25,9 @@ yarn-error.log
 .env.testing
 
 /storage/app/private/livewire-tmp/*
+
+# local env dumps / sqlite artifacts must never be committed
+.envf
+.env.*.local
+database/*.sqlite
+database/database.sqlite
