@@ -48,6 +48,9 @@ trait HasPortalAuth
                 $data = $response->json();
                 $user = $data['user'] ?? [];
 
+                // Rotate the session id to prevent session fixation.
+                $request->session()->regenerate();
+
                 // Simpan ke session Laravel frontend
                 session([
                     'auth_token'     => $data['token'] ?? null,
@@ -71,7 +74,8 @@ trait HasPortalAuth
             return back()->withInput($request->only('identifier'))->withErrors(['login' => $errorMessage]);
         } catch (\Throwable $e) {
             Log::error('Portal login failed: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            return back()->withInput($request->only('identifier'))->withErrors(['login' => 'Gagal terhubung ke backend API (' . $e->getMessage() . '). Pastikan server backend aktif di port 8001.']);
+            return back()->withInput($request->only('identifier'))
+                ->withErrors(['login' => 'Layanan autentikasi sedang tidak tersedia. Silakan coba beberapa saat lagi.']);
         }
     }
 

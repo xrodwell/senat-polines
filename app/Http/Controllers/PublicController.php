@@ -108,6 +108,238 @@ class PublicController extends Controller
         ]);
     }
 
+    /** Simpan Anggota Komisi Baru (CRUD Direktori) */
+    public function storeMember(Request $request)
+    {
+        $validated = $request->validate([
+            'nama' => ['required', 'string', 'max:255'],
+            'nim_nip' => ['nullable', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'committee_code' => ['required', 'string'],
+            'role' => ['required', 'string'],
+            'organ' => ['nullable', 'string', 'max:255'],
+            'focus' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
+        $apiSuccess = false;
+
+        // 1. Kirim ke Backend API jika aktif
+        try {
+            $apiUrl = str_contains($baseUrl, '/api')
+                ? "{$baseUrl}/committees/members"
+                : "{$baseUrl}/api/committees/members";
+
+            $response = Http::timeout(4)->post($apiUrl, [
+                'nama' => $validated['nama'],
+                'nim_nip' => $validated['nim_nip'] ?? '',
+                'email' => $validated['email'] ?? '',
+                'id_komisi' => $validated['committee_code'],
+                'jabatan_komisi' => $validated['role'],
+                'organ' => $validated['organ'] ?? '',
+            ]);
+
+            if ($response->successful()) {
+                $apiSuccess = true;
+            }
+        } catch (\Throwable $e) {
+            Log::info('Simpan anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
+        }
+
+        // 2. Sinkronkan ke mock storage lokal (committees.json)
+        $mockPath = storage_path('mock/committees.json');
+        if (file_exists($mockPath)) {
+            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
+            foreach ($committees as &$c) {
+                if ($c['code'] === $validated['committee_code']) {
+                    if ($validated['role'] === 'Ketua') {
+                        $c['lead'] = $validated['nama'];
+                    } elseif ($validated['role'] === 'Sekretaris') {
+                        $c['secretary'] = $validated['nama'];
+                    } else {
+                        if (!isset($c['members']) || !is_array($c['members'])) {
+                            $c['members'] = [];
+                        }
+                        if (!in_array($validated['nama'], $c['members'])) {
+                            $c['members'][] = $validated['nama'];
+                        }
+                    }
+                }
+                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
+                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
+                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
+            }
+            unset($c);
+            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Anggota Senat berhasil ditambahkan ke ' . $validated['committee_code'],
+                'api_synced' => $apiSuccess,
+            ]);
+        }
+
+        return redirect()->route('public.directory')->with('success', 'Anggota Senat berhasil ditambahkan!');
+    }
+
+    /** Update Anggota Komisi (CRUD Direktori) */
+    public function updateMember(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'nama' => ['required', 'string', 'max:255'],
+            'nama_lama' => ['nullable', 'string', 'max:255'],
+            'nim_nip' => ['nullable', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'committee_code' => ['required', 'string'],
+            'role' => ['required', 'string'],
+            'organ' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
+        $apiSuccess = false;
+
+        try {
+            $apiUrl = str_contains($baseUrl, '/api')
+                ? "{$baseUrl}/committees/members/{$id}"
+                : "{$baseUrl}/api/committees/members/{$id}";
+
+            $response = Http::timeout(4)->put($apiUrl, [
+                'nama' => $validated['nama'],
+                'nama_lama' => $validated['nama_lama'] ?? null,
+                'nim_nip' => $validated['nim_nip'] ?? '',
+                'email' => $validated['email'] ?? '',
+                'id_komisi' => $validated['committee_code'],
+                'jabatan_komisi' => $validated['role'],
+            ]);
+
+            if ($response->successful()) {
+                $apiSuccess = true;
+            }
+        } catch (\Throwable $e) {
+            Log::info('Update anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
+        }
+
+        // Update local mock
+        $mockPath = storage_path('mock/committees.json');
+        if (file_exists($mockPath)) {
+            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
+            $targetOldName = $validated['nama_lama'] ?? $validated['nama'];
+            $newCode = $validated['committee_code'];
+            $newRole = $validated['role'];
+            $newName = $validated['nama'];
+
+            // Hapus nama lama dari posisi sebelumnya di semua komisi agar tidak duplikat
+            foreach ($committees as &$c) {
+                if ($c['lead'] === $targetOldName) {
+                    $c['lead'] = 'Belum ditentukan';
+                }
+                if ($c['secretary'] === $targetOldName) {
+                    $c['secretary'] = 'Belum ditentukan';
+                }
+                if (isset($c['members']) && is_array($c['members'])) {
+                    $c['members'] = array_values(array_filter($c['members'], fn($m) => $m !== $targetOldName));
+                }
+            }
+            unset($c);
+
+            // Masukkan data baru ke komisi tujuan sesuai perannya
+            foreach ($committees as &$c) {
+                if ($c['code'] === $newCode) {
+                    if ($newRole === 'Ketua') {
+                        $c['lead'] = $newName;
+                    } elseif ($newRole === 'Sekretaris') {
+                        $c['secretary'] = $newName;
+                    } else {
+                        if (!isset($c['members']) || !is_array($c['members'])) {
+                            $c['members'] = [];
+                        }
+                        if (!in_array($newName, $c['members'])) {
+                            $c['members'][] = $newName;
+                        }
+                    }
+                }
+                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
+                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
+                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
+            }
+            unset($c);
+
+            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data anggota Senat berhasil diperbarui',
+                'api_synced' => $apiSuccess,
+            ]);
+        }
+
+        return redirect()->route('public.directory')->with('success', 'Data anggota berhasil diperbarui!');
+    }
+
+    /** Hapus Anggota Komisi (CRUD Direktori) */
+    public function destroyMember(Request $request, string $id)
+    {
+        $name = $request->input('nama');
+        $committeeCode = $request->input('committee_code');
+
+        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
+        $apiSuccess = false;
+
+        try {
+            $apiUrl = str_contains($baseUrl, '/api')
+                ? "{$baseUrl}/committees/members/{$id}"
+                : "{$baseUrl}/api/committees/members/{$id}";
+
+            $response = Http::timeout(4)->delete($apiUrl, [
+                'nama' => $name,
+                'committee_code' => $committeeCode,
+            ]);
+            if ($response->successful()) {
+                $apiSuccess = true;
+            }
+        } catch (\Throwable $e) {
+            Log::info('Hapus anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
+        }
+
+        // Hapus dari mock storage lokal
+        $mockPath = storage_path('mock/committees.json');
+        if (file_exists($mockPath) && $name) {
+            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
+            foreach ($committees as &$c) {
+                if (empty($committeeCode) || $c['code'] === $committeeCode) {
+                    if (isset($c['members']) && is_array($c['members'])) {
+                        $c['members'] = array_values(array_filter($c['members'], fn($m) => $m !== $name));
+                    }
+                    if ($c['lead'] === $name) {
+                        $c['lead'] = 'Belum ditentukan';
+                    }
+                    if ($c['secretary'] === $name) {
+                        $c['secretary'] = 'Belum ditentukan';
+                    }
+                }
+                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
+                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
+                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
+            }
+            unset($c);
+            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Anggota Senat berhasil dihapus dari komisi',
+                'api_synced' => $apiSuccess,
+            ]);
+        }
+
+        return redirect()->route('public.directory')->with('success', 'Anggota Senat berhasil dihapus!');
+    }
+
     /** 04 — Detail Anggota */
     public function member(string $slug): View
     {

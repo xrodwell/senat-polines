@@ -19,6 +19,9 @@ Route::get('/profil/struktur-organisasi', [PublicController::class, 'structure']
 
 // 03 / 04 — Direktori Komisi & Anggota
 Route::get('/direktori-komisi', [PublicController::class, 'directory'])->name('public.directory');
+Route::post('/direktori-komisi/anggota', [PublicController::class, 'storeMember'])->name('public.directory.store');
+Route::put('/direktori-komisi/anggota/{id}', [PublicController::class, 'updateMember'])->name('public.directory.update');
+Route::delete('/direktori-komisi/anggota/{id}', [PublicController::class, 'destroyMember'])->name('public.directory.destroy');
 Route::get('/direktori-komisi/{slug}', [PublicController::class, 'member'])->name('public.directory.member');
 
 // 05A / 05B / 05C — Produk Hukum
@@ -53,7 +56,9 @@ Route::prefix('portal')->group(function (): void {
     // Rute Tamu (Hanya dapat diakses jika belum login)
     Route::middleware('portal.guest')->group(function (): void {
         Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
-        Route::post('/login', [PortalController::class, 'authenticate'])->name('portal.login.submit');
+        Route::post('/login', [PortalController::class, 'authenticate'])
+            ->middleware('throttle:6,1')
+            ->name('portal.login.submit');
     });
 
     Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('portal.logout');
@@ -111,4 +116,5 @@ Route::get('/admin', \App\Livewire\AdminPreview::class)
 
 // API Proxy Frontend -> Backend untuk Chatbot Aspirasi
 Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])
+    ->middleware('throttle:20,1')
     ->name('api.chatbot.send');
