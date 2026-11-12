@@ -282,7 +282,18 @@
                                 <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">Anggota</p>
                                 <ul class="mt-2 flex flex-wrap gap-2">
                                     @foreach ($committee['members'] as $member)
-                                        <li class="rounded-full border border-senat-line bg-senat-surface px-3 py-1 text-[11px] text-senat-body">{{ $member }}</li>
+                                        @php
+                                            $memberName = is_array($member) ? ($member['nama'] ?? '—') : $member;
+                                            $memberSlug = is_array($member)
+                                                ? ($member['slug'] ?? \App\Support\SenatDirectory::slug($memberName))
+                                                : \App\Support\SenatDirectory::slug($memberName);
+                                        @endphp
+                                        <li>
+                                            <a href="{{ route('public.directory.member', $memberSlug) }}"
+                                               class="inline-block rounded-full border border-senat-line bg-senat-surface px-3 py-1 text-[11px] text-senat-body hover:border-senat-primary hover:text-senat-primary transition-colors">
+                                                {{ $memberName }}
+                                            </a>
+                                        </li>
                                     @endforeach
                                 </ul>
                             </div>
