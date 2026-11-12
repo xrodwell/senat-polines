@@ -386,7 +386,8 @@ class SenatDirectory
             ]);
             foreach ($committee['members'] ?? [] as $member) {
                 $push([
-                    'name' => $member,
+                    'name' => is_array($member) ? ($member['nama'] ?? $member['name'] ?? '—') : $member,
+                    'nip' => is_array($member) ? ($member['nim_nip'] ?? null) : null,
                     'role' => 'Anggota '.self::committeeLabel($committee['code']),
                     'organ' => self::committeeLabel($committee['code']).' — '.$committee['name'],
                     'committee_code' => $committee['code'],

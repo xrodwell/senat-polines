@@ -75,7 +75,7 @@
                 <h2 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Struktur Pimpinan, Komisi, dan Anggota</h2>
             </div>
             <p class="text-xs text-senat-muted italic">
-                * Klik pada setiap bagan untuk langsung membuka halaman profil dan mandatnya.
+                * Klik pada setiap bagan untuk langsung membuka halaman detail profil.
             </p>
         </div>
 
@@ -87,7 +87,7 @@
                 <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-hero">Struktur Organisasi Senat Akademik</p>
             </div>
 
-            {{-- 1. KETUA SENAT (LANGSUNG MEMBUKA PROFIL) --}}
+            {{-- 1. KETUA SENAT (KLIK LANGSUNG KE DETAIL PROFIL) --}}
             @if (! empty($chair))
                 <a href="{{ route('public.directory.member', $chair['slug'] ?? 'sukamto') }}"
                    class="group mx-auto mt-8 block w-full max-w-[500px] cursor-pointer overflow-hidden rounded-[14px] border border-[#144f8c] bg-senat-hero transition-all duration-200 hover:scale-[1.015] hover:shadow-xl hover:border-senat-orange">
@@ -130,10 +130,13 @@
                 </div>
             </div>
 
-            {{-- 2. SEKRETARIS SENAT & BADAN PEKERJA HARIAN (LANGSUNG MEMBUKA PROFIL) --}}
+            {{-- 2. SEKRETARIS SENAT & BADAN PEKERJA HARIAN (KLIK LANGSUNG KE DETAIL PROFIL) --}}
             <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($officers as $officer)
-                    <a href="{{ route('public.directory.member', $officer['slug']) }}"
+                    @php
+                        $officerSlug = $officer['slug'] ?? \App\Support\SenatDirectory::slug($officer['name'] ?? '');
+                    @endphp
+                    <a href="{{ route('public.directory.member', $officerSlug) }}"
                        class="group flex h-[110px] cursor-pointer items-center justify-between rounded-[12px] border border-[#d9e3f0] bg-white px-[18px] transition-all duration-200 hover:scale-[1.015] hover:border-senat-primary hover:shadow-md">
                         <div class="flex items-center min-w-0">
                             <span class="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
@@ -190,19 +193,21 @@
                 </div>
             </div>
 
-            {{-- 3. KARTU LIMA KOMISI (LANGSUNG MEMBUKA PROFIL KETUA KOMISI) --}}
+            {{-- 3. KARTU LIMA KOMISI (KLIK LANGSUNG KE DETAIL PROFIL KETUA / KOMISI) --}}
             <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
                 @forelse ($committees as $committee)
                     @php
                         $leadSlug = \App\Support\SenatDirectory::slug($committee['lead'] ?? '');
-                        $committeeLabel = \App\Support\SenatDirectory::committeeLabel($committee['code']);
+                        $committeeLabel = \App\Support\SenatDirectory::committeeLabel($committee['code'] ?? '');
+                        $targetUrl = !empty($leadSlug) && $leadSlug !== '-' && $leadSlug !== 'belum-ditentukan'
+                            ? route('public.directory.member', $leadSlug)
+                            : '#tupoksi-' . ($committee['code'] ?? '');
                     @endphp
-                    <a href="{{ route('public.directory.member', $leadSlug) }}"
-                       class="group flex flex-col cursor-pointer overflow-hidden rounded-[12px] border border-[#d9e3f0] bg-white transition-all duration-200 hover:scale-[1.02] hover:border-senat-primary hover:shadow-lg">
+                    <article class="group flex flex-col overflow-hidden rounded-[12px] border border-[#d9e3f0] bg-white transition-all duration-200 hover:scale-[1.02] hover:border-senat-primary hover:shadow-lg">
                         <div class="h-1 w-full {{ $loop->iteration === 3 ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
 
                         <div class="flex flex-1 flex-col p-5">
-                            <div class="flex items-center gap-3">
+                            <a href="{{ $targetUrl }}" class="flex items-center gap-3">
                                 <span class="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
                                     <span class="flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[#bdd1e5] bg-senat-badgeBg text-[14px] font-bold text-senat-link" aria-hidden="true">
                                         {{ $initials($committee['lead'] ?? null) }}
@@ -214,18 +219,19 @@
                                     </p>
                                     <p class="mt-0.5 text-[8px] font-medium uppercase leading-tight text-senat-body group-hover:text-senat-primary transition-colors truncate">{{ $committee['lead'] ?? '—' }}</p>
                                 </div>
-                            </div>
+                            </a>
 
                             <p class="mt-4 text-center text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary transition-colors">{{ $committee['name'] }}</p>
                             <p class="mt-2 flex-1 text-center text-[10px] leading-[1.3] text-senat-body line-clamp-3">{{ $committee['focus'] }}</p>
 
                             <div class="mt-4 h-px w-full bg-[#d9e3f0]" aria-hidden="true"></div>
 
-                            <span class="mt-3 block text-center text-[10px] font-bold text-senat-link group-hover:text-senat-primary transition-colors">
+                            <a href="{{ $targetUrl }}"
+                               class="mt-3 block text-center text-[10px] font-bold text-senat-link group-hover:text-senat-primary transition-colors">
                                 Lihat profil &amp; mandat <span aria-hidden="true">›</span>
-                            </span>
+                            </a>
                         </div>
-                    </a>
+                    </article>
                 @empty
                     <div class="sm:col-span-2 lg:col-span-5">
                         <x-senat.empty title="Data komisi belum dimuat" />
@@ -283,14 +289,16 @@
                                 <ul class="mt-2 flex flex-wrap gap-2">
                                     @foreach ($committee['members'] as $member)
                                         @php
-                                            $memberName = is_array($member) ? ($member['nama'] ?? '—') : $member;
+                                            $memberName = is_array($member) ? ($member['nama'] ?? $member['name'] ?? '—') : $member;
                                             $memberSlug = is_array($member)
                                                 ? ($member['slug'] ?? \App\Support\SenatDirectory::slug($memberName))
                                                 : \App\Support\SenatDirectory::slug($memberName);
                                         @endphp
-                                        <li>
-                                            <a href="{{ route('public.directory.member', $memberSlug) }}"
-                                               class="inline-block rounded-full border border-senat-line bg-senat-surface px-3 py-1 text-[11px] text-senat-body hover:border-senat-primary hover:text-senat-primary transition-colors">
+                                        <li class="rounded-full border border-senat-line bg-senat-surface px-3 py-1 text-[11px] text-senat-body hover:border-senat-primary hover:text-senat-primary transition-colors">
+                                            <a href="{{ route('public.directory.member', $memberSlug) }}" class="transition-colors">
+                                                {{ $memberName }}
+                                            </a>
+                                        </li>
                                                 {{ $memberName }}
                                             </a>
                                         </li>
