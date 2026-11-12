@@ -1,5 +1,41 @@
 [
     {
+        "id": 19,
+        "title": "Berita Utama Terkini 6af400a770ba9",
+        "slug": "berita-utama-terkini-6af400a770ba9",
+        "category": "Warta Senat",
+        "date": "2026-11-11",
+        "status": "Terpublikasi",
+        "excerpt": "Naskah rilis pers terverifikasi untuk dashboard anggota.",
+        "thumbnail": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": [],
+        "author": "Sekretariat Senat Polines",
+        "body": [
+            "Naskah rilis pers terverifikasi untuk dashboard anggota."
+        ]
+    },
+    {
+        "id": 18,
+        "title": "Judul Hasil Edit 6af400a06c8ae",
+        "slug": "judul-hasil-edit-6af400a06c8ae",
+        "category": "Warta Senat",
+        "date": "2026-11-11",
+        "status": "Draf",
+        "excerpt": "Isi berita lengkap untuk pengujian publikasi warta senat polines.",
+        "thumbnail": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": [],
+        "author": "Sekretariat Senat Polines",
+        "body": [
+            "Isi berita lengkap untuk pengujian publikasi warta senat polines."
+        ]
+    },
+    {
         "id": 17,
         "title": "Berita Utama Terkini 6af1d58e0de30",
         "slug": "berita-utama-terkini-6af1d58e0de30",
