@@ -60,7 +60,9 @@ Route::prefix('portal')->group(function (): void {
     // Rute Tamu (Hanya dapat diakses jika belum login)
     Route::middleware('portal.guest')->group(function (): void {
         Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
-        Route::post('/login', [PortalController::class, 'authenticate'])->name('portal.login.submit');
+        Route::post('/login', [PortalController::class, 'authenticate'])
+            ->middleware('throttle:6,1')
+            ->name('portal.login.submit');
     });
 
     Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('portal.logout');
@@ -97,6 +99,7 @@ Route::prefix('portal')->group(function (): void {
             ->name('portal.attendance.berbagi.destroy');
 
         Route::get('/session', [PortalController::class, 'adminMeetingSession'])->name('portal.session');
+        Route::match(['get', 'post'], '/leave-impersonate', [PortalController::class, 'leaveImpersonate'])->name('portal.leave-impersonate');
 
         // 13 — Sekretariat (dialihkan ke /admin) — Khusus role: admin
         Route::prefix('sekretariat')->middleware('portal.role:admin')->group(function (): void {
@@ -116,6 +119,11 @@ Route::get('/admin', \App\Livewire\AdminPreview::class)
     ->middleware(['portal.auth', 'portal.role:admin'])
     ->name('admin.preview');
 
+Route::post('/admin/impersonate/{id}', [PortalController::class, 'impersonate'])
+    ->middleware('portal.auth')
+    ->name('admin.impersonate');
+
 // API Proxy Frontend -> Backend untuk Chatbot Aspirasi
 Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])
+    ->middleware('throttle:20,1')
     ->name('api.chatbot.send');

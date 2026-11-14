@@ -122,8 +122,9 @@
                         <div class="pt-4 md:pt-0 md:pl-6">
                             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Badan Pekerja Harian (BPH)</span>
                             <h4 class="text-base font-extrabold text-slate-900 mt-1">Andi Setiawan, S.E., M.M.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">Ketua BPH</p>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">Ketua BPH &middot; NIP. 197607202008011011</p>
                             <h4 class="text-sm font-bold text-slate-800 mt-2">Vinda Setya Kartika, S.T., M.T.</h4>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">Sekretaris BPH &middot; NIP. 199108112019032024</p>
                             <p class="text-xs text-slate-600 mt-1 leading-relaxed">Penyusun rancangan agenda persidangan berkala, koordinasi antar-komisi, dan penyiapan berkas sidang.</p>
                         </div>
                     </div>

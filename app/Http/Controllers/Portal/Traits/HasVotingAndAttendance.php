@@ -171,7 +171,12 @@ trait HasVotingAndAttendance
         ]);
 
         try {
-            $userId = (int) (auth()->id() ?: session('auth_user_id', 2));
+            $userId = (int) (auth()->id() ?: session('auth_user_id'));
+
+            if ($userId <= 0) {
+                return back()->with('error', 'Sesi Anda tidak valid. Silakan login ulang.');
+            }
+
             $result = $this->votings->castVote(
                 (int) $validated['id_voting'],
                 (int) $validated['id_opsi'],
@@ -184,7 +189,8 @@ trait HasVotingAndAttendance
 
             return back()->with('success', $result['message'] ?? 'Suara Anda berhasil dicatat.');
         } catch (\Throwable $e) {
-            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+            \Log::error('castVote failed: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan sistem saat menyimpan suara. Silakan coba lagi.');
         }
     }
 
@@ -197,7 +203,7 @@ trait HasVotingAndAttendance
             'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'meetings' => $this->meetings->all(),
-            'idUser' => (int) (auth()->id() ?: session('auth_user_id', (int) env('PORTAL_DEMO_USER_ID', 2))),
+            'idUser' => (int) (auth()->id() ?: session('auth_user_id', 0)),
         ]);
     }
 

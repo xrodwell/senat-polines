@@ -27,6 +27,7 @@ use App\Repositories\Mock\JsonFeatureRepository;
 use App\Repositories\Mock\JsonMeetingRepository;
 use App\Repositories\Mock\JsonPostRepository;
 use App\Repositories\Mock\JsonRegulationRepository;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -47,6 +48,18 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        // Attach the portal bearer token to every outgoing backend call so the
+        // API can authenticate the request instead of trusting the network.
+        Http::globalRequestMiddleware(function ($request) {
+            $token = session('auth_token');
+            $backend = rtrim((string) config('services.backend_api.url', ''), '/');
+            $url = method_exists($request, 'url') ? (string) $request->url() : (string) $request->getUri();
+
+            if ($token && $backend && str_starts_with($url, $backend)) {
+                return $request->withHeader('Authorization', 'Bearer ' . $token);
+            }
+
+            return $request;
+        });
     }
 }

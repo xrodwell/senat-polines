@@ -1,40 +1,6 @@
-@import "tailwindcss";
-
-@source "../views/**/*.blade.php";
-@source "../../app/Livewire/**/*.php";
-
-@theme {
-    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-    --font-portal: "Inter", ui-sans-serif, system-ui, sans-serif;
-
-    --color-senat-hero: #03428b;
-    --color-senat-primary: #181a58;
-    --color-senat-primaryHover: #0f103b;
-    --color-senat-link: #03428b;
-    --color-senat-orange: #f8c300;
-    --color-senat-orangeHover: #dfae00;
-    --color-senat-yellow: #f8c300;
-    --color-senat-yellowHover: #dfae00;
-    --color-senat-blue: #03428b;
-    --color-senat-navy: #181a58;
-    --color-senat-ink: #172133;
-    --color-senat-body: #52637d;
-    --color-senat-muted: #637082;
-    --color-senat-line: #e2e8ee;
-    --color-senat-surface: #f7f9fc;
-    --color-senat-sidebarLine: #d9e2ef;
-    --color-senat-sky: #8fc7ff;
-    --color-senat-skySoft: #cfe0ff;
-    --color-senat-badgeBg: #f2f9ff;
-    --color-senat-badgeLine: #8cb8e3;
-    --color-senat-border: #cbd5e1;
-
-    --color-polines-navy: #181a58;
-    --color-polines-navyDark: #10123b;
-    --color-polines-blue: #03428b;
-    --color-polines-orange: #f8c300;
-    --color-polines-orangeHover: #dfae00;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 [x-cloak] {
     display: none !important;
