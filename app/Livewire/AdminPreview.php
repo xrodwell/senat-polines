@@ -10,6 +10,7 @@ use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use App\Livewire\Admin\Traits\HasAspirationManagement;
 use App\Livewire\Admin\Traits\HasAttendanceAndQr;
+use App\Livewire\Admin\Traits\HasCommitteeManagement;
 use App\Livewire\Admin\Traits\HasMeetingManagement;
 use App\Livewire\Admin\Traits\HasNewsAndMedia;
 use App\Livewire\Admin\Traits\HasNotulensiManagement;
@@ -32,6 +33,7 @@ class AdminPreview extends Component
     use WithFileUploads;
     use HasAspirationManagement;
     use HasAttendanceAndQr;
+    use HasCommitteeManagement;
     use HasMeetingManagement;
     use HasNewsAndMedia;
     use HasNotulensiManagement;

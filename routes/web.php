@@ -19,10 +19,14 @@ Route::get('/profil/struktur-organisasi', [PublicController::class, 'structure']
 
 // 03 / 04 — Direktori Komisi & Anggota
 Route::get('/direktori-komisi', [PublicController::class, 'directory'])->name('public.directory');
-Route::post('/direktori-komisi/anggota', [PublicController::class, 'storeMember'])->name('public.directory.store');
-Route::put('/direktori-komisi/anggota/{id}', [PublicController::class, 'updateMember'])->name('public.directory.update');
-Route::delete('/direktori-komisi/anggota/{id}', [PublicController::class, 'destroyMember'])->name('public.directory.destroy');
 Route::get('/direktori-komisi/{slug}', [PublicController::class, 'member'])->name('public.directory.member');
+
+// Manajemen anggota komisi — dialihkan/dikhususkan ke Admin Sekretariat (/admin?tab=Direktori+Komisi+%26+Anggota)
+Route::middleware(['portal.auth', 'portal.role:admin'])->group(function (): void {
+    Route::post('/direktori-komisi/anggota', [PublicController::class, 'storeMember'])->name('public.directory.store');
+    Route::put('/direktori-komisi/anggota/{id}', [PublicController::class, 'updateMember'])->name('public.directory.update');
+    Route::delete('/direktori-komisi/anggota/{id}', [PublicController::class, 'destroyMember'])->name('public.directory.destroy');
+});
 
 // 05A / 05B / 05C — Produk Hukum
 Route::get('/regulasi', [PublicController::class, 'regulations'])->name('public.regulations');
