@@ -35,6 +35,7 @@ trait HasNotulensiManagement
     public string $rekamanError = '';
     public string $rekamanNama = '';
     public int $rekamanDurasi = 0;
+    public ?int $rekamanNotulensiId = null;
     public array $rekamanList = [];
 
 
@@ -258,7 +259,7 @@ trait HasNotulensiManagement
             'rekamanFile.max' => 'Berkas terlalu besar. Maksimal 1 GB — untuk rapat panjang unggah audio (M4A/MP3) saja, bukan video.',
         ], ['rekamanFile' => 'berkas rekaman', 'rekamanRapatId' => 'rapat']);
 
-        $this->reset(['rekamanTranskrip', 'rekamanNotulen', 'rekamanError', 'rekamanStatus', 'rekamanProgres', 'rekamanAktifId']);
+        $this->reset(['rekamanTranskrip', 'rekamanNotulen', 'rekamanError', 'rekamanStatus', 'rekamanProgres', 'rekamanAktifId', 'rekamanNotulensiId']);
 
         $this->rekamanNama = $this->rekamanFile->getClientOriginalName();
 
@@ -324,6 +325,10 @@ trait HasNotulensiManagement
                 $this->rekamanNotulen = (string) $d['notulen'];
             }
 
+            if (! empty($d['id_notulensi'])) {
+                $this->rekamanNotulensiId = (int) $d['id_notulensi'];
+            }
+
             if ($this->rekamanStatus === 'selesai') {
                 $this->flashMessage = 'Notulensi otomatis selesai. Periksa dan sunting sebelum disahkan.';
                 $this->loadNotulensiData();
@@ -384,6 +389,12 @@ trait HasNotulensiManagement
     public function viewNotulensi(?int $id): void
     {
         $this->viewingNotulensiId = $id;
+    }
+
+    /** URL publik PDF notulen (format FPM 5.5.01/L2) yang dicetak backend. */
+    public function pdfUrl(int $idNotulensi): string
+    {
+        return $this->getBackendUrl() . "/notulensi/{$idNotulensi}/pdf";
     }
 
     #[Computed]
