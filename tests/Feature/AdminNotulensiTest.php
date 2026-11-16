@@ -70,6 +70,24 @@ class AdminNotulensiTest extends TestCase
             ->assertSee('Berhasil! Notulensi &amp; Risalah sidang baru sukses disimpan', false);
     }
 
+    public function test_kartu_notulensi_menyediakan_tautan_pdf(): void
+    {
+        Livewire::withQueryParams(['tab' => 'Risalah & Notulensi Sidang'])
+            ->test(AdminPreview::class)
+            ->set('notulensiList', [
+                [
+                    'id_notulensi' => 7,
+                    'status' => 'disahkan',
+                    'isi_notulensi' => 'Hasil sidang pleno',
+                    'rapat' => ['nama_agenda' => 'Sidang Pleno', 'tempat' => 'Ruang A'],
+                    'user' => ['nama' => 'Budi'],
+                ],
+            ])
+            ->assertSee('http://127.0.0.1:8001/api/notulensi/7/pdf')
+            ->call('viewNotulensi', 7)
+            ->assertSee('Unduh PDF Notulen');
+    }
+
     public function test_filtering_and_searching_notulensi(): void
     {
         Livewire::withQueryParams(['tab' => 'Risalah & Notulensi Sidang'])
