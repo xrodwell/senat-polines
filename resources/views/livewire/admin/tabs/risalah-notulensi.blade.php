@@ -162,6 +162,13 @@
                                         <x-senat.icon name="edit" class="h-3.5 w-3.5" /> Sunting &amp; Simpan ke Notulensi
                                     </button>
 
+                                    @if ($rekamanNotulensiId)
+                                        <a href="{{ $this->pdfUrl($rekamanNotulensiId) }}" target="_blank" rel="noopener"
+                                           class="inline-flex items-center gap-1.5 rounded-lg bg-senat-link px-3.5 py-2 text-[12px] font-semibold text-white hover:opacity-90">
+                                            <x-senat.icon name="file-text" class="h-3.5 w-3.5" /> Unduh Notulen PDF
+                                        </a>
+                                    @endif
+
                                     @if ($rekamanAktifId)
                                         <button type="button" wire:click="hapusRekaman({{ $rekamanAktifId }})"
                                                 class="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-[12px] font-semibold text-rose-700 hover:bg-rose-50">
@@ -377,6 +384,10 @@
                                                 class="rounded-lg bg-senat-badgeBg px-3 py-1.5 text-[12px] font-medium text-senat-link hover:bg-senat-link hover:text-white">
                                             Edit
                                         </button>
+                                        <a href="{{ $this->pdfUrl($item['id_notulensi']) }}" target="_blank" rel="noopener"
+                                           class="rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12px] font-medium text-senat-ink hover:bg-senat-badgeBg">
+                                            PDF
+                                        </a>
                                         <button type="button"
                                                 wire:click="deleteNotulensi({{ $item['id_notulensi'] }})"
                                                 wire:confirm="Yakin ingin menghapus risalah ini dari database?"
@@ -502,6 +513,10 @@
                                                 class="rounded-lg border border-senat-border bg-white px-4 py-2 text-[12.5px] font-medium text-senat-ink hover:bg-slate-50">
                                             Tutup
                                         </button>
+                                        <a href="{{ $this->pdfUrl($viewItem['id_notulensi']) }}" target="_blank" rel="noopener"
+                                           class="rounded-lg border border-senat-link bg-white px-4 py-2 text-[12.5px] font-medium text-senat-link hover:bg-senat-link/5">
+                                            Unduh PDF Notulen
+                                        </a>
                                         <button type="button" wire:click="editNotulensi({{ $viewItem['id_notulensi'] }}); viewNotulensi(null);"
                                                 class="rounded-lg bg-senat-link px-4 py-2 text-[12.5px] font-medium text-white hover:bg-senat-link/90">
                                             Edit Notulensi
