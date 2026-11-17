@@ -61,8 +61,12 @@ Route::prefix('portal')->group(function (): void {
     Route::middleware('portal.guest')->group(function (): void {
         Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
         Route::post('/login', [PortalController::class, 'authenticate'])
-            ->middleware('throttle:6,1')
+            ->middleware('throttle:30,1')
             ->name('portal.login.submit');
+        Route::get('/login/google', [PortalController::class, 'redirectToGoogle'])
+            ->name('portal.login.google');
+        Route::get('/login/google/callback', [PortalController::class, 'handleGoogleCallback'])
+            ->name('portal.login.google.callback');
     });
 
     Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('portal.logout');

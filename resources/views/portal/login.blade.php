@@ -23,17 +23,37 @@
 <body class="relative min-h-screen w-full bg-slate-50 font-sans text-slate-700 antialiased flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8" x-data="{
     show: false,
     showResetNotice: false,
-    fillDemo(ident, pass) {
-        const elId = document.getElementById('identifier');
-        const elPass = document.getElementById('password');
-        if (elId) {
-            elId.value = ident;
-            elId.dispatchEvent(new Event('input', { bubbles: true }));
+    identifierInput: @js(old('identifier', $lockoutIdentifier ?? '')),
+    lockedIdentifier: @js($lockoutIdentifier ?? ''),
+    lockoutRemaining: {{ (int) ($lockoutSeconds ?? 0) }},
+    _lockTimer: null,
+    init() {
+        if (this.lockoutRemaining > 0) {
+            this._lockTimer = setInterval(() => {
+                if (this.lockoutRemaining > 0) {
+                    this.lockoutRemaining--;
+                }
+                if (this.lockoutRemaining <= 0 && this._lockTimer) {
+                    clearInterval(this._lockTimer);
+                    this._lockTimer = null;
+                }
+            }, 1000);
         }
-        if (elPass) {
-            elPass.value = pass;
-            elPass.dispatchEvent(new Event('input', { bubbles: true }));
+    },
+    get isLockedOut() {
+        if (this.lockoutRemaining <= 0) return false;
+        const locked = (this.lockedIdentifier || '').trim().toLowerCase();
+        const current = (this.identifierInput || '').trim().toLowerCase();
+        return locked === '' || current === locked;
+    },
+    formatCountdown(seconds) {
+        const s = Math.max(0, Number(seconds) || 0);
+        const mins = Math.floor(s / 60);
+        const secs = s % 60;
+        if (mins > 0) {
+            return `${mins} menit ${String(secs).padStart(2, '0')} detik`;
         }
+        return `${secs} detik`;
     }
 }">
 
@@ -60,13 +80,27 @@
                     Masuk ke Portal Senat
                 </h1>
                 <p class="mt-1 text-xs text-slate-500">
-                    Gunakan kredensial institusional untuk mengakses akun
+                    Masuk dengan akun institusi atau akun Google terdaftar
+                </p>
+            </div>
+
+            {{-- Live Lockout Countdown Banner --}}
+            <div
+                x-cloak
+                x-show="isLockedOut"
+                class="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                <div class="font-semibold flex items-center justify-between gap-2">
+                    <span>Jeda Keamanan Aktif</span>
+                    <span class="font-mono font-bold tabular-nums text-amber-800" x-text="formatCountdown(lockoutRemaining)"></span>
+                </div>
+                <p class="mt-1 text-amber-800 leading-snug">
+                    Terlalu banyak percobaan kata sandi salah. Silakan tunggu hingga hitung mundur selesai atau gunakan login Google.
                 </p>
             </div>
 
             {{-- Error & Info Alerts --}}
             @if ($errors->any())
-                <div class="mt-5 rounded-lg bg-rose-50 border border-rose-200/80 p-3 text-xs text-rose-800">
+                <div x-show="!isLockedOut" class="mt-5 rounded-lg bg-rose-50 border border-rose-200/80 p-3 text-xs text-rose-800">
                     <div class="font-semibold">Autentikasi Gagal</div>
                     <p class="mt-0.5 text-rose-700 leading-snug">{{ $errors->first('login') ?: $errors->first() }}</p>
                 </div>
@@ -94,7 +128,7 @@
                             type="text"
                             required
                             autofocus
-                            value="{{ old('identifier') }}"
+                            x-model="identifierInput"
                             autocomplete="username"
                             placeholder="nama@polines.ac.id atau NIP"
                             class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition">
@@ -126,16 +160,11 @@
                     </div>
                 </div>
 
-                {{-- Remember Me & Forgot Password --}}
-                <div class="flex items-center justify-between text-xs pt-1">
-                    <label class="flex items-center gap-2 text-slate-600 cursor-pointer select-none">
-                        <input
-                            type="checkbox"
-                            name="remember"
-                            value="1"
-                            class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                        Ingat saya
-                    </label>
+                {{-- Session Policy Notice & Forgot Password --}}
+                <div class="flex items-center justify-between gap-2 text-xs pt-1">
+                    <span class="text-[11px] text-slate-400">
+                        Sesi aktif berlaku 3 hari sebelum verifikasi ulang
+                    </span>
                     <button
                         type="button"
                         @click="showResetNotice = true"
@@ -148,37 +177,41 @@
                 <div class="pt-2">
                     <button
                         type="submit"
-                        class="h-11 w-full rounded-lg bg-[#003366] hover:bg-[#00284d] text-white text-sm font-semibold transition-all duration-150 shadow-sm hover:shadow active:scale-[0.99] flex items-center justify-center gap-2">
-                        Masuk ke Portal
+                        :disabled="isLockedOut"
+                        :class="isLockedOut ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' : 'bg-[#003366] hover:bg-[#00284d] text-white shadow-sm hover:shadow active:scale-[0.99] cursor-pointer'"
+                        class="h-11 w-full rounded-lg text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2">
+                        <span x-show="!isLockedOut">Masuk ke Portal</span>
+                        <span x-cloak x-show="isLockedOut" x-text="'Coba lagi dalam ' + formatCountdown(lockoutRemaining)"></span>
                     </button>
-                    <p class="mt-2 text-center text-[10.5px] text-slate-400">
-                        Hak akses diarahkan otomatis sesuai peran akun
-                    </p>
                 </div>
             </form>
 
-            {{-- Compact Quick Fill Demo --}}
-            <div class="mt-6 pt-5 border-t border-slate-100">
-                <div class="flex items-center justify-between mb-2.5">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Akun Uji Coba:</span>
-                    <span class="text-[10px] text-slate-400">Klik untuk isi cepat</span>
+            {{-- Divider --}}
+            <div class="relative my-5">
+                <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div class="w-full border-t border-slate-200"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button
-                        type="button"
-                        @click="fillDemo('admin@senat.test', 'password')"
-                        class="rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-2 text-left transition hover:bg-blue-50 hover:border-blue-300">
-                        <span class="block text-[11px] font-bold text-slate-800">Sekretariat</span>
-                        <span class="block text-[10px] text-slate-500 truncate">admin@senat.test</span>
-                    </button>
-                    <button
-                        type="button"
-                        @click="fillDemo('197405191999031001', 'password')"
-                        class="rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-2 text-left transition hover:bg-blue-50 hover:border-blue-300">
-                        <span class="block text-[11px] font-bold text-slate-800">Anggota Senat</span>
-                        <span class="block text-[10px] text-slate-500 truncate">197405191999031001</span>
-                    </button>
+                <div class="relative flex justify-center text-[11px] font-medium uppercase tracking-wider">
+                    <span class="bg-white px-3 text-slate-400">atau</span>
                 </div>
+            </div>
+
+            {{-- Google Sign-In Option --}}
+            <div>
+                <a
+                    href="{{ route('portal.login.google') }}"
+                    class="h-11 w-full rounded-lg border border-slate-300 bg-white hover:bg-slate-50 hover:border-slate-400 text-slate-700 text-sm font-semibold transition-all duration-150 shadow-xs hover:shadow-sm active:scale-[0.99] flex items-center justify-center gap-2.5">
+                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+                        <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+                    </svg>
+                    <span>Masuk dengan Google</span>
+                </a>
+                <p class="mt-2.5 text-center text-[10.5px] text-slate-400">
+                    Terbuka untuk seluruh akun Google berdomain <span class="font-medium text-slate-500">*@polines.ac.id</span>.
+                </p>
             </div>
         </div>
     </main>
