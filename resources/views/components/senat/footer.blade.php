@@ -21,11 +21,6 @@
             <p class="senat-prose mt-5 max-w-[290px] text-[12px] leading-[1.5] text-senat-muted">
                 Lembaga normatif tertinggi di bidang akademik Politeknik Negeri Semarang yang merumuskan kebijakan dan menjaga mutu akademik institusi.
             </p>
-            <p class="mt-6 text-[12px] font-medium leading-[1.5] text-senat-muted">
-                Jl. Prof. Soedarto, S.H.<br>
-                Tembalang, Semarang<br>
-                Jawa Tengah 50275
-            </p>
         </div>
 
         {{-- Kolom 2: komisi & BP --}}
@@ -71,12 +66,17 @@
         {{-- Kolom 4: kontak --}}
         <div>
             <h2 class="text-[13px] font-bold text-[#0f172a]">Kontak &amp; Jam Operasional</h2>
-            <ul class="mt-4 space-y-1 text-[12px] text-senat-muted sm:mt-5">
-                <li><a href="mailto:senat@polines.ac.id" class="transition-colors hover:text-senat-primary">senat@polines.ac.id</a></li>
-                <li>(024) 7473417</li>
-                <li>Senin – Jumat</li>
-                <li>08.00 – 16.00 WIB</li>
-                <li>Gedung Rektorat Lt. 2, Kampus Tembalang</li>
+            <ul class="mt-4 space-y-1.5 text-[12px] text-senat-muted sm:mt-5">
+                <li>Telp. +62 24 7473417, 7499585, 7499586</li>
+                <li>Fax. +62 24 7472396</li>
+                <li>Email: <a href="mailto:sekretariat@polines.ac.id" class="transition-colors hover:text-senat-primary">sekretariat@polines.ac.id</a></li>
+                <li>Website: <a href="https://www.polines.ac.id" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-senat-primary">www.polines.ac.id</a></li>
+                <li class="pt-1">Senin – Jumat · 08.00 – 16.00 WIB</li>
+                <li class="pt-1">
+                    Jl. Prof. H. Soedarto S.H.,<br>
+                    Tembalang, Semarang<br>
+                    Kode Pos 50275
+                </li>
             </ul>
         </div>
     </div>

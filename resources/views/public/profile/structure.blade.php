@@ -237,11 +237,11 @@
                             <p class="mt-2.5 text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">
                                 {{ $committeeLabel }}
                             </p>
-                            <p class="mt-0.5 text-[11px] font-semibold leading-snug text-senat-body transition-colors group-hover:text-senat-primary">
+                            <p class="mt-0.5 flex min-h-[34px] items-start justify-center text-[11px] font-semibold leading-snug text-senat-body transition-colors group-hover:text-senat-primary">
                                 {{ $leadName }}
                             </p>
 
-                            <p class="mt-3 text-[12.5px] font-bold leading-snug text-senat-ink transition-colors group-hover:text-senat-primary">
+                            <p class="mt-2.5 flex min-h-[54px] items-start justify-center text-[12.5px] font-bold leading-snug text-senat-ink transition-colors group-hover:text-senat-primary">
                                 {{ $committee['name'] }}
                             </p>
                             <p class="mt-2 flex-1 text-[11px] leading-[1.45] text-senat-body">
