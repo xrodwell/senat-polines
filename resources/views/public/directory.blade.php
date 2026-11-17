@@ -32,6 +32,7 @@
             'name' => $committee['name'],
             'focus' => $committee['focus'],
             'tupoksi' => $committee['tupoksi'] ?? null,
+            'tupoksi_items' => $committee['tupoksi_items'] ?? [],
             'total' => $committee['members_count'],
             'lead' => $rows->first(fn (array $person) => $person['name'] === $committee['lead']),
             'secretary' => $rows->first(fn (array $person) => $person['name'] === $committee['secretary']),
@@ -52,11 +53,14 @@
         ->merge($leadership['bph'] ?? [])
         ->filter()
         ->values();
+    $requestedCode = strtoupper((string) request()->query('komisi', ''));
+    $initialActive = collect($panels)->search(fn (array $panel) => strtoupper($panel['code']) === $requestedCode);
+    $initialActive = $initialActive !== false ? (int) $initialActive : 0;
 @endphp
 
 @section('content')
     <div x-data="{
-        active: 0,
+        active: {{ $initialActive }},
         panels: @js($heroPanels)
     }">
 
@@ -154,7 +158,18 @@
                             @if (! empty($panel['lead']))
                                 <div class="group relative flex items-center gap-5 rounded-[12px] border border-[#a3c2e3] bg-senat-badgeBg p-6 transition-colors duration-150 hover:border-senat-link">
                                     <span class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link">
-                                        <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['lead']['name']) }}</span>
+                                        @php
+                                            $leadPhoto = $panel['lead']['photo'] ?? (! empty($panel['lead']['nip']) ? 'images/members/' . $panel['lead']['nip'] . '.jpg' : null);
+                                            $hasLeadPhoto = ! empty($leadPhoto) && (
+                                                file_exists(public_path($leadPhoto)) || 
+                                                file_exists(base_path('../Backend-Senat-Polines/public/' . $leadPhoto))
+                                            );
+                                        @endphp
+                                        @if ($hasLeadPhoto)
+                                            <img src="{{ asset($leadPhoto) }}" alt="{{ $panel['lead']['name'] }}" class="h-[74px] w-[74px] rounded-full object-cover object-top border border-[#bdd4eb]">
+                                        @else
+                                            <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['lead']['name']) }}</span>
+                                        @endif
                                     </span>
                                     <span class="min-w-0 flex-1">
                                         <span class="flex items-center justify-between gap-2">
@@ -174,7 +189,18 @@
                             @if (! empty($panel['secretary']))
                                 <div class="group relative flex items-center gap-5 rounded-[12px] border border-[#d6e0ed] bg-white p-6 transition-colors duration-150 hover:border-senat-link">
                                     <span class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link">
-                                        <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['secretary']['name']) }}</span>
+                                        @php
+                                            $secPhoto = $panel['secretary']['photo'] ?? (! empty($panel['secretary']['nip']) ? 'images/members/' . $panel['secretary']['nip'] . '.jpg' : null);
+                                            $hasSecPhoto = ! empty($secPhoto) && (
+                                                file_exists(public_path($secPhoto)) || 
+                                                file_exists(base_path('../Backend-Senat-Polines/public/' . $secPhoto))
+                                            );
+                                        @endphp
+                                        @if ($hasSecPhoto)
+                                            <img src="{{ asset($secPhoto) }}" alt="{{ $panel['secretary']['name'] }}" class="h-[74px] w-[74px] rounded-full object-cover object-top border border-[#bdd4eb]">
+                                        @else
+                                            <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['secretary']['name']) }}</span>
+                                        @endif
                                     </span>
                                     <span class="min-w-0 flex-1">
                                         <span class="flex items-center justify-between gap-2">
@@ -210,7 +236,18 @@
                                     <article class="flex flex-col rounded-[13px] border border-[#d6e0ed] bg-white p-6 shadow-2xs hover:shadow-xs transition-shadow">
                                         <div class="flex items-start gap-4">
                                             <span class="relative flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[14px] font-bold text-senat-link">
-                                                <span class="flex h-[62px] w-[62px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($person['name']) }}</span>
+                                                @php
+                                                    $personPhoto = $person['photo'] ?? (! empty($person['nip']) ? 'images/members/' . $person['nip'] . '.jpg' : null);
+                                                    $hasPersonPhoto = ! empty($personPhoto) && (
+                                                        file_exists(public_path($personPhoto)) || 
+                                                        file_exists(base_path('../Backend-Senat-Polines/public/' . $personPhoto))
+                                                    );
+                                                @endphp
+                                                @if ($hasPersonPhoto)
+                                                    <img src="{{ asset($personPhoto) }}" alt="{{ $person['name'] }}" class="h-[62px] w-[62px] rounded-full object-cover object-top border border-[#bdd4eb]">
+                                                @else
+                                                    <span class="flex h-[62px] w-[62px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($person['name']) }}</span>
+                                                @endif
                                             </span>
                                             <div class="min-w-0">
                                                 <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ strtoupper($person['role']) }}</p>
@@ -268,9 +305,17 @@
 
                             <div class="rounded-[6px] border border-[#e2e8f0] bg-white p-5 lg:col-span-2">
                                 <p class="text-[11px] font-bold uppercase tracking-[0.06em] text-senat-orange">Tupoksi Komisi</p>
-                                <p class="mt-3 max-w-[1100px] text-[12.5px] leading-relaxed text-[#475569]">
-                                    {{ $panel['tupoksi'] ?: 'Rincian tugas pokok dan fungsi komisi ini belum tersedia pada dokumen Sekretariat Senat.' }}
-                                </p>
+                                @if (! empty($panel['tupoksi_items']))
+                                    <ol class="mt-3 max-w-[1100px] list-decimal space-y-2 pl-5 text-[12.5px] leading-relaxed text-[#475569]">
+                                        @foreach ($panel['tupoksi_items'] as $item)
+                                            <li>{{ $item }}</li>
+                                        @endforeach
+                                    </ol>
+                                @else
+                                    <p class="mt-3 max-w-[1100px] text-[12.5px] leading-relaxed text-[#475569]">
+                                        {{ $panel['tupoksi'] ?: 'Rincian tugas pokok dan fungsi komisi ini belum tersedia pada dokumen Sekretariat Senat.' }}
+                                    </p>
+                                @endif
                             </div>
                         </div>
                     </section>
@@ -295,13 +340,37 @@
 
                     <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         @foreach ($leaderRows as $leader)
+                            @php
+                                $leadPhoto = $leader['photo'] ?? null;
+                                if (empty($leadPhoto)) {
+                                    $lName = $leader['name'] ?? '';
+                                    $lNip = $leader['nip'] ?? (\App\Support\SenatDirectory::LECTURER_DATA[$lName]['nip'] ?? null);
+                                    if (! $lNip) {
+                                        foreach (\App\Support\SenatDirectory::members() as $m) {
+                                            if (! empty($m['name']) && (str_contains($m['name'], $lName) || str_contains($lName, $m['name']))) {
+                                                $lNip = $m['nip'] ?? null;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (! empty($lNip)) {
+                                        $leadPhoto = 'images/members/' . $lNip . '.jpg';
+                                    }
+                                }
+                                $hasLeadPhoto = ! empty($leadPhoto) && (
+                                    file_exists(public_path($leadPhoto)) || 
+                                    file_exists(base_path('../Backend-Senat-Polines/public/' . $leadPhoto))
+                                );
+                            @endphp
                             <a href="{{ route('public.directory.member', $leader['slug']) }}"
                                class="group rounded-[12px] border border-[#d6e0ed] bg-white p-5 transition-colors duration-150 hover:border-senat-link">
                                 <span class="flex items-center gap-3">
-                                    @if (! empty($leader['photo']))
-                                        <img src="{{ asset($leader['photo']) }}" alt="{{ $leader['name'] }}" class="h-[44px] w-[44px] shrink-0 rounded-full border border-senat-badgeLine/60 object-cover object-top shadow-sm">
+                                    @if ($hasLeadPhoto)
+                                        <div class="h-[48px] w-[48px] shrink-0 overflow-hidden rounded-full border-2 border-[#a3bdd6] shadow-sm">
+                                            <img src="{{ asset($leadPhoto) }}" alt="{{ $leader['name'] }}" class="h-full w-full object-cover object-top scale-110 origin-top transition-transform duration-200 group-hover:scale-120">
+                                        </div>
                                     @else
-                                        <span class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[12px] font-bold text-senat-link">{{ $initialsOf($leader['name']) }}</span>
+                                        <span class="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[13px] font-bold text-senat-link">{{ $initialsOf($leader['name']) }}</span>
                                     @endif
                                     <span class="min-w-0">
                                         <span class="block text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ $leader['role'] }}</span>

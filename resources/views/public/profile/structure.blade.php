@@ -69,36 +69,34 @@
     {{-- ================= BAGAN FORMAL ================= --}}
     <section class="senat-shell pt-14 lg:pt-16">
 
-        <div class="flex flex-wrap items-end justify-between gap-4">
-            <div>
-                <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-link">Bagan Formal</p>
-                <h2 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Struktur Pimpinan, Komisi, dan Anggota</h2>
-            </div>
-            <p class="text-xs text-senat-muted italic">
-                * Klik pada setiap bagan untuk langsung membuka halaman detail profil.
-            </p>
+        <div>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-link">Bagan Formal</p>
+            <h2 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Struktur Pimpinan, Komisi, dan Anggota</h2>
         </div>
 
         <div class="mt-8 rounded-[14px] border border-senat-line bg-white p-6 lg:p-8">
 
-            {{-- Judul bagan --}}
-            <div class="rounded-[7px] bg-senat-badgeBg px-4 py-2 text-center">
-                <span class="mx-auto mb-1 block h-[3px] w-[38px] rounded-[2px] bg-senat-orange" aria-hidden="true"></span>
-                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-hero">Struktur Organisasi Senat Akademik</p>
-            </div>
-
             {{-- 1. KETUA SENAT (KLIK LANGSUNG KE DETAIL PROFIL) --}}
             @if (! empty($chair))
                 <a href="{{ route('public.directory.member', $chair['slug'] ?? 'sukamto') }}"
-                   class="group mx-auto mt-8 block w-full max-w-[500px] cursor-pointer overflow-hidden rounded-[14px] border border-[#144f8c] bg-senat-hero transition-all duration-200 hover:scale-[1.015] hover:shadow-xl hover:border-senat-orange">
+                   class="group mx-auto block w-full max-w-[500px] cursor-pointer overflow-hidden rounded-[14px] border border-[#144f8c] bg-senat-hero transition-all duration-200 hover:scale-[1.015] hover:shadow-xl hover:border-senat-orange">
                     <div class="h-[5px] w-full bg-senat-orange" aria-hidden="true"></div>
                     <div class="flex items-center justify-between gap-4 px-[22px] py-5">
                         <div class="flex items-center gap-5 min-w-0">
-                            @if (! empty($chair['photo']))
-                                <img src="{{ asset($chair['photo']) }}" alt="{{ $chair['name'] }}"
-                                     class="h-[62px] w-[62px] shrink-0 rounded-full border-2 border-senat-orange/60 object-cover object-top shadow-md transition-transform duration-200 group-hover:scale-105">
+                            @php
+                                $chairPhoto = $chair['photo'] ?? (! empty($chair['nip']) ? 'images/members/' . $chair['nip'] . '.jpg' : null);
+                                $hasChairPhoto = ! empty($chairPhoto) && (
+                                    file_exists(public_path($chairPhoto)) || 
+                                    file_exists(base_path('../Backend-Senat-Polines/public/' . $chairPhoto))
+                                );
+                            @endphp
+                            @if ($hasChairPhoto)
+                                <div class="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full border-2 border-senat-orange/70 shadow-md">
+                                    <img src="{{ asset($chairPhoto) }}" alt="{{ $chair['name'] }}"
+                                         class="h-full w-full object-cover object-top scale-110 origin-top transition-transform duration-200 group-hover:scale-120">
+                                </div>
                             @else
-                                <span class="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#0a4a86] text-[16px] font-bold text-[#add4ff] transition-transform duration-200 group-hover:scale-105" aria-hidden="true">
+                                <span class="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#0a4a86] text-[18px] font-bold text-[#add4ff] transition-transform duration-200 group-hover:scale-105" aria-hidden="true">
                                     {{ $initials($chair['name'] ?? null) }}
                                 </span>
                             @endif
@@ -125,15 +123,25 @@
             @if (! empty($secretary))
                 @php
                     $secretarySlug = $secretary['slug'] ?? \App\Support\SenatDirectory::slug($secretary['name'] ?? '');
+                    $secNip = $secretary['nip'] ?? (\App\Support\SenatDirectory::LECTURER_DATA[$secretary['name'] ?? '']['nip'] ?? null);
+                    $secPhoto = $secretary['photo'] ?? (! empty($secNip) ? 'images/members/' . $secNip . '.jpg' : null);
+                    $hasSecPhoto = ! empty($secPhoto) && (
+                        file_exists(public_path($secPhoto)) || 
+                        file_exists(base_path('../Backend-Senat-Polines/public/' . $secPhoto))
+                    );
                 @endphp
                 <a href="{{ route('public.directory.member', $secretarySlug) }}"
                    class="group mx-auto flex w-full max-w-[440px] cursor-pointer items-center justify-between rounded-[12px] border border-[#d9e3f0] bg-white px-[18px] py-4 transition-all duration-200 hover:scale-[1.015] hover:border-senat-primary hover:shadow-md">
                     <div class="flex items-center min-w-0">
-                        <span class="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
-                            <span class="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#bdd1e5] bg-senat-badgeBg text-[14px] font-bold text-senat-link" aria-hidden="true">
-                                {{ $initials($secretary['name'] ?? null) }}
-                            </span>
-                        </span>
+                        <div class="flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#a3bdd6] shadow-sm">
+                            @if ($hasSecPhoto)
+                                <img src="{{ asset($secPhoto) }}" alt="{{ $secretary['name'] }}" class="h-full w-full object-cover object-top scale-110 origin-top transition-transform duration-200 group-hover:scale-120">
+                            @else
+                                <span class="flex h-full w-full items-center justify-center bg-[#d6e5f5] text-[16px] font-bold text-senat-link" aria-hidden="true">
+                                    {{ $initials($secretary['name'] ?? null) }}
+                                </span>
+                            @endif
+                        </div>
                         <div class="ml-4 min-w-0">
                             <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ $secretary['role'] ?? 'Sekretaris Senat' }}</p>
                             <p class="mt-1 text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary transition-colors truncate">{{ $secretary['name'] ?? '—' }}</p>
@@ -165,99 +173,88 @@
                 <div class="h-6 w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
             </div>
 
-            <div class="hidden xl:block" aria-hidden="true">
-                <div class="mx-auto h-[2px] w-[83.3%] rounded-[1px] bg-[#8cabc9]"></div>
-                <div class="mx-auto grid w-[83.3%] grid-cols-6">
-                    @for ($i = 0; $i < 6; $i++)
-                        <div class="mx-auto h-[20px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
-                    @endfor
-                </div>
+            <div class="hidden xl:grid xl:grid-cols-6 xl:gap-2.5" aria-hidden="true">
+                @for ($i = 0; $i < 6; $i++)
+                    <div class="relative h-6">
+                        <div class="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 rounded-b-[1px] bg-[#8cabc9]"></div>
+                        @if ($i === 0)
+                            <div class="absolute -right-2.5 left-1/2 top-0 h-[2px] bg-[#8cabc9]"></div>
+                        @elseif ($i === 5)
+                            <div class="absolute left-0 right-1/2 top-0 h-[2px] bg-[#8cabc9]"></div>
+                        @else
+                            <div class="absolute -right-2.5 left-0 top-0 h-[2px] bg-[#8cabc9]"></div>
+                        @endif
+                    </div>
+                @endfor
             </div>
 
-            {{-- 4. ENAM KOLOM SEJAJAR: KOMISI I–III, BP, KOMISI IV–V --}}
+            {{-- 4. ENAM KOLOM SEJAJAR: BP DI KIRI AWAL, DIIKUTI KOMISI I–V (KETUA SAJA, KLIK KE /direktori-komisi) --}}
             @php
-                $excelOrder = ['KOM-I' => 1, 'KOM-II' => 2, 'KOM-III' => 3, 'BP' => 4, 'KOM-IV' => 5, 'KOM-V' => 6];
+                $excelOrder = ['BP' => 1, 'KOM-I' => 2, 'KOM-II' => 3, 'KOM-III' => 4, 'KOM-IV' => 5, 'KOM-V' => 6];
                 $orderedCommittees = collect($committees)
                     ->sortBy(fn ($item) => $excelOrder[$item['code'] ?? ''] ?? 99)
                     ->values();
             @endphp
 
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                 @forelse ($orderedCommittees as $committee)
                     @php
-                        $isBp = ($committee['code'] ?? '') === 'BP';
                         $leadName = $committee['lead'] ?? '—';
-                        $secretaryName = $committee['secretary'] ?? '—';
-                        $leadSlug = $isBp ? 'bp-andi-setiawan' : \App\Support\SenatDirectory::slug($leadName);
-                        $secretarySlug = \App\Support\SenatDirectory::slug($secretaryName);
                         $committeeLabel = \App\Support\SenatDirectory::committeeLabel($committee['code'] ?? '');
-                        $leadUrl = !empty($leadSlug) && $leadSlug !== '-' && $leadSlug !== 'belum-ditentukan'
-                            ? route('public.directory.member', $leadSlug)
-                            : '#tupoksi-' . ($committee['code'] ?? '');
-                        $secretaryUrl = !empty($secretarySlug) && $secretarySlug !== '-' && $secretarySlug !== 'belum-ditentukan'
-                            ? route('public.directory.member', $secretarySlug)
-                            : '#tupoksi-' . ($committee['code'] ?? '');
+                        $directoryUrl = route('public.directory', ['komisi' => $committee['code'] ?? '']);
+
+                        // Cari NIP & foto Ketua Komisi
+                        $leadNip = \App\Support\SenatDirectory::LECTURER_DATA[$leadName]['nip'] ?? null;
+                        if (! $leadNip) {
+                            foreach (\App\Support\SenatDirectory::members() as $m) {
+                                if (! empty($m['name']) && (str_contains($m['name'], $leadName) || str_contains($leadName, $m['name']))) {
+                                    $leadNip = $m['nip'] ?? null;
+                                    break;
+                                }
+                            }
+                        }
+                        $leadPhoto = ! empty($leadNip) ? 'images/members/' . $leadNip . '.jpg' : null;
+                        $hasLeadPhoto = ! empty($leadPhoto) && (
+                            file_exists(public_path($leadPhoto)) || 
+                            file_exists(base_path('../Backend-Senat-Polines/public/' . $leadPhoto))
+                        );
                     @endphp
-                    <article class="flex flex-col overflow-hidden rounded-[12px] border border-[#d9e3f0] bg-white">
-                        <div class="h-1 w-full {{ $isBp ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
+                    <a href="{{ $directoryUrl }}"
+                       class="group flex flex-col overflow-hidden rounded-[12px] border border-[#d9e3f0] bg-white transition-all duration-200 hover:scale-[1.015] hover:border-senat-primary hover:shadow-lg">
+                        <div class="h-1 w-full bg-senat-hero" aria-hidden="true"></div>
 
-                        {{-- Header Unit --}}
-                        <div class="border-b border-[#e5edf6] bg-senat-surface px-3.5 py-3 text-center">
-                            <p class="text-[10px] font-bold uppercase tracking-[0.06em] {{ $isBp ? 'text-senat-orange' : 'text-senat-link' }}">
-                                {{ $committeeLabel }}
-                            </p>
-                            <p class="mt-1 text-[12px] font-bold leading-snug text-senat-ink">{{ $committee['name'] }}</p>
-                        </div>
-
-                        <div class="flex flex-1 flex-col divide-y divide-[#eef3f9] px-3.5 py-2 text-[11px]">
-                            {{-- Ketua --}}
-                            <div class="py-2.5">
-                                <p class="text-[9px] font-bold uppercase tracking-[0.06em] text-senat-muted">Ketua</p>
-                                <a href="{{ $leadUrl }}" class="mt-1 block font-semibold leading-snug text-senat-ink hover:text-senat-primary transition-colors">
-                                    {{ $leadName }}
-                                </a>
-                            </div>
-
-                            {{-- Sekretaris --}}
-                            <div class="py-2.5">
-                                <p class="text-[9px] font-bold uppercase tracking-[0.06em] text-senat-muted">Sekretaris</p>
-                                <a href="{{ $secretaryUrl }}" class="mt-1 block font-semibold leading-snug text-senat-ink hover:text-senat-primary transition-colors">
-                                    {{ $secretaryName }}
-                                </a>
-                            </div>
-
-                            {{-- Anggota --}}
-                            <div class="flex-1 py-2.5">
-                                <p class="text-[9px] font-bold uppercase tracking-[0.06em] text-senat-muted">Anggota</p>
-                                @if (! empty($committee['members']))
-                                    <ul class="mt-1.5 space-y-1.5">
-                                        @foreach ($committee['members'] as $member)
-                                            @php
-                                                $memberName = is_array($member) ? ($member['nama'] ?? $member['name'] ?? '—') : $member;
-                                                $memberSlug = is_array($member)
-                                                    ? ($member['slug'] ?? \App\Support\SenatDirectory::slug($memberName))
-                                                    : \App\Support\SenatDirectory::slug($memberName);
-                                            @endphp
-                                            <li class="leading-snug text-senat-body">
-                                                <a href="{{ route('public.directory.member', $memberSlug) }}" class="hover:text-senat-primary transition-colors">
-                                                    {{ $memberName }}
-                                                </a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
+                        <div class="flex flex-1 flex-col p-4 text-center">
+                            <div class="mx-auto flex h-[66px] w-[66px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#a3bdd6] shadow-sm">
+                                @if ($hasLeadPhoto)
+                                    <img src="{{ asset($leadPhoto) }}" alt="{{ $leadName }}" class="h-full w-full object-cover object-top scale-110 origin-top transition-transform duration-200 group-hover:scale-120">
                                 @else
-                                    <p class="mt-1 text-[10px] italic text-senat-muted">—</p>
+                                    <span class="flex h-full w-full items-center justify-center bg-senat-badgeBg text-[16px] font-bold text-senat-link" aria-hidden="true">
+                                        {{ $initials($leadName) }}
+                                    </span>
                                 @endif
                             </div>
-                        </div>
 
-                        <div class="border-t border-[#e5edf6] px-3.5 py-2.5 text-center">
-                            <a href="#tupoksi-{{ $committee['code'] }}"
-                               class="text-[10px] font-bold text-senat-link hover:text-senat-primary transition-colors">
-                                Rincian tupoksi <span aria-hidden="true">›</span>
-                            </a>
+                            <p class="mt-2.5 text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">
+                                {{ $committeeLabel }}
+                            </p>
+                            <p class="mt-0.5 text-[11px] font-semibold leading-snug text-senat-body transition-colors group-hover:text-senat-primary">
+                                {{ $leadName }}
+                            </p>
+
+                            <p class="mt-3 text-[12.5px] font-bold leading-snug text-senat-ink transition-colors group-hover:text-senat-primary">
+                                {{ $committee['name'] }}
+                            </p>
+                            <p class="mt-2 flex-1 text-[11px] leading-[1.45] text-senat-body">
+                                {{ $committee['focus'] }}
+                            </p>
+
+                            <div class="mt-3.5 h-px w-full bg-[#d9e3f0]" aria-hidden="true"></div>
+
+                            <span class="mt-2.5 block text-[10px] font-bold text-senat-link transition-colors group-hover:text-senat-primary">
+                                Lihat anggota &amp; mandat <span aria-hidden="true">›</span>
+                            </span>
                         </div>
-                    </article>
+                    </a>
                 @empty
                     <div class="sm:col-span-2 lg:col-span-3 xl:col-span-6">
                         <x-senat.empty title="Data komisi belum dimuat" />
@@ -283,12 +280,12 @@
                     $isBp = ($committee['code'] ?? '') === 'BP';
                 @endphp
                 <article id="tupoksi-{{ $committee['code'] }}" class="scroll-mt-24 overflow-hidden rounded-[12px] border border-senat-line bg-white">
-                    <div class="h-1 w-full {{ $isBp ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
+                    <div class="h-1 w-full bg-senat-hero" aria-hidden="true"></div>
 
                     <div class="p-6 lg:p-8">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div class="min-w-0">
-                                <span class="inline-flex items-center rounded-full border {{ $isBp ? 'border-senat-orange/40 bg-orange-50 text-senat-orange' : 'border-senat-badgeLine bg-senat-badgeBg text-senat-link' }} px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em]">
+                                <span class="inline-flex items-center rounded-full border border-senat-badgeLine bg-senat-badgeBg px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">
                                     {{ \App\Support\SenatDirectory::committeeLabel($committee['code']) }}
                                 </span>
                                 <h3 class="mt-3 text-[18px] font-bold leading-snug text-senat-ink">{{ $committee['name'] }}</h3>
@@ -309,7 +306,15 @@
 
                         <div class="mt-5">
                             <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">Tugas Pokok &amp; Fungsi</p>
-                            <p class="mt-2 text-[12.5px] leading-[1.6] text-senat-body">{{ $committee['tupoksi'] ?? $committee['focus'] ?? '—' }}</p>
+                            @if (! empty($committee['tupoksi_items']))
+                                <ol class="mt-2 list-decimal space-y-1.5 pl-4 text-[12.5px] leading-[1.6] text-senat-body">
+                                    @foreach ($committee['tupoksi_items'] as $item)
+                                        <li>{{ $item }}</li>
+                                    @endforeach
+                                </ol>
+                            @else
+                                <p class="mt-2 text-[12.5px] leading-[1.6] text-senat-body">{{ $committee['tupoksi'] ?? $committee['focus'] ?? '—' }}</p>
+                            @endif
                         </div>
 
                         @if (! empty($committee['members']))

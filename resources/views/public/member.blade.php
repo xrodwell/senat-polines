@@ -23,9 +23,7 @@
     $committeeDisplay = $isBpMember ? 'BP (Badan Pekerja)' : $committeeLabel;
     $isCommitteeMember = $committeeLabel !== null && $committee !== null;
     $badge = $committeeDisplay ?? ($member['organ'] ?? 'Pimpinan Senat');
-    $metaLine = $isCommitteeMember
-        ? ($isBpMember ? 'Pengurus '.$committeeDisplay.' • Masa Bakti '.$period : 'Anggota '.$committeeLabel.' • Masa Bakti '.$period)
-        : 'Anggota Pimpinan Senat • Masa Bakti '.$period;
+    $metaLine = 'Masa Bakti ' . $period;
 
     /** Pimpinan komisi (ketua & sekretaris) untuk kartu ringkasan komisi. */
     $komisiPimpinan = [];
@@ -41,18 +39,6 @@
 @endphp
 
 @section('content')
-
-    {{-- Breadcrumb strip --}}
-    <div class="border-b border-[#d9e3f0] bg-white">
-        <div class="senat-shell py-4">
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-                <a href="{{ route('public.profile.structure') }}" class="font-bold text-senat-link hover:underline">‹&nbsp; Profil &amp; Struktur</a>
-                <span class="text-senat-body">/</span>
-                <span class="font-medium text-senat-body">Detail Anggota Senat</span>
-            </div>
-            <p class="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-senat-link">Profil Anggota Senat</p>
-        </div>
-    </div>
 
     {{-- Hero Banner Asli (Figma 2061:2) --}}
     <section class="relative overflow-hidden bg-senat-hero">
@@ -70,51 +56,88 @@
 
     {{-- Portrait + identity card (Melayang di atas hero dengan z-index yang tepat) --}}
     <div class="senat-shell relative z-20 -mt-[140px] sm:-mt-[160px]">
-        <div class="grid gap-5 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-start">
+        <div class="grid gap-5 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-stretch">
 
             {{-- Kartu Foto Anggota --}}
-            <div class="rounded-[18px] border border-[#d9e3f0] bg-white p-7 shadow-xl">
+            <div class="flex flex-col justify-center rounded-[18px] border border-[#d9e3f0] bg-white p-7 shadow-xl">
                 <div class="mx-auto flex h-[210px] w-[210px] max-w-full items-center justify-center overflow-hidden rounded-full border-4 border-[#c7dcf0] bg-[#eef5fc] shadow-inner">
-                    @if (! empty($member['photo']))
-                        <img src="{{ asset($member['photo']) }}" alt="{{ $member['name'] }}" class="h-full w-full rounded-full object-cover object-top">
+                    @php
+                        $photo = $member['photo'] ?? null;
+                        if (empty($photo) && ! empty($member['nip'])) {
+                            $photo = 'images/members/' . $member['nip'] . '.jpg';
+                        }
+                        $hasPhoto = ! empty($photo) && (
+                            file_exists(public_path($photo)) || 
+                            file_exists(base_path('../Backend-Senat-Polines/public/' . $photo))
+                        );
+                    @endphp
+                    @if ($hasPhoto)
+                        <img src="{{ asset($photo) }}" alt="{{ $member['name'] }}" class="h-full w-full rounded-full object-cover object-top">
                     @else
                         <span class="text-[52px] font-extrabold tracking-[0.04em] text-senat-primary">{{ $initialsOf($member['name']) }}</span>
                     @endif
                 </div>
-                <div class="mt-4 text-center">
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Status: Aktif Menjabat
+                <div class="mt-4 flex items-center justify-center gap-2.5">
+                    <span class="h-px w-6 bg-emerald-200" aria-hidden="true"></span>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] tracking-wide text-emerald-700">
+                        <svg class="h-3.5 w-3.5 text-emerald-600 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="font-medium text-slate-500">Status:</span>
+                        <span class="font-bold text-emerald-700">Aktif Menjabat</span>
                     </span>
+                    <span class="h-px w-6 bg-emerald-200" aria-hidden="true"></span>
                 </div>
-                <p class="mt-3 text-center text-[10px] leading-relaxed text-senat-muted">
-                    Foto resmi anggota dikelola Sekretariat Senat.
-                </p>
             </div>
 
             {{-- Kartu Identitas & Gelar --}}
-            <div class="rounded-[18px] border border-[#d9e3f0] bg-white p-6 sm:p-8 shadow-xl">
-                <span class="inline-flex items-center rounded-full bg-senat-badgeBg px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-senat-link border border-senat-badgeLine/40">
-                    {{ $badge }}
-                </span>
+            <div class="flex flex-col justify-between rounded-[18px] border border-[#d9e3f0] bg-white p-6 sm:p-8 shadow-xl">
+                <div>
+                    <h1 class="text-[22px] font-bold leading-tight text-senat-primary sm:text-[28px]">{{ $member['name'] }}</h1>
+                    <p class="mt-1.5 text-[15px] font-bold text-senat-orange">{{ $member['role'] }}</p>
+                    <div class="mt-3 grid max-w-md grid-cols-[auto_auto_1fr] items-baseline gap-x-2.5 gap-y-1 text-[11px] text-senat-body">
+                        <span class="text-slate-500">Masa Bakti</span>
+                        <span class="text-slate-400">:</span>
+                        <span class="font-medium text-senat-ink">{{ $period }}</span>
 
-                <h1 class="mt-3 text-[22px] font-bold leading-tight text-senat-primary sm:text-[28px]">{{ $member['name'] }}</h1>
-                <p class="mt-1.5 text-[15px] font-bold text-senat-orange">{{ $member['role'] }}</p>
-                <p class="mt-1 text-[11px] text-senat-body">{{ $metaLine }}</p>
+                        @if (! empty($member['nip']))
+                            <span class="text-slate-500">NIP</span>
+                            <span class="text-slate-400">:</span>
+                            <span class="font-mono font-medium text-senat-ink">{{ $member['nip'] }}</span>
+                        @endif
 
-                @if (! empty($member['nip']))
-                    <p class="mt-1 font-mono text-[11px] font-medium text-slate-500">NIP {{ $member['nip'] }}</p>
-                @endif
-                @if (! empty($member['email']))
-                    <p class="mt-0.5 text-[11px] font-medium text-slate-500">Email: <a href="mailto:{{ $member['email'] }}" class="text-senat-link hover:underline">{{ $member['email'] }}</a></p>
-                @endif
+                        @if (! empty($member['email']))
+                            <span class="text-slate-500">Email</span>
+                            <span class="text-slate-400">:</span>
+                            <span>
+                                <a href="mailto:{{ $member['email'] }}" class="text-senat-link hover:underline">{{ $member['email'] }}</a>
+                            </span>
+                        @endif
+                    </div>
+                </div>
 
                 <div class="mt-6 h-px w-full bg-[#d9e3f0]" aria-hidden="true"></div>
 
                 <dl class="mt-5 grid gap-4 sm:grid-cols-3">
                     <div class="rounded-xl bg-[#f8fafc] p-3.5 border border-[#eef2f6]">
                         <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Kedudukan</dt>
-                        <dd class="mt-1 text-[11px] font-bold leading-snug text-senat-ink">{{ $member['organ'] }}</dd>
+                        <dd class="mt-1 text-[11px] font-bold leading-snug text-senat-ink">
+                            @php
+                                $positions = $member['positions'] ?? [['role' => $member['role'] ?? 'Anggota', 'organ' => $member['organ'] ?? 'Senat Akademik']];
+                            @endphp
+                            @if (count($positions) > 1)
+                                <ul class="space-y-1.5">
+                                    @foreach ($positions as $pos)
+                                        <li class="leading-snug">
+                                            <span class="block text-senat-ink">{{ $pos['role'] }}</span>
+                                            <span class="block text-[10px] font-normal text-slate-500">{{ $pos['organ'] }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                {{ $member['organ'] }}
+                            @endif
+                        </dd>
                     </div>
                     <div class="rounded-xl bg-[#f8fafc] p-3.5 border border-[#eef2f6]">
                         <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Jurusan &amp; Afiliasi</dt>
@@ -137,34 +160,32 @@
 
     {{-- Back to structure + ringkasan jabatan --}}
     <div class="senat-shell mt-8">
-        <div class="grid gap-6 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-start">
+        <div class="grid items-center gap-5 lg:grid-cols-[286px_minmax(0,1fr)]">
+            <div class="hidden lg:block" aria-hidden="true"></div>
+            <div class="flex items-center gap-3">
+                <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
+                <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-body">Data Jabatan</span>
+                <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
+            </div>
+        </div>
 
-            <div class="space-y-3">
+        <div class="mt-4 grid gap-5 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-stretch">
+            <div class="flex flex-col gap-3">
                 <a href="{{ route('public.profile.structure') }}"
-                   class="block rounded-[14px] border border-senat-hero bg-senat-hero p-5 text-white shadow-sm transition-all duration-150 hover:bg-senat-primary hover:shadow-md">
+                   class="flex flex-1 flex-col justify-center rounded-[14px] border border-senat-hero bg-senat-hero p-5 text-white shadow-sm transition-all duration-150 hover:bg-senat-primary hover:shadow-md">
                     <span class="block text-[9px] font-bold uppercase tracking-[0.08em] text-[#add4ff]">Bagan Organisasi</span>
-                    <span class="mt-2 block text-[13px] font-bold text-white">‹&nbsp; Kembali ke Struktur</span>
+                    <span class="mt-1.5 block text-[13px] font-bold text-white">‹&nbsp; Kembali ke Struktur</span>
                 </a>
                 <a href="{{ route('public.directory') }}"
-                   class="block rounded-[14px] border border-[#d9e3f0] bg-white p-4 text-center text-xs font-semibold text-senat-body shadow-sm transition-colors hover:border-senat-link hover:text-senat-link">
+                   class="flex items-center justify-center rounded-[14px] border border-[#d9e3f0] bg-white px-4 py-3.5 text-center text-xs font-semibold text-senat-body shadow-sm transition-colors hover:border-senat-link hover:text-senat-link">
                     Direktori Komisi &amp; Anggota ›
                 </a>
             </div>
 
-            <div>
-                <div class="flex items-center gap-3">
-                    <span class="h-[4px] w-[80px] rounded-[2px] bg-senat-orange" aria-hidden="true"></span>
-                    <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
-                    <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-body">Data Jabatan</span>
-                    <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
-                </div>
-
-                <div class="mt-5 rounded-[16px] border border-[#d9e3f0] bg-white p-6 sm:p-8 shadow-sm">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-link">Ringkasan Peran</p>
-                    <h3 class="mt-2 text-[20px] font-bold leading-snug text-senat-ink">{{ $member['role'] }}</h3>
-                    <p class="mt-3 max-w-[826px] text-[13px] leading-relaxed text-senat-body">{{ $member['focus'] }}</p>
-                    <p class="mt-5 text-[11px] font-semibold text-emerald-600">Status keanggotaan: Aktif Menjabat</p>
-                </div>
+            <div class="flex flex-col justify-center rounded-[16px] border border-[#d9e3f0] bg-white p-6 sm:p-8 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-link">Ringkasan Peran</p>
+                <h3 class="mt-2 text-[20px] font-bold leading-snug text-senat-ink">{{ $member['role'] }}</h3>
+                <p class="mt-3 max-w-[826px] text-[13px] leading-relaxed text-senat-body">{{ $member['focus'] }}</p>
             </div>
         </div>
     </div>
@@ -279,11 +300,28 @@
 
             <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($peers as $peer)
+                    @php
+                        $peerPhoto = $peer['photo'] ?? null;
+                        if (empty($peerPhoto) && ! empty($peer['nip'])) {
+                            $peerCand = 'images/members/' . $peer['nip'] . '.jpg';
+                            if (file_exists(public_path($peerCand)) || file_exists(base_path('../Backend-Senat-Polines/public/' . $peerCand))) {
+                                $peerPhoto = $peerCand;
+                            }
+                        }
+                        $hasPeerPhoto = ! empty($peerPhoto) && (
+                            file_exists(public_path($peerPhoto)) || 
+                            file_exists(base_path('../Backend-Senat-Polines/public/' . $peerPhoto))
+                        );
+                    @endphp
                     <a href="{{ route('public.directory.member', $peer['slug']) }}"
                        class="group flex items-start gap-4 rounded-[14px] border border-[#d6e0ed] bg-white p-5 shadow-sm transition-all duration-150 hover:border-senat-link hover:shadow-md">
-                        <span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[14px] font-bold text-senat-link transition-colors group-hover:bg-senat-hero group-hover:text-white">
-                            {{ $initialsOf($peer['name']) }}
-                        </span>
+                        @if ($hasPeerPhoto)
+                            <img src="{{ asset($peerPhoto) }}" alt="{{ $peer['name'] }}" class="h-[52px] w-[52px] shrink-0 rounded-full border border-[#bdd4eb] object-cover object-top shadow-xs">
+                        @else
+                            <span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[14px] font-bold text-senat-link transition-colors group-hover:bg-senat-hero group-hover:text-white">
+                                {{ $initialsOf($peer['name']) }}
+                            </span>
+                        @endif
                         <span class="min-w-0">
                             <span class="block text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ strtoupper($peer['role']) }}</span>
                             <span class="mt-1 block text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-link transition-colors">{{ $peer['name'] }}</span>

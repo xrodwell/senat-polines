@@ -272,6 +272,7 @@ trait HasPortalAuth
             'auth_user_role'   => $user['role'] ?? 'anggota',
             'auth_user_nip'    => $user['nim_nip'] ?? '',
             'auth_user_email'  => $user['email'] ?? '',
+            'auth_user_foto'   => $user['foto_profil'] ?? null,
             'auth_verified_at' => now()->timestamp,
         ]);
 

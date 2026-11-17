@@ -21,6 +21,19 @@ Route::get('/profil/struktur-organisasi', [PublicController::class, 'structure']
 Route::get('/direktori-komisi', [PublicController::class, 'directory'])->name('public.directory');
 Route::get('/direktori-komisi/{slug}', [PublicController::class, 'member'])->name('public.directory.member');
 
+// Fallback penyaji aset foto anggota (mendukung penyimpanan di folder frontend maupun backend)
+Route::get('/images/members/{filename}', function (string $filename) {
+    $path = public_path('images/members/' . $filename);
+    if (file_exists($path)) {
+        return response()->file($path);
+    }
+    $backendPath = base_path('../Backend-Senat-Polines/public/images/members/' . $filename);
+    if (file_exists($backendPath)) {
+        return response()->file($backendPath);
+    }
+    abort(404);
+})->where('filename', '.*');
+
 // Manajemen anggota komisi — dialihkan/dikhususkan ke Admin Sekretariat (/admin?tab=Direktori+Komisi+%26+Anggota)
 Route::middleware(['portal.auth', 'portal.role:admin'])->group(function (): void {
     Route::post('/direktori-komisi/anggota', [PublicController::class, 'storeMember'])->name('public.directory.store');

@@ -23,6 +23,7 @@ class PortalAuthMiddleware
         'auth_user_role',
         'auth_user_nip',
         'auth_user_email',
+        'auth_user_foto',
         'auth_verified_at',
         'impersonator',
     ];

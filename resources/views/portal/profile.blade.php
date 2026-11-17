@@ -36,6 +36,24 @@
     $organLabel = $memberInfo['organ'] ?? ($currentRole === 'admin' ? 'Sekretariat Senat' : 'Komisi Senat Akademik');
     $jabatanLabel = $memberInfo['role'] ?? ($currentRole === 'admin' ? 'Administrator Sistem' : 'Anggota Senat');
     $focusDesc = $memberInfo['focus'] ?? 'Menjalankan fungsi pengawasan normatif, penetapan kurikulum, dan pertimbangan akademik Politeknik Negeri Semarang.';
+
+    $initialsOf = function (string $name): string {
+        $parts = collect(explode(' ', preg_replace('/,.*$/', '', $name)))
+            ->filter(fn ($part) => $part !== '' && ! str_contains($part, '.'))
+            ->values();
+        $out = $parts->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
+
+        return $out !== '' ? $out : mb_strtoupper(mb_substr($name, 0, 1));
+    };
+
+    // Standar foto profil: images/members/{nip}.jpg
+    $effectiveNip = ($currentNip && $currentNip !== '-') ? $currentNip : ($memberInfo['nip'] ?? null);
+    $defaultNipPhoto = ! empty($effectiveNip) ? 'images/members/' . $effectiveNip . '.jpg' : null;
+    $photoCandidate = session('auth_user_foto') ?: ($memberInfo['photo'] ?? $defaultNipPhoto);
+    $avatarPhoto = ($photoCandidate && (
+        file_exists(public_path($photoCandidate)) || 
+        file_exists(base_path('../Backend-Senat-Polines/public/' . $photoCandidate))
+    )) ? $photoCandidate : null;
 @endphp
 
 <div class="mx-auto w-full max-w-[1116px] space-y-6">
@@ -49,11 +67,13 @@
     {{-- ================= PROFIL ================= --}}
     <section class="rounded-[14px] border border-senat-line bg-white p-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
         <div class="flex flex-wrap items-center gap-5">
-            <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-[42px] bg-[#eaf3fe] text-[28px] font-bold text-senat-primary shadow-xs" aria-hidden="true">
-                <svg class="h-10 w-10 text-senat-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-            </span>
+            @if (! empty($avatarPhoto))
+                <img src="{{ asset($avatarPhoto) }}" alt="{{ $currentName }}" class="h-[84px] w-[84px] shrink-0 rounded-full object-cover object-top border-2 border-[#c7dcf0] shadow-sm">
+            @else
+                <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-full bg-[#eaf3fe] text-[28px] font-bold text-senat-primary border-2 border-[#c7dcf0] shadow-xs" aria-hidden="true">
+                    {{ $initialsOf($currentName) }}
+                </span>
+            @endif
             <div class="min-w-0">
                 <h2 class="text-[22px] font-bold leading-snug text-senat-ink">{{ $currentName }}</h2>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -140,7 +160,7 @@
             <div class="mt-5 flex items-center gap-4 rounded-[14px] bg-[#eaf8f0] px-5 py-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
                 <span class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-[#116a3c] text-[16px] font-bold text-white" aria-hidden="true"><x-senat.icon name="eye" class="h-[18px] w-[18px]" /></span>
                 <div>
-                    <p class="text-[28px] font-bold leading-none tabular-nums text-senat-ink">{{ $stats['attendance_rate'] }}%</p>
+                    <p class="text-[28px] font-bold leading-none tabular-nums text-senat-ink">{{ $stats['attendance_rate'] ?? $stats['persentase'] ?? 0 }}%</p>
                     <p class="mt-1.5 text-[12px] font-medium text-senat-body">Kehadiran</p>
                 </div>
             </div>
@@ -148,11 +168,11 @@
             <dl class="mt-5 divide-y divide-senat-line border-t border-senat-line">
                 <div class="flex items-center justify-between gap-4 py-3">
                     <dt class="text-[12px] text-senat-muted">Total agenda tercatat</dt>
-                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['total'] }}</dd>
+                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['total'] ?? 0 }}</dd>
                 </div>
                 <div class="flex items-center justify-between gap-4 py-3">
                     <dt class="text-[12px] text-senat-muted">Kehadiran tercatat</dt>
-                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['present'] }}/{{ $stats['invited'] }}</dd>
+                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['present'] ?? 0 }}/{{ $stats['invited'] ?? 0 }}</dd>
                 </div>
             </dl>
 

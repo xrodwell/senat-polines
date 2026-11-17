@@ -5,12 +5,12 @@ namespace App\Support;
 use Illuminate\Support\Str;
 
 /**
- * Sumber tunggal data kepengurusan Senat Akademik Polines periode 2026–2029.
+ * Sumber tunggal data kepengurusan Senat Akademik Polines periode 2026–2030.
  * Data resmi diverifikasi berdasarkan data kepegawaian resmi Politeknik Negeri Semarang (Polines).
  */
 class SenatDirectory
 {
-    public const PERIOD = '2026–2029';
+    public const PERIOD = '2026–2030';
 
     /** @var array<string, string> */
     public const COMMITTEE_LABELS = [
@@ -263,7 +263,7 @@ class SenatDirectory
             'email' => $info['email'] ?? 'sukamto@polines.ac.id',
             'organ' => 'Pimpinan Senat',
             'focus' => 'Memimpin persidangan pleno, menetapkan agenda normatif, dan merepresentasikan Senat kepada Direktur serta Kemendiktisaintek.',
-            'photo' => 'images/members/sukamto.jpg',
+            'photo' => 'images/members/197101172003121001.jpg',
         ];
     }
 
@@ -280,6 +280,7 @@ class SenatDirectory
             'email' => $info['email'] ?? 'andi.setiawan@polines.ac.id',
             'organ' => 'Pimpinan Senat',
             'focus' => 'Mengelola persidangan, verifikasi risalah keputusan pleno, dan pengelolaan arsip normatif Senat.',
+            'photo' => 'images/members/197607202008011011.jpg',
         ];
     }
 
@@ -301,6 +302,7 @@ class SenatDirectory
                 'committee_code' => 'BP',
                 'committee_name' => 'BP (Badan Pekerja)',
                 'focus' => 'Mengoordinasikan kerja antar-komisi dan menyiapkan berkas sidang.',
+                'photo' => 'images/members/197607202008011011.jpg',
             ],
             [
                 'slug' => 'vinda-setya-kartika',
@@ -313,6 +315,7 @@ class SenatDirectory
                 'committee_code' => 'BP',
                 'committee_name' => 'BP (Badan Pekerja)',
                 'focus' => 'Menyusun rancangan agenda persidangan berkala dan risalah tindak lanjut.',
+                'photo' => 'images/members/199108112019032024.jpg',
             ],
         ];
     }
@@ -367,7 +370,20 @@ class SenatDirectory
             }
             $seen[$person['name'] . '|' . $person['role']] = true;
             $info = self::LECTURER_DATA[$person['name']] ?? [];
-            $members[] = array_merge($info, $person, ['slug' => $slug]);
+            $cleanPerson = array_filter($person, static fn ($value) => $value !== null);
+            $merged = array_merge($info, $cleanPerson, ['slug' => $slug]);
+
+            // Standar foto: images/members/{nip}.jpg (cek di folder lokal dan backend)
+            $nip = $merged['nip'] ?? null;
+            if (! empty($nip)) {
+                $nipFile = 'images/members/' . $nip . '.jpg';
+                $exists = file_exists(public_path($nipFile)) || file_exists(base_path('../Backend-Senat-Polines/public/' . $nipFile));
+                $merged['photo'] = $exists ? $nipFile : null;
+            } else {
+                $merged['photo'] = null;
+            }
+
+            $members[] = $merged;
         };
 
         $chair = self::chair();
@@ -421,14 +437,89 @@ class SenatDirectory
     public static function findBySlug(string $slug): ?array
     {
         $normalizedSlug = $slug === 'bph-andi-setiawan' ? 'bp-andi-setiawan' : $slug;
+        $allMembers = self::members();
 
-        foreach (self::members() as $member) {
-            if ($member['slug'] === $normalizedSlug) {
-                return $member;
+        $matched = null;
+        foreach ($allMembers as $member) {
+            if ($member['slug'] === $normalizedSlug || self::slug($member['name'] ?? '') === $normalizedSlug) {
+                $matched = $member;
+                break;
             }
         }
 
-        return null;
+        if ($matched === null) {
+            foreach ($allMembers as $member) {
+                if (str_contains($member['slug'], $normalizedSlug) || str_contains(self::slug($member['name'] ?? ''), $normalizedSlug)) {
+                    $matched = $member;
+                    break;
+                }
+            }
+        }
+
+        if ($matched === null) {
+            return null;
+        }
+
+        $targetNip = ! empty($matched['nip']) ? trim((string) $matched['nip']) : null;
+        $targetNameSlug = self::slug((string) ($matched['name'] ?? ''));
+
+        $personEntries = collect($allMembers)
+            ->filter(function (array $person) use ($targetNip, $targetNameSlug): bool {
+                $personNip = ! empty($person['nip']) ? trim((string) $person['nip']) : null;
+                if ($targetNip !== null && $personNip !== null) {
+                    return $personNip === $targetNip;
+                }
+
+                return self::slug((string) ($person['name'] ?? '')) === $targetNameSlug;
+            })
+            ->sortBy(fn (array $person) => self::rolePriority((string) ($person['role'] ?? '')))
+            ->values();
+
+        $primary = $personEntries->first() ?? $matched;
+
+        // Gabungkan foto atau metadata tambahan dari entri lain milik orang yang sama
+        foreach ($personEntries as $entry) {
+            if (empty($primary['photo']) && ! empty($entry['photo'])) {
+                $primary['photo'] = $entry['photo'];
+            }
+            if (empty($primary['committee_code']) && ! empty($entry['committee_code'])) {
+                $primary['committee_code'] = $entry['committee_code'];
+                $primary['committee_name'] = $entry['committee_name'] ?? null;
+            }
+        }
+
+        $positions = $personEntries
+            ->map(function (array $entry): array {
+                return [
+                    'role' => $entry['role'] ?? 'Anggota',
+                    'organ' => $entry['organ'] ?? 'Senat Akademik',
+                    'committee_code' => $entry['committee_code'] ?? null,
+                ];
+            })
+            ->unique(fn (array $pos) => $pos['role'] . '|' . $pos['organ'])
+            ->values()
+            ->all();
+
+        $primary['positions'] = $positions;
+
+        return $primary;
+    }
+
+    private static function rolePriority(string $role): int
+    {
+        $r = mb_strtolower(trim($role));
+
+        return match (true) {
+            $r === 'ketua senat' => 1,
+            $r === 'sekretaris senat' => 2,
+            str_starts_with($r, 'ketua komisi') => 3,
+            str_starts_with($r, 'sekretaris komisi') => 4,
+            $r === 'ketua bp' => 5,
+            $r === 'sekretaris bp' => 6,
+            str_starts_with($r, 'anggota komisi') => 7,
+            $r === 'anggota bp' => 8,
+            default => 9,
+        };
     }
 
     /** @return array<string, mixed> */

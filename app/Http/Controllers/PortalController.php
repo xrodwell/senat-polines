@@ -100,6 +100,7 @@ class PortalController extends Controller
                     'auth_user_role' => $targetUser['role'] ?? 'anggota',
                     'auth_user_nip' => $targetUser['nim_nip'] ?? '',
                     'auth_user_email' => $targetUser['email'] ?? '',
+                    'auth_user_foto' => $targetUser['foto_profil'] ?? null,
                 ]);
 
                 return redirect()->route('portal.dashboard')
@@ -144,6 +145,7 @@ class PortalController extends Controller
             'auth_user_role' => $impersonator['role'] ?? 'admin',
             'auth_user_nip' => $impersonator['nip'] ?? '',
             'auth_user_email' => $impersonator['email'] ?? '',
+            'auth_user_foto' => $impersonator['user']['foto_profil'] ?? null,
         ]);
 
         session()->forget('impersonator');
