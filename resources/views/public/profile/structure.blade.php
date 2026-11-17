@@ -116,120 +116,145 @@
                 </a>
             @endif
 
-            {{-- Penghubung: Ketua → Pejabat --}}
+            {{-- Penghubung: Ketua Senat → Sekretaris Senat --}}
             <div class="flex justify-center" aria-hidden="true">
                 <div class="h-6 w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
             </div>
 
-            <div class="hidden lg:block" aria-hidden="true">
-                <div class="mx-auto h-[2px] w-[69.3%] rounded-[1px] bg-[#8cabc9]"></div>
-                <div class="mx-auto grid w-[69.3%] grid-cols-3">
-                    @for ($i = 0; $i < 3; $i++)
-                        <div class="mx-auto h-[18px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
-                    @endfor
-                </div>
-            </div>
-
-            {{-- 2. SEKRETARIS SENAT & BP (BADAN PEKERJA) (KLIK LANGSUNG KE DETAIL PROFIL) --}}
-            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                @forelse ($officers as $officer)
-                    @php
-                        $officerSlug = $officer['slug'] ?? \App\Support\SenatDirectory::slug($officer['name'] ?? '');
-                    @endphp
-                    <a href="{{ route('public.directory.member', $officerSlug) }}"
-                       class="group flex h-[110px] cursor-pointer items-center justify-between rounded-[12px] border border-[#d9e3f0] bg-white px-[18px] transition-all duration-200 hover:scale-[1.015] hover:border-senat-primary hover:shadow-md">
-                        <div class="flex items-center min-w-0">
-                            <span class="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
-                                <span class="flex h-[50px] w-[50px] items-center justify-center rounded-full border border-[#bdd1e5] bg-senat-badgeBg text-[15px] font-bold text-senat-link" aria-hidden="true">
-                                    {{ $initials($officer['name']) }}
-                                </span>
+            {{-- 2. SEKRETARIS SENAT (KLIK LANGSUNG KE DETAIL PROFIL) --}}
+            @if (! empty($secretary))
+                @php
+                    $secretarySlug = $secretary['slug'] ?? \App\Support\SenatDirectory::slug($secretary['name'] ?? '');
+                @endphp
+                <a href="{{ route('public.directory.member', $secretarySlug) }}"
+                   class="group mx-auto flex w-full max-w-[440px] cursor-pointer items-center justify-between rounded-[12px] border border-[#d9e3f0] bg-white px-[18px] py-4 transition-all duration-200 hover:scale-[1.015] hover:border-senat-primary hover:shadow-md">
+                    <div class="flex items-center min-w-0">
+                        <span class="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
+                            <span class="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#bdd1e5] bg-senat-badgeBg text-[14px] font-bold text-senat-link" aria-hidden="true">
+                                {{ $initials($secretary['name'] ?? null) }}
                             </span>
-                            <div class="ml-4 min-w-0">
-                                <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ $officer['role'] }}</p>
-                                <p class="mt-1 text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary transition-colors truncate">{{ $officer['name'] }}</p>
-                                <p class="mt-1 text-[9px] text-senat-body">Masa Bakti {{ $period }}</p>
-                            </div>
+                        </span>
+                        <div class="ml-4 min-w-0">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ $secretary['role'] ?? 'Sekretaris Senat' }}</p>
+                            <p class="mt-1 text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary transition-colors truncate">{{ $secretary['name'] ?? '—' }}</p>
+                            <p class="mt-0.5 text-[9px] text-senat-body">Masa Bakti {{ $period }}</p>
                         </div>
-                        <span class="hidden sm:block text-senat-muted group-hover:text-senat-primary transition-colors pl-2" aria-hidden="true">›</span>
-                    </a>
-                @empty
-                    <div class="sm:col-span-2 lg:col-span-3">
-                        <x-senat.empty title="Data pimpinan belum dimuat" />
                     </div>
-                @endforelse
+                    <span class="hidden sm:block text-senat-muted group-hover:text-senat-primary transition-colors pl-2" aria-hidden="true">›</span>
+                </a>
+            @endif
+
+            {{-- Penghubung: Sekretaris Senat → Sekretariat --}}
+            <div class="flex justify-center" aria-hidden="true">
+                <div class="h-6 w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
             </div>
 
-            {{-- Sub-judul: Pimpinan, Komisi, & BP --}}
-            <div class="mt-12 border-t border-senat-line pt-8">
-                <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-link">Struktur Organisasi</p>
-                <h3 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Pimpinan, Lima Komisi, dan Badan Pekerja (BP)</h3>
-            </div>
-
-            {{-- Penghubung: Pejabat → Komisi --}}
-            <div class="mt-6 flex justify-center" aria-hidden="true">
-                <div class="h-[30px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
-            </div>
-
-            {{-- Panel koordinasi komisi --}}
-            <div class="mx-auto flex w-full max-w-[400px] items-center gap-4 rounded-[10px] border border-[#a3c2e0] bg-senat-badgeBg px-5 py-3">
-                <span class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-senat-hero text-[13px] font-bold leading-none text-white" aria-hidden="true"><x-senat.icon name="minutes" class="h-[18px] w-[18px]" /></span>
-                <div class="min-w-0">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-hero">Koordinasi Komisi &amp; BP Senat Akademik</p>
-                    <p class="mt-1 text-[9px] text-senat-body">Telaah kebijakan melalui lima komisi dan BP (Badan Pekerja).</p>
+            {{-- 3. SEKRETARIAT --}}
+            <div class="mx-auto flex w-full max-w-[340px] items-center justify-center gap-3 rounded-[10px] border border-[#a3c2e0] bg-senat-badgeBg px-5 py-3 text-center">
+                <span class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-senat-hero text-white" aria-hidden="true">
+                    <x-senat.icon name="minutes" class="h-[16px] w-[16px]" />
+                </span>
+                <div class="text-left">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-senat-hero">Sekretariat</p>
+                    <p class="text-[9px] text-senat-body">Koordinasi Komisi I–V &amp; BP (Badan Pekerja)</p>
                 </div>
             </div>
 
-            {{-- Penghubung: Koordinasi → Komisi & BP --}}
+            {{-- Penghubung: Sekretariat → 6 Kolom Komisi & BP --}}
             <div class="flex justify-center" aria-hidden="true">
-                <div class="h-[30px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
+                <div class="h-6 w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
             </div>
 
             <div class="hidden xl:block" aria-hidden="true">
                 <div class="mx-auto h-[2px] w-[83.3%] rounded-[1px] bg-[#8cabc9]"></div>
                 <div class="mx-auto grid w-[83.3%] grid-cols-6">
                     @for ($i = 0; $i < 6; $i++)
-                        <div class="mx-auto h-[24px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
+                        <div class="mx-auto h-[20px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
                     @endfor
                 </div>
             </div>
 
-            {{-- 3. KARTU KOMISI I–V & BP (BADAN PEKERJA) --}}
+            {{-- 4. ENAM KOLOM SEJAJAR: KOMISI I–III, BP, KOMISI IV–V --}}
+            @php
+                $excelOrder = ['KOM-I' => 1, 'KOM-II' => 2, 'KOM-III' => 3, 'BP' => 4, 'KOM-IV' => 5, 'KOM-V' => 6];
+                $orderedCommittees = collect($committees)
+                    ->sortBy(fn ($item) => $excelOrder[$item['code'] ?? ''] ?? 99)
+                    ->values();
+            @endphp
+
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                @forelse ($committees as $committee)
+                @forelse ($orderedCommittees as $committee)
                     @php
                         $isBp = ($committee['code'] ?? '') === 'BP';
-                        $leadSlug = $isBp ? 'bp-andi-setiawan' : \App\Support\SenatDirectory::slug($committee['lead'] ?? '');
+                        $leadName = $committee['lead'] ?? '—';
+                        $secretaryName = $committee['secretary'] ?? '—';
+                        $leadSlug = $isBp ? 'bp-andi-setiawan' : \App\Support\SenatDirectory::slug($leadName);
+                        $secretarySlug = \App\Support\SenatDirectory::slug($secretaryName);
                         $committeeLabel = \App\Support\SenatDirectory::committeeLabel($committee['code'] ?? '');
-                        $targetUrl = !empty($leadSlug) && $leadSlug !== '-' && $leadSlug !== 'belum-ditentukan'
+                        $leadUrl = !empty($leadSlug) && $leadSlug !== '-' && $leadSlug !== 'belum-ditentukan'
                             ? route('public.directory.member', $leadSlug)
                             : '#tupoksi-' . ($committee['code'] ?? '');
+                        $secretaryUrl = !empty($secretarySlug) && $secretarySlug !== '-' && $secretarySlug !== 'belum-ditentukan'
+                            ? route('public.directory.member', $secretarySlug)
+                            : '#tupoksi-' . ($committee['code'] ?? '');
                     @endphp
-                    <article class="group flex flex-col overflow-hidden rounded-[12px] border border-[#d9e3f0] bg-white transition-all duration-200 hover:scale-[1.02] hover:border-senat-primary hover:shadow-lg">
+                    <article class="flex flex-col overflow-hidden rounded-[12px] border border-[#d9e3f0] bg-white">
                         <div class="h-1 w-full {{ $isBp ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
 
-                        <div class="flex flex-1 flex-col p-4">
-                            <a href="{{ $targetUrl }}" class="flex items-center gap-3">
-                                <span class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
-                                    <span class="flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[#bdd1e5] bg-senat-badgeBg text-[13px] font-bold text-senat-link" aria-hidden="true">
-                                        {{ $initials($committee['lead'] ?? null) }}
-                                    </span>
-                                </span>
-                                <div class="min-w-0">
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.06em] {{ $isBp ? 'text-senat-orange' : 'text-senat-link' }}">
-                                        {{ $committeeLabel }}
-                                    </p>
-                                    <p class="mt-0.5 text-[8px] font-medium uppercase leading-tight text-senat-body group-hover:text-senat-primary transition-colors truncate">{{ $committee['lead'] ?? '—' }}</p>
-                                </div>
-                            </a>
+                        {{-- Header Unit --}}
+                        <div class="border-b border-[#e5edf6] bg-senat-surface px-3.5 py-3 text-center">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.06em] {{ $isBp ? 'text-senat-orange' : 'text-senat-link' }}">
+                                {{ $committeeLabel }}
+                            </p>
+                            <p class="mt-1 text-[12px] font-bold leading-snug text-senat-ink">{{ $committee['name'] }}</p>
+                        </div>
 
-                            <p class="mt-4 text-center text-[13.5px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary transition-colors">{{ $committee['name'] }}</p>
-                            <p class="mt-2 flex-1 text-center text-[10px] leading-[1.3] text-senat-body line-clamp-3">{{ $committee['focus'] }}</p>
+                        <div class="flex flex-1 flex-col divide-y divide-[#eef3f9] px-3.5 py-2 text-[11px]">
+                            {{-- Ketua --}}
+                            <div class="py-2.5">
+                                <p class="text-[9px] font-bold uppercase tracking-[0.06em] text-senat-muted">Ketua</p>
+                                <a href="{{ $leadUrl }}" class="mt-1 block font-semibold leading-snug text-senat-ink hover:text-senat-primary transition-colors">
+                                    {{ $leadName }}
+                                </a>
+                            </div>
 
-                            <div class="mt-4 h-px w-full bg-[#d9e3f0]" aria-hidden="true"></div>
+                            {{-- Sekretaris --}}
+                            <div class="py-2.5">
+                                <p class="text-[9px] font-bold uppercase tracking-[0.06em] text-senat-muted">Sekretaris</p>
+                                <a href="{{ $secretaryUrl }}" class="mt-1 block font-semibold leading-snug text-senat-ink hover:text-senat-primary transition-colors">
+                                    {{ $secretaryName }}
+                                </a>
+                            </div>
 
-                            <a href="{{ $targetUrl }}"
-                               class="mt-3 block text-center text-[10px] font-bold text-senat-link group-hover:text-senat-primary transition-colors">
-                                Lihat profil &amp; mandat <span aria-hidden="true">›</span>
+                            {{-- Anggota --}}
+                            <div class="flex-1 py-2.5">
+                                <p class="text-[9px] font-bold uppercase tracking-[0.06em] text-senat-muted">Anggota</p>
+                                @if (! empty($committee['members']))
+                                    <ul class="mt-1.5 space-y-1.5">
+                                        @foreach ($committee['members'] as $member)
+                                            @php
+                                                $memberName = is_array($member) ? ($member['nama'] ?? $member['name'] ?? '—') : $member;
+                                                $memberSlug = is_array($member)
+                                                    ? ($member['slug'] ?? \App\Support\SenatDirectory::slug($memberName))
+                                                    : \App\Support\SenatDirectory::slug($memberName);
+                                            @endphp
+                                            <li class="leading-snug text-senat-body">
+                                                <a href="{{ route('public.directory.member', $memberSlug) }}" class="hover:text-senat-primary transition-colors">
+                                                    {{ $memberName }}
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="mt-1 text-[10px] italic text-senat-muted">—</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="border-t border-[#e5edf6] px-3.5 py-2.5 text-center">
+                            <a href="#tupoksi-{{ $committee['code'] }}"
+                               class="text-[10px] font-bold text-senat-link hover:text-senat-primary transition-colors">
+                                Rincian tupoksi <span aria-hidden="true">›</span>
                             </a>
                         </div>
                     </article>

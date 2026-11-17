@@ -141,6 +141,11 @@ class SenatDirectory
             'jurusan' => 'Akuntansi',
             'email' => 'iwan.budiyono@polines.ac.id',
         ],
+        'Iwan Budiyono, S.E., M.Si., Ak.' => [
+            'nip' => '198410192010121003',
+            'jurusan' => 'Akuntansi',
+            'email' => 'iwan.budiyono@polines.ac.id',
+        ],
         'Iwan Budiyono, S.E., M.Si., Akt.' => [
             'nip' => '198410192010121003',
             'jurusan' => 'Akuntansi',
@@ -188,6 +193,11 @@ class SenatDirectory
             'email' => 'arif.wahyudianto@polines.ac.id',
         ],
         'Alvianita Gunawan Putri, S.E., M.Acc., Ak., CA., CPA., ASEAN CPA.' => [
+            'nip' => '199201072019032024',
+            'jurusan' => 'Akuntansi',
+            'email' => 'alvianita.putri@polines.ac.id',
+        ],
+        'Alvianita Gunawan Putri, S.E., M.Acc., Ak., CA., CPA., Asean CPA.' => [
             'nip' => '199201072019032024',
             'jurusan' => 'Akuntansi',
             'email' => 'alvianita.putri@polines.ac.id',
