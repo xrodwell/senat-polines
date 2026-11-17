@@ -54,9 +54,11 @@ trait HasMeetingManagement
 
     public function selectCommitteeLecturers(string $komisi): void
     {
+        $pattern = '/(?<![A-Za-z0-9])' . preg_quote($komisi, '/') . '(?![A-Za-z])/i';
         $this->selectedLecturerIds = array_values(array_map(
             fn($item) => $item['id_user'],
-            array_filter($this->allLecturers, fn($item) => str_contains($item['komisi'] ?? '', $komisi) || str_contains($item['role'] ?? '', $komisi))
+            array_filter($this->allLecturers, fn($item) => preg_match($pattern, (string) ($item['komisi'] ?? '')) === 1
+                || preg_match($pattern, (string) ($item['role'] ?? '')) === 1)
         ));
     }
 
@@ -97,11 +99,12 @@ trait HasMeetingManagement
                 $payload = $res->json('data') ?? $res->json();
                 $items = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
                 if (is_array($items) && !empty($items)) {
-                    $komisiPresets = ['Pimpinan Senat', 'Komisi I', 'Komisi II', 'Komisi III', 'Komisi IV', 'Komisi V'];
+                    $komisiPresets = ['Pimpinan Senat', 'Komisi I', 'Komisi II', 'Komisi III', 'Komisi IV', 'Komisi V', 'BP (Badan Pekerja)'];
                     $this->allLecturers = array_map(function ($u, $idx) use ($komisiPresets) {
                         $kom = $u['komisi'] ?? null;
                         if (!$kom && !empty($u['enrollments']) && is_array($u['enrollments'])) {
-                            $kom = $u['enrollments'][0]['komisi']['nama_komisi'] ?? ($u['enrollments'][0]['jabatan_komisi'] ?? null);
+                            $komisiNames = array_filter(array_map(fn ($e) => $e['komisi']['nama_komisi'] ?? null, $u['enrollments']));
+                            $kom = !empty($komisiNames) ? implode(', ', $komisiNames) : ($u['enrollments'][0]['jabatan_komisi'] ?? null);
                         }
                         if (!$kom || $kom === 'anggota' || $kom === 'Komisi Senat') {
                             $kom = $komisiPresets[$idx % count($komisiPresets)];
@@ -247,14 +250,18 @@ trait HasMeetingManagement
                 $invitedIds = $targetSession['invited_user_ids'];
                 $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => in_array($u['id_user'], $invitedIds)));
             } else
-            if (str_contains($type, 'Komisi I')) {
-                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi I') || str_contains($u['role'] ?? '', 'Ketua')));
-            } elseif (str_contains($type, 'Komisi II')) {
-                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi II')));
+            if (str_contains($type, 'Komisi I') && !str_contains($type, 'Komisi II') && !str_contains($type, 'Komisi III') && !str_contains($type, 'Komisi IV')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi I') && !str_contains($u['komisi'] ?? '', 'Komisi II') && !str_contains($u['komisi'] ?? '', 'Komisi III') && !str_contains($u['komisi'] ?? '', 'Komisi IV') || str_contains($u['role'] ?? '', 'Ketua')));
+            } elseif (str_contains($type, 'Komisi II') && !str_contains($type, 'Komisi III')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi II') && !str_contains($u['komisi'] ?? '', 'Komisi III')));
             } elseif (str_contains($type, 'Komisi III')) {
                 $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi III')));
+            } elseif (str_contains($type, 'Komisi IV')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi IV')));
             } elseif (str_contains($type, 'Komisi V')) {
                 $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi V')));
+            } elseif (str_contains($type, 'Badan Pekerja') || str_contains($type, 'BP')) {
+                $invitedLecturers = array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Badan Pekerja') || str_contains($u['komisi'] ?? '', 'BP')));
             }
 
             $totalInvited = count($invitedLecturers);

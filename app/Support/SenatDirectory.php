@@ -19,6 +19,7 @@ class SenatDirectory
         'KOM-III' => 'Komisi III',
         'KOM-IV' => 'Komisi IV',
         'KOM-V' => 'Komisi V',
+        'BP' => 'BP',
     ];
 
     /**
@@ -280,23 +281,27 @@ class SenatDirectory
 
         return [
             [
-                'slug' => 'bph-andi-setiawan',
+                'slug' => 'bp-andi-setiawan',
                 'name' => 'Andi Setiawan, S.E., M.M.',
-                'role' => 'Ketua BPH',
+                'role' => 'Ketua BP',
                 'nip' => $andiInfo['nip'] ?? '197607202008011011',
                 'jurusan' => $andiInfo['jurusan'] ?? 'Administrasi Bisnis',
                 'email' => $andiInfo['email'] ?? 'andi.setiawan@polines.ac.id',
-                'organ' => 'Badan Pekerja Harian',
+                'organ' => 'BP (Badan Pekerja)',
+                'committee_code' => 'BP',
+                'committee_name' => 'BP (Badan Pekerja)',
                 'focus' => 'Mengoordinasikan kerja antar-komisi dan menyiapkan berkas sidang.',
             ],
             [
                 'slug' => 'vinda-setya-kartika',
                 'name' => 'Vinda Setya Kartika, S.T., M.T.',
-                'role' => 'Sekretaris BPH',
+                'role' => 'Sekretaris BP',
                 'nip' => $vindaInfo['nip'] ?? '199108112019032024',
                 'jurusan' => $vindaInfo['jurusan'] ?? 'Teknik Elektro',
                 'email' => $vindaInfo['email'] ?? 'vinda.setya@polines.ac.id',
-                'organ' => 'Badan Pekerja Harian',
+                'organ' => 'BP (Badan Pekerja)',
+                'committee_code' => 'BP',
+                'committee_name' => 'BP (Badan Pekerja)',
                 'focus' => 'Menyusun rancangan agenda persidangan berkala dan risalah tindak lanjut.',
             ],
         ];
@@ -336,7 +341,7 @@ class SenatDirectory
     }
 
     /**
-     * Direktori anggota lengkap: pimpinan, BPH, ketua/sekretaris komisi, dan anggota komisi.
+     * Direktori anggota lengkap: pimpinan, BP (Badan Pekerja), ketua/sekretaris komisi, dan anggota komisi.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -368,18 +373,21 @@ class SenatDirectory
         }
 
         foreach (self::committees() as $committee) {
+            $isBp = ($committee['code'] ?? '') === 'BP';
+            $label = self::committeeLabel($committee['code']);
+            $organName = $isBp ? 'BP (Badan Pekerja)' : ($label . ' — ' . $committee['name']);
             $push([
                 'name' => $committee['lead'],
-                'role' => 'Ketua '.self::committeeLabel($committee['code']),
-                'organ' => self::committeeLabel($committee['code']).' — '.$committee['name'],
+                'role' => 'Ketua ' . $label,
+                'organ' => $organName,
                 'committee_code' => $committee['code'],
                 'committee_name' => $committee['name'],
                 'focus' => $committee['focus'],
             ]);
             $push([
                 'name' => $committee['secretary'],
-                'role' => 'Sekretaris '.self::committeeLabel($committee['code']),
-                'organ' => self::committeeLabel($committee['code']).' — '.$committee['name'],
+                'role' => 'Sekretaris ' . $label,
+                'organ' => $organName,
                 'committee_code' => $committee['code'],
                 'committee_name' => $committee['name'],
                 'focus' => $committee['focus'],
@@ -388,8 +396,8 @@ class SenatDirectory
                 $push([
                     'name' => is_array($member) ? ($member['nama'] ?? $member['name'] ?? '—') : $member,
                     'nip' => is_array($member) ? ($member['nim_nip'] ?? null) : null,
-                    'role' => 'Anggota '.self::committeeLabel($committee['code']),
-                    'organ' => self::committeeLabel($committee['code']).' — '.$committee['name'],
+                    'role' => 'Anggota ' . $label,
+                    'organ' => $organName,
                     'committee_code' => $committee['code'],
                     'committee_name' => $committee['name'],
                     'focus' => $committee['focus'],
@@ -402,8 +410,10 @@ class SenatDirectory
 
     public static function findBySlug(string $slug): ?array
     {
+        $normalizedSlug = $slug === 'bph-andi-setiawan' ? 'bp-andi-setiawan' : $slug;
+
         foreach (self::members() as $member) {
-            if ($member['slug'] === $slug) {
+            if ($member['slug'] === $normalizedSlug) {
                 return $member;
             }
         }

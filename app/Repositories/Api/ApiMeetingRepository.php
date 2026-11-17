@@ -63,7 +63,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
                             2 => 'Terbuka',
                             3 => 'Pimpinan',
                             4 => 'Komisi',
-                            5 => 'Panitia Kerja / Badan Pekerja',
+                            5 => 'Badan Pekerja (BP)',
                             6 => 'Rapat/Sidang Lainnya',
                             default => 'Pleno',
                         };

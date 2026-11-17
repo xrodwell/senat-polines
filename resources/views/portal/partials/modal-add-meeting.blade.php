@@ -22,6 +22,7 @@
                         <option value="Rapat Komisi III">Rapat Komisi III (Kelembagaan dan SDM)</option>
                         <option value="Rapat Komisi IV">Rapat Komisi IV (Pengembangan dan Kerja Sama)</option>
                         <option value="Rapat Komisi V">Rapat Komisi V (Komisi Etik)</option>
+                        <option value="Rapat Badan Pekerja (BP)">Rapat BP (Badan Pekerja)</option>
                     </select>
                 </div>
                 <div>

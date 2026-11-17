@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Struktur Organisasi — Senat Akademik Politeknik Negeri Semarang')
-@section('description', 'Bagan organisasi Senat Akademik Politeknik Negeri Semarang: susunan pimpinan kolegial, Badan Pekerja Harian, dan lima komisi fungsional beserta profil dan tupoksinya.')
+@section('description', 'Bagan organisasi Senat Akademik Politeknik Negeri Semarang: susunan pimpinan kolegial, BP (Badan Pekerja), dan lima komisi fungsional beserta profil dan tupoksinya.')
 
 @section('content')
 
@@ -9,7 +9,7 @@
     <x-senat.page-hero
         eyebrow="Bagan Kelembagaan & Struktur"
         title="Struktur Organisasi Senat Akademik"
-        subtitle="Susunan kepemimpinan kolegial, komisi fungsional I–V, dan sekretariat Senat Akademik Politeknik Negeri Semarang periode aktif."
+        subtitle="Susunan kepemimpinan kolegial, komisi fungsional I–V, BP (Badan Pekerja), dan sekretariat Senat Akademik Politeknik Negeri Semarang periode aktif."
     />
 
     @php
@@ -40,7 +40,7 @@
             return $letters ? implode('', $letters) : 'SA';
         };
 
-        // Pejabat di bawah Ketua: Sekretaris Senat + Badan Pekerja Harian
+        // Pejabat di bawah Ketua: Sekretaris Senat + BP (Badan Pekerja)
         $officers = [];
 
         if (! empty($secretary)) {
@@ -56,9 +56,9 @@
 
         foreach ($bph as $person) {
             $officers[] = [
-                'role' => $person['role'] ?? 'Badan Pekerja Harian',
+                'role' => $person['role'] ?? 'BP (Badan Pekerja)',
                 'name' => $person['name'] ?? '—',
-                'organ' => $person['organ'] ?? 'Badan Pekerja Harian',
+                'organ' => $person['organ'] ?? 'BP (Badan Pekerja)',
                 'nip' => $person['nip'] ?? (\App\Support\SenatDirectory::LECTURER_DATA[$person['name'] ?? '']['nip'] ?? null),
                 'focus' => $person['focus'] ?? 'Mengoordinasikan kerja antar-komisi dan menyiapkan berkas sidang.',
                 'slug' => $person['slug'] ?? \App\Support\SenatDirectory::slug($person['name'] ?? ''),
@@ -130,7 +130,7 @@
                 </div>
             </div>
 
-            {{-- 2. SEKRETARIS SENAT & BADAN PEKERJA HARIAN (KLIK LANGSUNG KE DETAIL PROFIL) --}}
+            {{-- 2. SEKRETARIS SENAT & BP (BADAN PEKERJA) (KLIK LANGSUNG KE DETAIL PROFIL) --}}
             <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($officers as $officer)
                     @php
@@ -159,10 +159,10 @@
                 @endforelse
             </div>
 
-            {{-- Sub-judul: Pimpinan dan Lima Komisi --}}
+            {{-- Sub-judul: Pimpinan, Komisi, & BP --}}
             <div class="mt-12 border-t border-senat-line pt-8">
                 <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-link">Struktur Organisasi</p>
-                <h3 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Pimpinan dan Lima Komisi Senat</h3>
+                <h3 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Pimpinan, Lima Komisi, dan Badan Pekerja (BP)</h3>
             </div>
 
             {{-- Penghubung: Pejabat → Komisi --}}
@@ -174,54 +174,55 @@
             <div class="mx-auto flex w-full max-w-[400px] items-center gap-4 rounded-[10px] border border-[#a3c2e0] bg-senat-badgeBg px-5 py-3">
                 <span class="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-senat-hero text-[13px] font-bold leading-none text-white" aria-hidden="true"><x-senat.icon name="minutes" class="h-[18px] w-[18px]" /></span>
                 <div class="min-w-0">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-hero">Koordinasi Komisi Senat Akademik</p>
-                    <p class="mt-1 text-[9px] text-senat-body">Telaah kebijakan melalui lima bidang mandat.</p>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-hero">Koordinasi Komisi &amp; BP Senat Akademik</p>
+                    <p class="mt-1 text-[9px] text-senat-body">Telaah kebijakan melalui lima komisi dan BP (Badan Pekerja).</p>
                 </div>
             </div>
 
-            {{-- Penghubung: Koordinasi → Lima Komisi --}}
+            {{-- Penghubung: Koordinasi → Komisi & BP --}}
             <div class="flex justify-center" aria-hidden="true">
                 <div class="h-[30px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
             </div>
 
-            <div class="hidden lg:block" aria-hidden="true">
-                <div class="mx-auto h-[2px] w-[81.3%] rounded-[1px] bg-[#8cabc9]"></div>
-                <div class="mx-auto grid w-[81.3%] grid-cols-5">
-                    @for ($i = 0; $i < 5; $i++)
+            <div class="hidden xl:block" aria-hidden="true">
+                <div class="mx-auto h-[2px] w-[83.3%] rounded-[1px] bg-[#8cabc9]"></div>
+                <div class="mx-auto grid w-[83.3%] grid-cols-6">
+                    @for ($i = 0; $i < 6; $i++)
                         <div class="mx-auto h-[24px] w-[2px] rounded-[1px] bg-[#8cabc9]"></div>
                     @endfor
                 </div>
             </div>
 
-            {{-- 3. KARTU LIMA KOMISI (KLIK LANGSUNG KE DETAIL PROFIL KETUA / KOMISI) --}}
-            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            {{-- 3. KARTU KOMISI I–V & BP (BADAN PEKERJA) --}}
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                 @forelse ($committees as $committee)
                     @php
-                        $leadSlug = \App\Support\SenatDirectory::slug($committee['lead'] ?? '');
+                        $isBp = ($committee['code'] ?? '') === 'BP';
+                        $leadSlug = $isBp ? 'bp-andi-setiawan' : \App\Support\SenatDirectory::slug($committee['lead'] ?? '');
                         $committeeLabel = \App\Support\SenatDirectory::committeeLabel($committee['code'] ?? '');
                         $targetUrl = !empty($leadSlug) && $leadSlug !== '-' && $leadSlug !== 'belum-ditentukan'
                             ? route('public.directory.member', $leadSlug)
                             : '#tupoksi-' . ($committee['code'] ?? '');
                     @endphp
                     <article class="group flex flex-col overflow-hidden rounded-[12px] border border-[#d9e3f0] bg-white transition-all duration-200 hover:scale-[1.02] hover:border-senat-primary hover:shadow-lg">
-                        <div class="h-1 w-full {{ $loop->iteration === 3 ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
+                        <div class="h-1 w-full {{ $isBp ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
 
-                        <div class="flex flex-1 flex-col p-5">
+                        <div class="flex flex-1 flex-col p-4">
                             <a href="{{ $targetUrl }}" class="flex items-center gap-3">
-                                <span class="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
-                                    <span class="flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[#bdd1e5] bg-senat-badgeBg text-[14px] font-bold text-senat-link" aria-hidden="true">
+                                <span class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-[#a3bdd6] bg-[#d6e5f5] transition-transform duration-200 group-hover:scale-105">
+                                    <span class="flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[#bdd1e5] bg-senat-badgeBg text-[13px] font-bold text-senat-link" aria-hidden="true">
                                         {{ $initials($committee['lead'] ?? null) }}
                                     </span>
                                 </span>
                                 <div class="min-w-0">
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">
+                                    <p class="text-[10px] font-bold uppercase tracking-[0.06em] {{ $isBp ? 'text-senat-orange' : 'text-senat-link' }}">
                                         {{ $committeeLabel }}
                                     </p>
                                     <p class="mt-0.5 text-[8px] font-medium uppercase leading-tight text-senat-body group-hover:text-senat-primary transition-colors truncate">{{ $committee['lead'] ?? '—' }}</p>
                                 </div>
                             </a>
 
-                            <p class="mt-4 text-center text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary transition-colors">{{ $committee['name'] }}</p>
+                            <p class="mt-4 text-center text-[13.5px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary transition-colors">{{ $committee['name'] }}</p>
                             <p class="mt-2 flex-1 text-center text-[10px] leading-[1.3] text-senat-body line-clamp-3">{{ $committee['focus'] }}</p>
 
                             <div class="mt-4 h-px w-full bg-[#d9e3f0]" aria-hidden="true"></div>
@@ -233,7 +234,7 @@
                         </div>
                     </article>
                 @empty
-                    <div class="sm:col-span-2 lg:col-span-5">
+                    <div class="sm:col-span-2 lg:col-span-3 xl:col-span-6">
                         <x-senat.empty title="Data komisi belum dimuat" />
                     </div>
                 @endforelse
@@ -241,25 +242,28 @@
         </div>
     </section>
 
-    {{-- ================= RINCIAN TUPOKSI KOMISI ================= --}}
+    {{-- ================= RINCIAN TUPOKSI KOMISI & BP ================= --}}
     <section id="tupoksi-komisi" class="senat-shell scroll-mt-24 py-14 lg:py-16">
         <div>
             <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-link">Tugas Pokok &amp; Fungsi</p>
-            <h2 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Rincian Tupoksi Lima Komisi Senat</h2>
+            <h2 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Rincian Tupoksi Komisi &amp; Badan Pekerja (BP)</h2>
             <p class="mt-3 max-w-[1264px] text-[14px] leading-[1.45] text-senat-body">
-                Setiap komisi menjalankan mandat normatif yang ditetapkan Senat Akademik untuk periode {{ $period }}, mulai dari perumusan kebijakan hingga pengawasan pelaksanaannya.
+                Setiap komisi dan Badan Pekerja (BP) menjalankan mandat normatif yang ditetapkan Senat Akademik untuk periode {{ $period }}, mulai dari koordinasi persidangan hingga perumusan kebijakan dan pengawasan.
             </p>
         </div>
 
         <div class="mt-8 space-y-4">
             @forelse ($committees as $committee)
+                @php
+                    $isBp = ($committee['code'] ?? '') === 'BP';
+                @endphp
                 <article id="tupoksi-{{ $committee['code'] }}" class="scroll-mt-24 overflow-hidden rounded-[12px] border border-senat-line bg-white">
-                    <div class="h-1 w-full {{ $loop->iteration === 3 ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
+                    <div class="h-1 w-full {{ $isBp ? 'bg-senat-orange' : 'bg-senat-hero' }}" aria-hidden="true"></div>
 
                     <div class="p-6 lg:p-8">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div class="min-w-0">
-                                <span class="inline-flex items-center rounded-full border border-senat-badgeLine bg-senat-badgeBg px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">
+                                <span class="inline-flex items-center rounded-full border {{ $isBp ? 'border-senat-orange/40 bg-orange-50 text-senat-orange' : 'border-senat-badgeLine bg-senat-badgeBg text-senat-link' }} px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em]">
                                     {{ \App\Support\SenatDirectory::committeeLabel($committee['code']) }}
                                 </span>
                                 <h3 class="mt-3 text-[18px] font-bold leading-snug text-senat-ink">{{ $committee['name'] }}</h3>
@@ -269,11 +273,11 @@
 
                         <dl class="mt-5 grid gap-4 sm:grid-cols-2">
                             <div class="rounded-[10px] border border-[#f1f5f9] bg-[#f8fafc] px-4 py-3">
-                                <dt class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">Ketua Komisi</dt>
+                                <dt class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">{{ $isBp ? 'Ketua BP' : 'Ketua Komisi' }}</dt>
                                 <dd class="mt-1 text-[13px] font-bold text-senat-ink">{{ $committee['lead'] ?? '—' }}</dd>
                             </div>
                             <div class="rounded-[10px] border border-[#f1f5f9] bg-[#f8fafc] px-4 py-3">
-                                <dt class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">Sekretaris Komisi</dt>
+                                <dt class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">{{ $isBp ? 'Sekretaris BP' : 'Sekretaris Komisi' }}</dt>
                                 <dd class="mt-1 text-[13px] font-bold text-senat-ink">{{ $committee['secretary'] ?? '—' }}</dd>
                             </div>
                         </dl>
@@ -299,9 +303,6 @@
                                                 {{ $memberName }}
                                             </a>
                                         </li>
-                                                {{ $memberName }}
-                                            </a>
-                                        </li>
                                     @endforeach
                                 </ul>
                             </div>
@@ -322,10 +323,10 @@
             <h2 class="mt-3 text-[22px] font-bold leading-[1.2] text-[#0f172a]">Senat Akademik dalam Angka</h2>
 
             <div class="mt-6 grid gap-4 sm:grid-cols-3">
-                <x-senat.stat label="Komisi Fungsional" :value="$direktori['committees'] ?? count($committees)"
-                              hint="Komisi I s.d. Komisi V" icon="dashboard" />
+                <x-senat.stat label="Komisi & Badan Pekerja" :value="count($committees) ?: ($direktori['committees'] ?? 6)"
+                              hint="Komisi I–V & BP (Badan Pekerja)" icon="dashboard" />
                 <x-senat.stat label="Anggota Senat" :value="$direktori['members'] ?? 0"
-                              hint="Pimpinan, BPH, dan anggota komisi" icon="users" />
+                              hint="Pimpinan, BP, dan anggota komisi" icon="users" />
                 <x-senat.stat label="Periode Jabatan" :value="$direktori['period'] ?? $period"
                               hint="Masa bakti kolegial Senat" icon="calendar" />
             </div>

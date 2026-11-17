@@ -120,11 +120,11 @@
                             <p class="text-xs text-slate-600 mt-3 leading-relaxed">Pengelola persidangan, verifikasi risalah keputusan sidang pleno, dan pengelolaan arsip normatif.</p>
                         </div>
                         <div class="pt-4 md:pt-0 md:pl-6">
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Badan Pekerja Harian (BPH)</span>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Badan Pekerja (BP)</span>
                             <h4 class="text-base font-extrabold text-slate-900 mt-1">Andi Setiawan, S.E., M.M.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">Ketua BPH &middot; NIP. 197607202008011011</p>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">Ketua BP &middot; NIP. 197607202008011011</p>
                             <h4 class="text-sm font-bold text-slate-800 mt-2">Vinda Setya Kartika, S.T., M.T.</h4>
-                            <p class="text-xs text-slate-500 font-mono mt-0.5">Sekretaris BPH &middot; NIP. 199108112019032024</p>
+                            <p class="text-xs text-slate-500 font-mono mt-0.5">Sekretaris BP &middot; NIP. 199108112019032024</p>
                             <p class="text-xs text-slate-600 mt-1 leading-relaxed">Penyusun rancangan agenda persidangan berkala, koordinasi antar-komisi, dan penyiapan berkas sidang.</p>
                         </div>
                     </div>
@@ -135,7 +135,7 @@
                     <div class="flex flex-col items-center">
                         <div class="w-px h-6 bg-slate-300"></div>
                         <span class="text-[10px] font-mono font-bold uppercase tracking-widest bg-slate-200 text-slate-600 px-3 py-0.5 rounded-full">
-                            Membawahi {{ count($committees) }} Komisi Tetap
+                            Membawahi 5 Komisi Tetap &amp; BP (Badan Pekerja)
                         </span>
                         <div class="w-px h-6 bg-slate-300"></div>
                     </div>

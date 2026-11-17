@@ -28,16 +28,21 @@
             </p>
         </div>
 
-        {{-- Kolom 2: komisi --}}
+        {{-- Kolom 2: komisi & BP --}}
         <div>
-            <h2 class="text-[13px] font-bold text-[#0f172a]">Komisi Senat</h2>
+            <h2 class="text-[13px] font-bold text-[#0f172a]">Komisi &amp; BP Senat</h2>
             <ul class="mt-4 space-y-[2px] text-[12px] text-senat-muted sm:mt-5">
                 @forelse (\App\Support\SenatDirectory::committees() as $committee)
+                    @php
+                        $isBp = ($committee['code'] ?? '') === 'BP';
+                        $footerLabel = $isBp
+                            ? 'BP — Badan Pekerja'
+                            : (\App\Support\SenatDirectory::committeeLabel($committee['code']) . ' — ' . \Illuminate\Support\Str::after($committee['name'], 'Komisi '));
+                    @endphp
                     <li>
-                        <a href="{{ route('public.profile.structure') }}"
+                        <a href="{{ route('public.profile.structure') }}#tupoksi-{{ $committee['code'] }}"
                            class="senat-tap inline-flex min-h-[36px] items-center transition-colors hover:text-senat-primary">
-                            {{ \App\Support\SenatDirectory::committeeLabel($committee['code']) }}
-                            — {{ \Illuminate\Support\Str::after($committee['name'], 'Komisi ') }}
+                            {{ $footerLabel }}
                         </a>
                     </li>
                 @empty
@@ -46,6 +51,7 @@
                     <li>Komisi III — Kelembagaan dan SDM</li>
                     <li>Komisi IV — Pengembangan dan Kerja Sama</li>
                     <li>Komisi V — Komisi Etik</li>
+                    <li>BP — Badan Pekerja</li>
                 @endforelse
             </ul>
         </div>

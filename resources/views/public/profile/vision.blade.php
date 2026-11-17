@@ -106,24 +106,24 @@
         </div>
     </section>
 
-    {{-- ================= LIMA KOMISI & RINGKASAN DIREKTORI ================= --}}
+    {{-- ================= KOMISI & BADAN PEKERJA SENAT ================= --}}
     <section class="mt-14 border-t border-senat-line bg-white">
         <div class="senat-shell py-14">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-orange">Struktur Kerja</p>
-                    <h2 class="mt-3 text-[22px] font-bold leading-[1.2] text-[#0f172a]">Lima Komisi Senat Akademik</h2>
+                    <h2 class="mt-3 text-[22px] font-bold leading-[1.2] text-[#0f172a]">Komisi &amp; Badan Pekerja (BP) Senat Akademik</h2>
                 </div>
                 <x-senat.button variant="secondary" size="md" :href="route('public.profile.structure')" trailing="›">
                     Lihat Struktur Organisasi
                 </x-senat.button>
             </div>
 
-            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($committees as $committee)
-                    <a href="{{ route('public.profile.structure') }}"
+                    <a href="{{ route('public.profile.structure') }}#tupoksi-{{ $committee['code'] }}"
                        class="group flex flex-col rounded-[12px] border border-senat-line bg-white p-5 transition-colors hover:border-senat-badgeLine">
-                        <span class="inline-flex w-fit items-center rounded-full border border-senat-badgeLine bg-senat-badgeBg px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">
+                        <span class="inline-flex w-fit items-center rounded-full border {{ ($committee['code'] ?? '') === 'BP' ? 'border-senat-orange/40 bg-orange-50 text-senat-orange' : 'border-senat-badgeLine bg-senat-badgeBg text-senat-link' }} px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em]">
                             {{ \App\Support\SenatDirectory::committeeLabel($committee['code']) }}
                         </span>
                         <h3 class="mt-3 text-[13px] font-bold leading-snug text-senat-ink">{{ $committee['name'] }}</h3>
@@ -135,7 +135,7 @@
                         </span>
                     </a>
                 @empty
-                    <div class="sm:col-span-2 lg:col-span-5">
+                    <div class="sm:col-span-2 lg:col-span-3">
                         <x-senat.empty title="Data komisi belum dimuat"
                                        message="Struktur komisi Senat Akademik akan tampil setelah data kelembagaan tersedia." />
                     </div>
@@ -143,10 +143,10 @@
             </div>
 
             <div class="mt-6 grid gap-4 sm:grid-cols-3">
-                <x-senat.stat label="Komisi Fungsional" :value="$direktori['committees'] ?? count($committees)"
-                              hint="Komisi I s.d. Komisi V" icon="dashboard" />
+                <x-senat.stat label="Komisi & Badan Pekerja" :value="count($committees) ?: ($direktori['committees'] ?? 6)"
+                              hint="Komisi I–V & BP (Badan Pekerja)" icon="dashboard" />
                 <x-senat.stat label="Anggota Senat" :value="$direktori['members'] ?? 0"
-                              hint="Pimpinan, BPH, dan anggota komisi" icon="users" />
+                              hint="Pimpinan, BP, dan anggota komisi" icon="users" />
                 <x-senat.stat label="Periode Jabatan" :value="$direktori['period'] ?? '—'"
                               hint="Masa bakti kolegial Senat" icon="calendar" />
             </div>

@@ -42,8 +42,8 @@
     {{-- Daftar Anggota Komisi & Tindakan Administrasi --}}
     <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
         <div class="border-b border-slate-100 pb-4">
-            <h3 class="text-[15px] font-bold text-slate-900">Susunan Lengkap Komisi I – V</h3>
-            <p class="text-[12px] text-slate-500">Edit data anggota atau mutasi komisi langsung dari panel administrasi ini.</p>
+            <h3 class="text-[15px] font-bold text-slate-900">Susunan Lengkap Komisi I – V &amp; BP (Badan Pekerja)</h3>
+            <p class="text-[12px] text-slate-500">Edit data anggota atau mutasi komisi / BP langsung dari panel administrasi ini.</p>
         </div>
 
         <div class="mt-6 space-y-6">
@@ -51,7 +51,17 @@
                 @php
                     $leadName = $c['lead'] ?? '';
                     $secName = $c['secretary'] ?? '';
-                    $membersList = $c['members'] ?? [];
+                    $membersList = array_values(array_filter($c['members'] ?? [], function ($m) use ($leadName, $secName) {
+                        if (!is_array($m)) {
+                            return $m !== $leadName && $m !== $secName;
+                        }
+                        $jab = strtolower(trim($m['jabatan'] ?? ''));
+                        $nama = $m['nama'] ?? ($m['name'] ?? '');
+                        if (in_array($jab, ['ketua', 'sekretaris'], true) && ($nama === $leadName || $nama === $secName)) {
+                            return false;
+                        }
+                        return true;
+                    }));
                 @endphp
                 <div class="rounded-xl border border-slate-200 overflow-hidden">
                     <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-3 border-b border-slate-200">
@@ -105,10 +115,11 @@
                             @php
                                 $mName = is_array($m) ? ($m['nama'] ?? $m['name'] ?? '—') : $m;
                                 $mNip = is_array($m) ? ($m['nim_nip'] ?? '') : '';
+                                $mJab = is_array($m) ? ($m['jabatan'] ?? 'Anggota') : 'Anggota';
                             @endphp
                             <div class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 transition">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 shrink-0">ANGGOTA</span>
+                                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase text-slate-600 shrink-0">{{ $mJab }}</span>
                                     <div class="min-w-0">
                                         <p class="font-medium text-slate-800 truncate">{{ $mName }}</p>
                                         @if ($mNip)

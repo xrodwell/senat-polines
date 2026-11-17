@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Beranda — Senat Akademik Politeknik Negeri Semarang')
-@section('description', 'Portal resmi Senat Akademik Politeknik Negeri Semarang — agenda sidang, lima komisi, fitur unggulan, dan warta keputusan akademik terbaru.')
+@section('description', 'Portal resmi Senat Akademik Politeknik Negeri Semarang — agenda sidang, lima komisi & Badan Pekerja (BP), fitur unggulan, dan warta keputusan akademik terbaru.')
 
 @section('content')
 
@@ -79,7 +79,7 @@
             @php
                 $stats = [
                     ['label' => 'ANGGOTA SENAT',   'value' => $memberCount,     'hint' => 'Guru Besar & Pendidik'],
-                    ['label' => 'KOMISI AKTIF',    'value' => $committeeCount,  'hint' => 'Komisi I s.d. V'],
+                    ['label' => 'KOMISI & BP',     'value' => $committeeCount,  'hint' => 'Komisi I–V & BP'],
                     ['label' => 'WARTA TERBIT',    'value' => $releaseCount,    'hint' => 'Rilis & keputusan senat'],
                     ['label' => 'TAHUN PERIODE',   'value' => $period,          'hint' => 'Senat Akademik'],
                 ];
@@ -194,38 +194,41 @@
     </div>
 </section>
 
-{{-- ==================== LIMA KOMISI SENAT (2013:57 → 2013:88) ==================== --}}
+{{-- ==================== KOMISI & BADAN PEKERJA SENAT (2013:57 → 2013:88) ==================== --}}
 <section class="pb-[50px] pt-[68px]">
     <div class="senat-shell">
         <div>
             <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-link">Struktur Kerja</p>
             <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
-                Lima Komisi Senat Polines
+                Komisi &amp; Badan Pekerja (BP) Senat Polines
             </h2>
         </div>
 
-        <div class="mt-[33px] grid grid-cols-1 gap-[19px] sm:grid-cols-2 lg:grid-cols-5">
+        <div class="mt-[33px] grid grid-cols-1 gap-[19px] sm:grid-cols-2 lg:grid-cols-3">
             @forelse ($committees as $committee)
                 @php
-                    $roman = \Illuminate\Support\Str::after($committee['code'], 'KOM-');
+                    $isBp = ($committee['code'] ?? '') === 'BP';
+                    $badgeText = $isBp ? 'BP' : \Illuminate\Support\Str::after($committee['code'], 'KOM-');
+                    $eyebrowText = $isBp ? 'BADAN PEKERJA' : ('KOMISI ' . $badgeText);
+                    $headingText = $isBp ? 'BP (Badan Pekerja)' : \Illuminate\Support\Str::after($committee['name'], 'Komisi ');
                 @endphp
                 <a href="{{ route('public.profile.structure') }}"
                    class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#d9e3f0] bg-white p-[18px] transition-colors duration-150 hover:border-senat-primary/50">
-                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] bg-senat-hero text-[12px] font-bold text-white">
-                        {{ $roman }}
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] {{ $isBp ? 'bg-senat-orange' : 'bg-senat-hero' }} text-[12px] font-bold text-white">
+                        {{ $badgeText }}
                     </span>
                     <p class="mt-3 text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-body">
-                        KOMISI {{ $roman }}
+                        {{ $eyebrowText }}
                     </p>
                     <h3 class="mt-[6px] text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary">
-                        {{ \Illuminate\Support\Str::after($committee['name'], 'Komisi ') }}
+                        {{ $headingText }}
                     </h3>
                     <p class="mt-[14px] text-[11px] leading-[1.3] text-senat-body line-clamp-4">
                         {{ $committee['focus'] }}
                     </p>
                 </a>
             @empty
-                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-5">
+                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-3">
                     <p class="text-[13px] text-senat-muted">Data komisi belum dimuat.</p>
                 </div>
             @endforelse

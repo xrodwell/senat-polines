@@ -8,8 +8,8 @@
      * 03 — Direktori Komisi & Anggota — Figma node 2075:2 (1440×2532).
      * Data dari PublicController@directory: $committees, $members, $leadership, $period, $direktori.
      */
-    $komisiLabel = fn (string $code): string => str_replace('KOM-', 'Komisi ', $code);
-    $komisiShort = fn (string $name): string => preg_replace('/^Komisi\s+/', '', $name);
+    $komisiLabel = fn (string $code): string => \App\Support\SenatDirectory::committeeLabel($code);
+    $komisiShort = fn (string $name): string => str_contains(strtolower($name), 'badan pekerja') ? 'Badan Pekerja' : preg_replace('/^Komisi\s+/', '', $name);
     $initialsOf = function (string $name): string {
         $parts = collect(explode(' ', preg_replace('/,.*$/', '', $name)))
             ->filter(fn ($part) => $part !== '' && ! str_contains($part, '.'))
@@ -100,8 +100,8 @@
         <div class="senat-shell pb-16 pt-10">
 
             {{-- Selector surface: pilih komisi --}}
-            <section class="rounded-[13px] border border-[#d6e0ed] bg-white p-5 sm:p-6" aria-label="Pilih komisi">
-                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-body">Pilih Komisi</p>
+            <section class="rounded-[13px] border border-[#d6e0ed] bg-white p-5 sm:p-6" aria-label="Pilih komisi dan Badan Pekerja">
+                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-body">Pilih Komisi &amp; BP (Badan Pekerja)</p>
 
                 @if (count($panels))
                     <div class="mt-4 flex flex-wrap gap-3">
@@ -146,9 +146,9 @@
                         </div>
                     </section>
 
-                    {{-- Leadership zone: pimpinan komisi --}}
+                    {{-- Leadership zone: pimpinan unit --}}
                     <section class="rounded-[15px] border border-[#d6e0ed] bg-white p-6 sm:p-8">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Pimpinan Komisi</p>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">{{ ($panel['code'] ?? '') === 'BP' ? 'Pimpinan BP (Badan Pekerja)' : 'Pimpinan Komisi' }}</p>
 
                         <div class="mt-6 grid gap-5 lg:grid-cols-2">
                             @if (! empty($panel['lead']))
@@ -277,15 +277,15 @@
                 </div>
             @endforeach
 
-            {{-- Pimpinan Senat & BPH --}}
+            {{-- Pimpinan Senat & BP --}}
             @if ($leaderRows->isNotEmpty())
                 <section class="mt-14 rounded-[15px] border border-[#d6e0ed] bg-white p-6 sm:p-8">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Pimpinan Senat &amp; BPH</p>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Pimpinan Senat &amp; BP</p>
                             <h2 class="mt-2 text-[26px] font-bold leading-tight text-senat-ink">Pimpinan Senat Akademik</h2>
                             <p class="mt-2 text-[11px] leading-relaxed text-senat-body">
-                                Ketua, Sekretaris, dan Badan Pekerja Harian Senat Akademik periode {{ $period }}.
+                                Ketua, Sekretaris, dan Badan Pekerja (BP) Senat Akademik periode {{ $period }}.
                             </p>
                         </div>
                         <span class="shrink-0 self-start rounded-full bg-senat-badgeBg px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-senat-hero lg:self-end">
@@ -314,8 +314,8 @@
                     </div>
 
                     <div class="mt-6 grid gap-5 sm:grid-cols-3">
-                        <x-senat.stat label="Total Anggota" :value="$direktori['members']" hint="Pimpinan, BPH, dan anggota komisi" icon="users" />
-                        <x-senat.stat label="Komisi Kerja" :value="$direktori['committees']" hint="Komisi I–V Senat Akademik" icon="dashboard" />
+                        <x-senat.stat label="Total Anggota" :value="$direktori['members']" hint="Pimpinan, BP, dan anggota komisi" icon="users" />
+                        <x-senat.stat label="Komisi & BP" :value="count($committees) ?: $direktori['committees']" hint="Komisi I–V & BP (Badan Pekerja)" icon="dashboard" />
                         <x-senat.stat label="Masa Bakti" :value="$direktori['period']" hint="Periode kepengurusan Senat" icon="calendar" />
                     </div>
                 </section>

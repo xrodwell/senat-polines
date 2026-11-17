@@ -17,11 +17,14 @@
         return $out !== '' ? $out : mb_strtoupper(mb_substr($name, 0, 1));
     };
 
-    $committeeLabel = isset($member['committee_code']) ? str_replace('KOM-', 'Komisi ', $member['committee_code']) : null;
+    $committeeCode = $member['committee_code'] ?? null;
+    $isBpMember = $committeeCode === 'BP';
+    $committeeLabel = $committeeCode !== null ? \App\Support\SenatDirectory::committeeLabel($committeeCode) : null;
+    $committeeDisplay = $isBpMember ? 'BP (Badan Pekerja)' : $committeeLabel;
     $isCommitteeMember = $committeeLabel !== null && $committee !== null;
-    $badge = $committeeLabel ?? ($member['organ'] ?? 'Pimpinan Senat');
+    $badge = $committeeDisplay ?? ($member['organ'] ?? 'Pimpinan Senat');
     $metaLine = $isCommitteeMember
-        ? 'Anggota '.$committeeLabel.' • Masa Bakti '.$period
+        ? ($isBpMember ? 'Pengurus '.$committeeDisplay.' • Masa Bakti '.$period : 'Anggota '.$committeeLabel.' • Masa Bakti '.$period)
         : 'Anggota Pimpinan Senat • Masa Bakti '.$period;
 
     /** Pimpinan komisi (ketua & sekretaris) untuk kartu ringkasan komisi. */
@@ -262,9 +265,9 @@
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-link">
                         @if ($isCommitteeMember)
-                            Rekan Sekomisi
+                            {{ $isBpMember ? 'Rekan Pengurus BP (Badan Pekerja)' : 'Rekan Sekomisi' }}
                         @else
-                            Rekan Pimpinan &amp; BPH
+                            Rekan Pimpinan &amp; BP
                         @endif
                     </p>
                     <h2 class="mt-2 text-[20px] font-bold text-senat-ink">

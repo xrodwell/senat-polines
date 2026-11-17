@@ -103,11 +103,11 @@
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[730px_1fr]">
 
-        {{-- ================= KEANGGOTAAN KOMISI ================= --}}
+        {{-- ================= KEANGGOTAAN KOMISI & BP ================= --}}
         <section class="rounded-[14px] border border-senat-line bg-white p-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
-            <h2 class="text-[18px] font-bold text-senat-ink">Keanggotaan Komisi</h2>
+            <h2 class="text-[18px] font-bold text-senat-ink">Keanggotaan Komisi &amp; BP</h2>
             <p class="mt-2 text-[13px] text-senat-muted">
-                Lima komisi tetap Senat Akademik periode {{ $periode }}.
+                Lima komisi tetap dan Badan Pekerja (BP) Senat Akademik periode {{ $periode }}.
             </p>
 
             <ul class="mt-5 divide-y divide-senat-line">

@@ -78,5 +78,16 @@
         ],
         "focus": "Kode etik dosen & mahasiswa, pengawasan norma akademik, dan rekomendasi sanksi kepada Direktur.",
         "tupoksi": "Memberikan pertimbangan dalam penyusunan ketentuan mengenai kode etik dosen, kode etik mahasiswa, dan etika akademik beserta sanksinya; melakukan pengawasan terhadap pelaksanaan norma akademik dan kode etik sivitas akademika; serta memberikan pertimbangan dan rekomendasi dalam penjatuhan sanksi terhadap pelanggaran norma, etika, dan peraturan akademik oleh sivitas akademika kepada Direktur. Ketentuan mengenai keanggotaan, kepemimpinan, dan tata kerja Komisi Etik diatur dengan Peraturan Senat tersendiri."
+    },
+    {
+        "id": 6,
+        "code": "BP",
+        "name": "BP (Badan Pekerja)",
+        "lead": "Andi Setiawan, S.E., M.M.",
+        "secretary": "Vinda Setya Kartika, S.T., M.T.",
+        "members_count": 2,
+        "members": [],
+        "focus": "Koordinasi kerja antar-komisi, penyusunan rancangan agenda persidangan berkala, dan penyiapan berkas sidang Senat.",
+        "tupoksi": "Mengoordinasikan pelaksanaan tugas antar-komisi fungsional Senat Akademik; menyusun rancangan agenda persidangan pleno dan rapat pimpinan secara berkala; menyiapkan bahan dan berkas persidangan; serta memantau dan mengawal tindak lanjut risalah keputusan Senat Akademik."
     }
 ]
