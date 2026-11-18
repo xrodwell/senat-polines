@@ -40,6 +40,7 @@ class AdminPreview extends Component
     use HasPimpinanAndStruktur;
     use HasRegulasiManagement;
     use HasVotingManagement;
+    use \App\Livewire\Admin\Traits\HasHeroSettings;
 
     public const MENU_KEYS = [
          'dashboard-rapat' => 'Dashboard Rapat',
@@ -120,6 +121,10 @@ class AdminPreview extends Component
             $this->active = 'Dashboard Rapat';
         }
 
+        if ($this->active === 'Pengaturan Informasi & Hero') {
+            $this->reloadHeroSettings();
+        }
+
         $this->postDate = date('Y-m-d');
 
         $this->loadLecturersMaster();
@@ -151,6 +156,10 @@ class AdminPreview extends Component
 
         $this->active = $screen;
         $this->flashMessage = '';
+
+        if ($screen === 'Pengaturan Informasi & Hero' && !$this->heroAttempted) {
+            $this->reloadHeroSettings();
+        }
 
         if (in_array($screen, ['Presensi & Verifikasi QR', 'Kuorum & Kehadiran Anggota'])) {
             $this->refreshAttendance();

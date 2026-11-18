@@ -285,7 +285,7 @@
                                     title="Unduh Rekap Kehadiran ke CSV (.csv)">
                                 <span>Ekspor CSV</span>
                             </button>
-                        @else
+                        @elseif ($active !== 'Pengaturan Informasi & Hero')
                             <button type="button"
                                     wire:click="saveAction(@js($active))"
                                     class="senat-tap inline-flex h-9 items-center gap-1.5 rounded-md bg-senat-primary px-4 text-[12px] font-semibold text-white transition hover:bg-senat-primaryHover">
