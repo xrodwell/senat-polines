@@ -33,30 +33,28 @@
     @endphp
 
     {{-- ================= WEWENANG NORMATIF ================= --}}
-    <section class="senat-shell pt-12 pb-14 sm:pt-14 lg:pt-16 lg:pb-20">
-        <div class="mx-auto max-w-4xl">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-[0.1em] text-senat-orange">Wewenang Normatif</p>
-                <h2 class="mt-3 text-2xl font-bold leading-snug text-senat-ink sm:text-[28px]">Fungsi Utama Senat Berdasarkan Statuta Polines</h2>
-                <p class="mt-4 max-w-[68ch] text-base leading-7 text-senat-body">
-                    Senat Akademik menjalankan wewenang kolegial dalam merumuskan arah kebijakan akademik, mengawal akuntabilitas penjaminan mutu, serta menjamin hak sivitas akademika.
-                </p>
-            </div>
-
-            <ol class="mt-8 space-y-7 sm:mt-10 sm:space-y-8">
-                @foreach ($kewenangan as $duty)
-                    <li class="flex items-start gap-4 sm:gap-5">
-                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-senat-badgeLine bg-senat-badgeBg text-sm font-bold text-senat-link tabular-nums">
-                            {{ $duty['no'] }}
-                        </span>
-                        <div class="min-w-0 pt-1.5">
-                            <p class="text-base font-bold leading-6 text-senat-ink sm:text-lg sm:leading-7">{{ $duty['title'] }}</p>
-                            <p class="mt-2 max-w-[68ch] text-sm leading-6 text-senat-body sm:text-base sm:leading-7">{{ $duty['note'] }}</p>
-                        </div>
-                    </li>
-                @endforeach
-            </ol>
+    <section class="senat-shell py-14 lg:py-20">
+        <div>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-orange">Wewenang Normatif</p>
+            <h2 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Fungsi Utama Senat Berdasarkan Statuta Polines</h2>
+            <p class="mt-3 max-w-[1264px] text-[14px] leading-[1.45] text-senat-body">
+                Senat Akademik menjalankan wewenang kolegial dalam merumuskan arah kebijakan akademik, mengawal akuntabilitas penjaminan mutu, serta menjamin hak sivitas akademika.
+            </p>
         </div>
+
+        <ol class="mt-14 space-y-9">
+            @foreach ($kewenangan as $duty)
+                <li class="flex gap-[21px]">
+                    <span class="flex h-[45px] w-[45px] shrink-0 items-center justify-center rounded-[10px] border border-senat-badgeLine bg-senat-badgeBg text-[13px] font-bold text-senat-link tabular-nums">
+                        {{ $duty['no'] }}
+                    </span>
+                    <div class="min-w-0 pt-[6px]">
+                        <p class="text-[14px] font-bold leading-[1.25] text-senat-ink">{{ $duty['title'] }}</p>
+                        <p class="mt-1.5 text-[11px] leading-[1.2] text-senat-body">{{ $duty['note'] }}</p>
+                    </div>
+                </li>
+            @endforeach
+        </ol>
     </section>
 
 @endsection
