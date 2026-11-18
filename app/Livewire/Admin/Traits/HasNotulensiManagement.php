@@ -18,7 +18,7 @@ trait HasNotulensiManagement
     public ?int $notulensiUserId = 1;
     public string $notulensiIsi = '';
     public string $notulensiFile = '';
-    public string $notulensiStatus = 'draf';
+    public string $notulensiStatus = 'dipertimbangkan';
     public string $notulensiSearch = '';
     public string $notulensiFilterStatus = 'all';
     public ?int $viewingNotulensiId = null;
@@ -111,7 +111,7 @@ trait HasNotulensiManagement
         $this->notulensiUserId = $this->userList[0]['id_user'] ?? 1;
         $this->notulensiIsi = '';
         $this->notulensiFile = '';
-        $this->notulensiStatus = 'draf';
+        $this->notulensiStatus = 'dipertimbangkan';
     }
 
     public function editNotulensi(int $id): void
@@ -123,7 +123,7 @@ trait HasNotulensiManagement
             $this->notulensiUserId = $item['id_user'] ?? 1;
             $this->notulensiIsi = $item['isi_notulensi'] ?? '';
             $this->notulensiFile = $item['file_risalah'] ?? '';
-            $this->notulensiStatus = strtolower($item['status'] ?? 'draf');
+            $this->notulensiStatus = strtolower($item['status'] ?? 'dipertimbangkan');
             $this->isFormOpen = true;
         }
     }
@@ -146,7 +146,7 @@ trait HasNotulensiManagement
             'id_user' => (int) ($this->notulensiUserId ?: 1),
             'isi_notulensi' => $this->notulensiIsi,
             'file_risalah' => $this->notulensiFile ?: null,
-            'status' => $this->notulensiStatus ?: 'draf',
+            'status' => $this->notulensiStatus ?: 'dipertimbangkan',
         ];
 
         try {
@@ -373,7 +373,7 @@ trait HasNotulensiManagement
 
         $this->notulensiIsi = $this->rekamanNotulen;
         $this->notulensiRapatId = $this->rekamanRapatId ?: $this->notulensiRapatId;
-        $this->notulensiStatus = 'draf';
+        $this->notulensiStatus = 'dipertimbangkan';
         $this->notulensiFile = '';
         $this->selectedNotulensiId = null;
         $this->isFormOpen = true;
@@ -425,7 +425,7 @@ trait HasNotulensiManagement
         return collect($this->notulensiList)
             ->filter(function ($item) {
                 if ($this->notulensiFilterStatus !== 'all') {
-                    if (strtolower($item['status'] ?? 'draf') !== strtolower($this->notulensiFilterStatus)) {
+                    if (strtolower($item['status'] ?? 'dipertimbangkan') !== strtolower($this->notulensiFilterStatus)) {
                         return false;
                     }
                 }

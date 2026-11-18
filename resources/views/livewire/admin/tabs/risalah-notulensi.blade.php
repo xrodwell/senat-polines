@@ -38,21 +38,21 @@
                                 <p class="mt-0.5 text-[18px] font-bold text-senat-ink">{{ count($notulensiList) }}</p>
                             </div>
                             <div class="rounded-lg bg-emerald-50/60 p-3">
-                                <span class="text-[11px] font-medium text-emerald-700 uppercase">Telah Disahkan</span>
+                                <span class="text-[11px] font-medium text-emerald-700 uppercase">Ditetapkan</span>
                                 <p class="mt-0.5 text-[18px] font-bold text-emerald-800">
-                                    {{ collect($notulensiList)->filter(fn($n) => strtolower($n['status'] ?? '') === 'disahkan')->count() }}
+                                    {{ collect($notulensiList)->filter(fn($n) => strtolower($n['status'] ?? '') === 'ditetapkan')->count() }}
                                 </p>
                             </div>
                             <div class="rounded-lg bg-sky-50/60 p-3">
-                                <span class="text-[11px] font-medium text-sky-700 uppercase">Tahap Review</span>
+                                <span class="text-[11px] font-medium text-sky-700 uppercase">Dipertimbangkan</span>
                                 <p class="mt-0.5 text-[18px] font-bold text-sky-800">
-                                    {{ collect($notulensiList)->filter(fn($n) => strtolower($n['status'] ?? '') === 'review')->count() }}
+                                    {{ collect($notulensiList)->filter(fn($n) => strtolower($n['status'] ?? '') === 'dipertimbangkan')->count() }}
                                 </p>
                             </div>
                             <div class="rounded-lg bg-amber-50/60 p-3">
-                                <span class="text-[11px] font-medium text-amber-700 uppercase">Draf Notulensi</span>
+                                <span class="text-[11px] font-medium text-amber-700 uppercase">Dikembalikan</span>
                                 <p class="mt-0.5 text-[18px] font-bold text-amber-800">
-                                    {{ collect($notulensiList)->filter(fn($n) => in_array(strtolower($n['status'] ?? ''), ['draf', 'draft', '']))->count() }}
+                                    {{ collect($notulensiList)->filter(fn($n) => strtolower($n['status'] ?? '') === 'dikembalikan')->count() }}
                                 </p>
                             </div>
                         </div>
@@ -301,9 +301,9 @@
                                         <label class="block text-[12.5px] font-semibold text-senat-ink">Status Dokumen</label>
                                         <select wire:model="notulensiStatus"
                                                 class="mt-1.5 w-full rounded-[10px] border border-senat-border bg-white px-3.5 py-2 text-[13px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                                            <option value="draf">Draf (Penyusunan Awal)</option>
-                                            <option value="review">Review (Verifikasi Sekretariat)</option>
-                                            <option value="disahkan">Disahkan (Risalah Final)</option>
+                                            <option value="dipertimbangkan">Dipertimbangkan (Menunggu Keputusan Sidang)</option>
+                                            <option value="ditetapkan">Ditetapkan (Risalah Final)</option>
+                                            <option value="dikembalikan">Dikembalikan (Perlu Perbaikan)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -343,17 +343,17 @@
                                     class="rounded-md px-3 py-1.5 transition {{ $notulensiFilterStatus === 'all' ? 'bg-senat-link text-white' : 'text-senat-body hover:text-senat-ink' }}">
                                 Semua ({{ count($notulensiList) }})
                             </button>
-                            <button type="button" wire:click="$set('notulensiFilterStatus', 'disahkan')"
-                                    class="rounded-md px-3 py-1.5 transition {{ $notulensiFilterStatus === 'disahkan' ? 'bg-emerald-600 text-white' : 'text-senat-body hover:text-senat-ink' }}">
-                                Disahkan
+                            <button type="button" wire:click="$set('notulensiFilterStatus', 'ditetapkan')"
+                                    class="rounded-md px-3 py-1.5 transition {{ $notulensiFilterStatus === 'ditetapkan' ? 'bg-emerald-600 text-white' : 'text-senat-body hover:text-senat-ink' }}">
+                                Ditetapkan
                             </button>
-                            <button type="button" wire:click="$set('notulensiFilterStatus', 'review')"
-                                    class="rounded-md px-3 py-1.5 transition {{ $notulensiFilterStatus === 'review' ? 'bg-sky-600 text-white' : 'text-senat-body hover:text-senat-ink' }}">
-                                Review
+                            <button type="button" wire:click="$set('notulensiFilterStatus', 'dipertimbangkan')"
+                                    class="rounded-md px-3 py-1.5 transition {{ $notulensiFilterStatus === 'dipertimbangkan' ? 'bg-sky-600 text-white' : 'text-senat-body hover:text-senat-ink' }}">
+                                Dipertimbangkan
                             </button>
-                            <button type="button" wire:click="$set('notulensiFilterStatus', 'draf')"
-                                    class="rounded-md px-3 py-1.5 transition {{ $notulensiFilterStatus === 'draf' ? 'bg-amber-600 text-white' : 'text-senat-body hover:text-senat-ink' }}">
-                                Draf
+                            <button type="button" wire:click="$set('notulensiFilterStatus', 'dikembalikan')"
+                                    class="rounded-md px-3 py-1.5 transition {{ $notulensiFilterStatus === 'dikembalikan' ? 'bg-amber-600 text-white' : 'text-senat-body hover:text-senat-ink' }}">
+                                Dikembalikan
                             </button>
                         </div>
 
@@ -373,16 +373,16 @@
                                     <div class="min-w-0 max-w-[760px]">
                                         <div class="flex flex-wrap items-center gap-2">
                                             @php
-                                                $st = strtolower($item['status'] ?? 'draf');
+                                                $st = strtolower($item['status'] ?? 'dipertimbangkan');
                                                 $badgeState = match ($st) {
-                                                    'disahkan' => 'success',
-                                                    'review' => 'info',
+                                                    'ditetapkan' => 'success',
+                                                    'dipertimbangkan' => 'info',
                                                     default => 'warning',
                                                 };
                                                 $badgeLabel = match ($st) {
-                                                    'disahkan' => 'Risalah Disahkan',
-                                                    'review' => 'Dalam Review',
-                                                    default => 'Draf Notulensi',
+                                                    'ditetapkan' => 'Risalah Ditetapkan',
+                                                    'dipertimbangkan' => 'Dipertimbangkan',
+                                                    default => 'Dikembalikan',
                                                 };
                                             @endphp
                                             <x-senat.badge :state="$badgeState">{{ $badgeLabel }}</x-senat.badge>
@@ -457,17 +457,17 @@
 
                                     <div class="flex items-center gap-1.5 text-[11.5px]">
                                         <span class="text-senat-muted">Ubah status:</span>
-                                        <button type="button" wire:click="setNotulensiStatus({{ $item['id_notulensi'] }}, 'draf')"
-                                                class="rounded px-2 py-0.5 font-medium transition {{ $st === 'draf' ? 'bg-amber-100 text-amber-800 font-semibold' : 'text-senat-body hover:bg-slate-100' }}">
-                                            Draf
+                                        <button type="button" wire:click="setNotulensiStatus({{ $item['id_notulensi'] }}, 'dikembalikan')"
+                                                class="rounded px-2 py-0.5 font-medium transition {{ $st === 'dikembalikan' ? 'bg-amber-100 text-amber-800 font-semibold' : 'text-senat-body hover:bg-slate-100' }}">
+                                            Dikembalikan
                                         </button>
-                                        <button type="button" wire:click="setNotulensiStatus({{ $item['id_notulensi'] }}, 'review')"
-                                                class="rounded px-2 py-0.5 font-medium transition {{ $st === 'review' ? 'bg-sky-100 text-sky-800 font-semibold' : 'text-senat-body hover:bg-slate-100' }}">
-                                            Review
+                                        <button type="button" wire:click="setNotulensiStatus({{ $item['id_notulensi'] }}, 'dipertimbangkan')"
+                                                class="rounded px-2 py-0.5 font-medium transition {{ $st === 'dipertimbangkan' ? 'bg-sky-100 text-sky-800 font-semibold' : 'text-senat-body hover:bg-slate-100' }}">
+                                            Dipertimbangkan
                                         </button>
-                                        <button type="button" wire:click="setNotulensiStatus({{ $item['id_notulensi'] }}, 'disahkan')"
-                                                class="rounded px-2 py-0.5 font-medium transition {{ $st === 'disahkan' ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'text-senat-body hover:bg-slate-100' }}">
-                                            Sahkan
+                                        <button type="button" wire:click="setNotulensiStatus({{ $item['id_notulensi'] }}, 'ditetapkan')"
+                                                class="rounded px-2 py-0.5 font-medium transition {{ $st === 'ditetapkan' ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'text-senat-body hover:bg-slate-100' }}">
+                                            Ditetapkan
                                         </button>
                                     </div>
                                 </div>
