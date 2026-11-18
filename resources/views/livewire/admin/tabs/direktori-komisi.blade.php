@@ -1,4 +1,32 @@
 <div wire:key="screen-direktori-komisi" class="space-y-6">
+    @php
+        // Resolusi URL foto profil: cek path tersimpan, lalu konvensi
+        // images/members/{nip}.{ext} atau {slug}.{ext} (frontend maupun backend).
+        $photoUrl = function (?string $path, ?string $nip = null, ?string $name = null): ?string {
+            $candidates = [];
+            if (! empty($path)) {
+                $candidates[] = preg_replace('/\.(jpg|jpeg|png|webp)$/i', '', $path);
+            }
+            if (! empty($nip)) {
+                $candidates[] = 'images/members/' . $nip;
+            }
+            if (! empty($name)) {
+                $candidates[] = 'images/members/' . \Illuminate\Support\Str::slug($name);
+            }
+
+            foreach ($candidates as $base) {
+                foreach (['jpg', 'jpeg', 'png', 'webp'] as $extension) {
+                    $candidate = $base . '.' . $extension;
+                    if (file_exists(public_path($candidate)) || file_exists(base_path('../Backend-Senat-Polines/public/' . $candidate))) {
+                        return asset($candidate);
+                    }
+                }
+            }
+
+            return null;
+        };
+        $initialOf = fn (?string $name): string => strtoupper(mb_substr(trim($name ?: 'A'), 0, 1));
+    @endphp
     {{-- Header & Manajemen Anggota Senat --}}
     <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -51,6 +79,23 @@
                 @php
                     $leadName = $c['lead'] ?? '';
                     $secName = $c['secretary'] ?? '';
+                    $leadPhoto = null;
+                    $secPhoto = null;
+                    $leadNip = null;
+                    $secNip = null;
+                    foreach (($c['members'] ?? []) as $memberRow) {
+                        if (! is_array($memberRow)) {
+                            continue;
+                        }
+                        if (($memberRow['nama'] ?? '') === $leadName) {
+                            $leadPhoto = $memberRow['foto_profil'] ?? null;
+                            $leadNip = $memberRow['nim_nip'] ?? null;
+                        }
+                        if (($memberRow['nama'] ?? '') === $secName) {
+                            $secPhoto = $memberRow['foto_profil'] ?? null;
+                            $secNip = $memberRow['nim_nip'] ?? null;
+                        }
+                    }
                     $membersList = array_values(array_filter($c['members'] ?? [], function ($m) use ($leadName, $secName) {
                         if (!is_array($m)) {
                             return $m !== $leadName && $m !== $secName;
@@ -79,13 +124,20 @@
                         {{-- Ketua Komisi --}}
                         <div class="flex items-center justify-between px-4 py-2.5 bg-blue-50/30 hover:bg-blue-50/50 transition">
                             <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-blue-200 bg-white text-[11px] font-bold text-blue-800">
+                                    @if ($photoUrl($leadPhoto, $leadNip, $leadName))
+                                        <img src="{{ $photoUrl($leadPhoto, $leadNip, $leadName) }}" alt="{{ $leadName }}" class="h-full w-full object-cover object-top">
+                                    @else
+                                        {{ $initialOf($leadName) }}
+                                    @endif
+                                </span>
                                 <span class="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 shrink-0">KETUA</span>
                                 <span class="font-semibold text-slate-900 truncate">{{ $leadName ?: 'Belum ditentukan' }}</span>
                             </div>
                             @if (!empty($leadName) && $leadName !== 'Belum ditentukan')
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['name' => $leadName, 'role' => 'Ketua', 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $leadName, 'role' => 'Ketua', 'committee_code' => $c['code'], 'photo' => $leadPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -96,13 +148,20 @@
                         {{-- Sekretaris Komisi --}}
                         <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50/40 hover:bg-slate-50/80 transition">
                             <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-sky-200 bg-white text-[11px] font-bold text-sky-800">
+                                    @if ($photoUrl($secPhoto, $secNip, $secName))
+                                        <img src="{{ $photoUrl($secPhoto, $secNip, $secName) }}" alt="{{ $secName }}" class="h-full w-full object-cover object-top">
+                                    @else
+                                        {{ $initialOf($secName) }}
+                                    @endif
+                                </span>
                                 <span class="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800 shrink-0">SEKRETARIS</span>
                                 <span class="font-semibold text-slate-900 truncate">{{ $secName ?: 'Belum ditentukan' }}</span>
                             </div>
                             @if (!empty($secName) && $secName !== 'Belum ditentukan')
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['name' => $secName, 'role' => 'Sekretaris', 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $secName, 'role' => 'Sekretaris', 'committee_code' => $c['code'], 'photo' => $secPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -116,9 +175,17 @@
                                 $mName = is_array($m) ? ($m['nama'] ?? $m['name'] ?? '—') : $m;
                                 $mNip = is_array($m) ? ($m['nim_nip'] ?? '') : '';
                                 $mJab = is_array($m) ? ($m['jabatan'] ?? 'Anggota') : 'Anggota';
+                                $mPhoto = is_array($m) ? ($m['foto_profil'] ?? null) : null;
                             @endphp
                             <div class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 transition">
                                 <div class="flex items-center gap-3 min-w-0">
+                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white text-[10px] font-bold text-slate-600">
+                                        @if ($photoUrl($mPhoto, $mNip, $mName))
+                                            <img src="{{ $photoUrl($mPhoto, $mNip, $mName) }}" alt="{{ $mName }}" class="h-full w-full object-cover object-top">
+                                        @else
+                                            {{ $initialOf($mName) }}
+                                        @endif
+                                    </span>
                                     <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase text-slate-600 shrink-0">{{ $mJab }}</span>
                                     <div class="min-w-0">
                                         <p class="font-medium text-slate-800 truncate">{{ $mName }}</p>
@@ -129,7 +196,7 @@
                                 </div>
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['name' => $mName, 'nip' => $mNip, 'role' => 'Anggota', 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $mName, 'nip' => $mNip, 'role' => 'Anggota', 'committee_code' => $c['code'], 'photo' => $mPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -258,6 +325,54 @@
                 </div>
 
                 <form wire:submit.prevent="saveMember" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-[11.5px] font-bold uppercase tracking-wider text-[#334155]">
+                            Foto Profil Anggota
+                        </label>
+                        <div class="mt-1 flex items-center gap-4">
+                            <span class="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[18px] font-bold text-senat-link">
+                                @if ($memberPhoto)
+                                    @php
+                                        try {
+                                            $previewUrl = $memberPhoto->temporaryUrl();
+                                        } catch (\Throwable $e) {
+                                            $previewUrl = null;
+                                        }
+                                    @endphp
+                                    @if ($previewUrl)
+                                        <img src="{{ $previewUrl }}" alt="Pratinjau foto" class="h-full w-full object-cover object-top">
+                                    @else
+                                        {{ $initialOf($memberNama) }}
+                                    @endif
+                                @elseif ($photoUrl($memberExistingPhoto, $memberNimNip, $memberNama))
+                                    <img src="{{ $photoUrl($memberExistingPhoto, $memberNimNip, $memberNama) }}" alt="Foto saat ini" class="h-full w-full object-cover object-top">
+                                @else
+                                    {{ $initialOf($memberNama) }}
+                                @endif
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <input type="file" wire:model="memberPhoto" accept="image/jpeg,image/png,image/webp"
+                                       class="block w-full text-[11.5px] text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-senat-primary file:px-3.5 file:py-2 file:text-[11.5px] file:font-semibold file:text-white hover:file:bg-senat-primaryHover cursor-pointer">
+                                <p class="mt-1.5 text-[10.5px] text-slate-500">
+                                    JPG, PNG, atau WebP — maksimal 2 MB.
+                                    @if ($memberExistingPhoto)
+                                        Pilih file baru untuk mengganti foto saat ini.
+                                    @endif
+                                </p>
+                                <div wire:loading wire:target="memberPhoto" class="mt-1 text-[10.5px] font-semibold text-senat-link">
+                                    Mengunggah gambar...
+                                </div>
+                                @error('memberPhoto') <span class="mt-1 block text-xs text-red-500">{{ $message }}</span> @enderror
+                                @if ($memberPhoto)
+                                    <button type="button" wire:click="$set('memberPhoto', null)"
+                                            class="mt-1.5 text-[10.5px] font-semibold text-red-600 hover:underline cursor-pointer">
+                                        Batalkan pilihan gambar
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-[11.5px] font-bold uppercase tracking-wider text-[#334155]">
                             Nama Lengkap &amp; Gelar Akademik <span class="text-red-500">*</span>

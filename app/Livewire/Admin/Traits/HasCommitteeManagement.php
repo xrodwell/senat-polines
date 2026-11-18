@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Traits;
 
 use App\Contracts\CommitteeRepositoryInterface;
+use App\Support\MemberPhotoStorage;
 use App\Support\SenatDirectory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,10 @@ trait HasCommitteeManagement
     public string $memberRole = 'Anggota';
     public string $memberOrgan = '';
     public string $memberFocus = '';
+
+    // Foto profil anggota (unggahan baru & foto tersimpan saat ini)
+    public $memberPhoto = null;
+    public ?string $memberExistingPhoto = null;
 
     // State Modal Konfirmasi Hapus
     public bool $showDeleteMemberModal = false;
@@ -63,6 +68,7 @@ trait HasCommitteeManagement
 
         $this->memberOrgan = $person['organ'] ?? '';
         $this->memberFocus = $person['focus'] ?? '';
+        $this->memberExistingPhoto = $person['photo'] ?? null;
         $this->showMemberModal = true;
     }
 
@@ -82,6 +88,8 @@ trait HasCommitteeManagement
         $this->memberRole = 'Anggota';
         $this->memberOrgan = '';
         $this->memberFocus = '';
+        $this->memberPhoto = null;
+        $this->memberExistingPhoto = null;
         $this->resetValidation([
             'memberNama',
             'memberNimNip',
@@ -99,14 +107,30 @@ trait HasCommitteeManagement
             'memberEmail' => ['nullable', 'email', 'max:255'],
             'memberCommitteeCode' => ['required', 'string'],
             'memberRole' => ['required', 'string'],
+            'memberPhoto' => ['nullable', 'image', 'max:2048'],
         ], [
             'memberNama.required' => 'Nama lengkap dan gelar wajib diisi.',
             'memberCommitteeCode.required' => 'Komisi wajib dipilih.',
             'memberRole.required' => 'Jabatan komisi wajib dipilih.',
+            'memberPhoto.image' => 'Foto profil harus berupa gambar (JPG, PNG, atau WebP).',
+            'memberPhoto.max' => 'Ukuran foto profil maksimal 2 MB.',
         ]);
 
         $baseUrl = $this->getBackendUrl();
         $isEdit = $this->isEditingMember && !empty($this->memberEditId);
+
+        // Simpan foto baru (jika dipilih) ke folder publik frontend, lalu
+        // sinkronkan path-nya ke Backend API dan penyimpanan lokal.
+        $photoPath = $this->memberExistingPhoto;
+        if ($this->memberPhoto) {
+            $photoPath = MemberPhotoStorage::store(
+                $this->memberPhoto,
+                $this->memberNimNip ?: null,
+                $this->memberNama
+            );
+            $this->memberExistingPhoto = $photoPath;
+            $this->memberPhoto = null;
+        }
 
         // 1. Simpan ke Backend API jika tersedia
         try {
@@ -121,6 +145,7 @@ trait HasCommitteeManagement
                 'id_komisi' => $this->memberCommitteeCode,
                 'jabatan_komisi' => $this->memberRole,
                 'organ' => $this->memberOrgan,
+                'foto_profil' => $photoPath,
             ];
 
             if ($isEdit) {
@@ -139,7 +164,9 @@ trait HasCommitteeManagement
             $this->memberNama,
             $this->memberNamaLama ?: $this->memberNama,
             $this->memberCommitteeCode,
-            $this->memberRole
+            $this->memberRole,
+            $this->memberNimNip ?: null,
+            $photoPath
         );
 
         $this->flashMessage = $isEdit
@@ -206,14 +233,14 @@ trait HasCommitteeManagement
                 $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
             }
             unset($c);
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
 
         $this->flashMessage = "Anggota {$this->deleteMemberName} berhasil dihapus dari direktori.";
         $this->closeDeleteMemberModal();
     }
 
-    private function syncMemberToLocalMock(bool $isEdit, string $newName, string $oldName, string $committeeCode, string $role): void
+    private function syncMemberToLocalMock(bool $isEdit, string $newName, string $oldName, string $committeeCode, string $role, ?string $nip = null, ?string $photoPath = null): void
     {
         $mockPath = storage_path('mock/committees.json');
         if (!file_exists($mockPath)) {
@@ -261,7 +288,13 @@ trait HasCommitteeManagement
                         }
                     }
                     if (!$exists) {
-                        $c['members'][] = $newName;
+                        // Simpan objek anggota agar NIP & foto dapat ditampilkan
+                        // oleh halaman publik (resolusi foto berdasarkan NIP).
+                        $c['members'][] = array_filter([
+                            'nama' => $newName,
+                            'nim_nip' => $nip,
+                            'photo' => $photoPath,
+                        ], static fn ($value) => $value !== null && $value !== '');
                     }
                 }
             }
@@ -271,6 +304,6 @@ trait HasCommitteeManagement
         }
         unset($c);
 
-        file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }
