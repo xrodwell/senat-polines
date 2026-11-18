@@ -373,15 +373,28 @@ class SenatDirectory
             $cleanPerson = array_filter($person, static fn ($value) => $value !== null);
             $merged = array_merge($info, $cleanPerson, ['slug' => $slug]);
 
-            // Standar foto: images/members/{nip}.jpg (cek di folder lokal dan backend)
+            // Standar foto: images/members/{nip}.{ext} atau {slug}.{ext}
+            // (mendukung unggahan admin berformat JPG/JPEG/PNG/WebP).
             $nip = $merged['nip'] ?? null;
+            $photoBaseNames = [];
             if (! empty($nip)) {
-                $nipFile = 'images/members/' . $nip . '.jpg';
-                $exists = file_exists(public_path($nipFile)) || file_exists(base_path('../Backend-Senat-Polines/public/' . $nipFile));
-                $merged['photo'] = $exists ? $nipFile : null;
-            } else {
-                $merged['photo'] = null;
+                $photoBaseNames[] = 'images/members/' . $nip;
             }
+            if (! empty($slug)) {
+                $photoBaseNames[] = 'images/members/' . $slug;
+            }
+
+            $photo = null;
+            foreach ($photoBaseNames as $photoBase) {
+                foreach (['jpg', 'jpeg', 'png', 'webp'] as $extension) {
+                    $candidate = $photoBase . '.' . $extension;
+                    if (file_exists(public_path($candidate)) || file_exists(base_path('../Backend-Senat-Polines/public/' . $candidate))) {
+                        $photo = $candidate;
+                        break 2;
+                    }
+                }
+            }
+            $merged['photo'] = $photo;
 
             $members[] = $merged;
         };
