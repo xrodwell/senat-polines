@@ -24,7 +24,7 @@
 <section class="relative overflow-hidden bg-senat-hero">
     {{-- Latar foto gedung dengan gradasi biru tua & biru Polines yang proporsional --}}
     <div class="absolute inset-0 z-0 select-none overflow-hidden">
-        <img src="{{ asset('images/gedung-polines.jpg') }}" alt="Gedung Kuliah Terpadu Polines"
+        <img src="{{ $hero['background_image'] }}" alt="Gedung Kuliah Terpadu Polines"
              class="h-full w-full object-cover object-[80%_10%] lg:object-[82%_15%]" loading="eager">
         <div class="absolute inset-0 bg-gradient-to-r from-senat-primary via-senat-primary/85 to-senat-hero/35"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-senat-primary/95 via-transparent to-transparent"></div>
@@ -45,31 +45,33 @@
         <div class="max-w-[700px]">
             {{-- Eyebrow (2013:19) --}}
             <p class="text-[11px] font-bold uppercase leading-[1.1] tracking-[0.02em] text-senat-sky {{ $hasActive ? 'mt-[38px]' : '' }}">
-                Organ Tertinggi Normatif Akademik
+                {{ $hero['eyebrow'] }}
             </p>
 
             {{-- Judul (2013:20 / 2013:21) --}}
             <h1 class="mt-[14px] text-[34px] font-bold leading-[1.05] tracking-tight text-white sm:text-[42px] lg:text-[50px]">
-                Senat Akademik<br>
-                <span class="text-senat-orange">Politeknik Negeri Semarang</span>
+                @php
+                    $heroLines = explode("\n", $hero['title'], 2);
+                @endphp
+                {{ $heroLines[0] }}@if (isset($heroLines[1]))<br>
+                <span class="text-senat-orange">{{ $heroLines[1] }}</span>@endif
             </h1>
 
             {{-- Deskripsi (2013:22) --}}
             <p class="mt-[26px] max-w-[650px] text-[15px] leading-[1.45] text-senat-skySoft">
-                Perumus kebijakan akademik, penjaga mutu pendidikan vokasi, dan penyalur aspirasi civitas akademika
-                — memastikan tata kelola Polines berjalan transparan, akuntabel, dan berintegritas.
+                {{ $hero['description'] }}
             </p>
 
             {{-- CTA (2013:23 / 2013:25) --}}
             <div class="mt-10 flex flex-wrap items-center gap-[18px]">
                 <a href="{{ route('public.profile') }}"
                    class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-senat-orange px-5 text-[12px] font-bold text-senat-primary transition-colors duration-150 hover:bg-senat-orangeHover shadow-sm">
-                    Profil &amp; Komisi
+                    {{ $hero['primary_label'] }}
                     <span aria-hidden="true">›</span>
                 </a>
                 <a href="{{ route('public.regulations') }}"
                    class="inline-flex h-10 items-center rounded-lg border border-white/20 bg-white/10 px-6 text-[12px] font-bold text-white backdrop-blur-sm transition-colors duration-150 hover:bg-white/20">
-                    Repositori Produk Hukum
+                    {{ $hero['secondary_label'] }}
                 </a>
             </div>
         </div>

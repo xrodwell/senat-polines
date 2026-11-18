@@ -55,6 +55,10 @@ class AppServiceProvider extends ServiceProvider
             $backend = rtrim((string) config('services.backend_api.url', ''), '/');
             $url = method_exists($request, 'url') ? (string) $request->url() : (string) $request->getUri();
 
+            if ($request->getMethod() === 'GET' && parse_url($url, PHP_URL_PATH) === '/api/hero-settings') {
+                return $request->withoutHeader('Authorization');
+            }
+
             if ($token && $backend && str_starts_with($url, $backend)) {
                 return $request->withHeader('Authorization', 'Bearer ' . $token);
             }
