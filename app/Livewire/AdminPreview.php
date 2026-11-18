@@ -181,7 +181,12 @@ class AdminPreview extends Component
             $url = 'http://127.0.0.1:8001/api';
         }
 
-        return rtrim($url, '/');
+        $url = rtrim($url, '/');
+        if (! str_ends_with($url, '/api')) {
+            $url .= '/api';
+        }
+
+        return $url;
     }
 
     public function render(
