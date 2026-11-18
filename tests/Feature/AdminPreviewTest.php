@@ -101,7 +101,9 @@ class AdminPreviewTest extends TestCase
 
     public function test_public_home_renders_livewire_scripts(): void
     {
-        $this->get('/')
+        $response = $this->get('/');
+
+        $response
             ->assertOk()
             ->assertDontSee('Panel Admin')
             ->assertDontSee('Peta Produk')
@@ -109,5 +111,8 @@ class AdminPreviewTest extends TestCase
             ->assertSee('livewire')
             ->assertSee('senatChatWidget()')
             ->assertSee('pointer-events-none invisible translate-y-3 scale-95 opacity-0', false);
+
+        preg_match_all('/href="[^"]*\/berita\/[^"]+"/', $response->getContent(), $newsLinks);
+        $this->assertLessThanOrEqual(6, count($newsLinks[0]));
     }
 }
