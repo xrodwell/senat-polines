@@ -95,6 +95,10 @@
                     class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '5' ? 'bg-rose-700 text-white shadow-2xs' : 'bg-white text-rose-800 border border-rose-200 hover:bg-rose-50' }}">
                 Komisi V (Etik) <span class="ml-0.5 opacity-75 font-normal">({{ $stats['komisi_5'] }})</span>
             </button>
+            <button type="button" wire:click="setFilterKomisi('6')"
+                    class="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold transition {{ $aspirationFilterKomisi === '6' ? 'bg-indigo-700 text-white shadow-2xs' : 'bg-white text-indigo-800 border border-indigo-200 hover:bg-indigo-50' }}">
+                BP (Badan Pekerja) <span class="ml-0.5 opacity-75 font-normal">({{ $stats['bp'] ?? 0 }})</span>
+            </button>
         </div>
     </div>
 
@@ -189,6 +193,10 @@
                                     <button type="button" wire:click="setAspirasiDisposisi({{ $asp['id'] }}, 5)"
                                             class="w-full text-left rounded-lg px-2.5 py-1.5 text-[11.5px] hover:bg-rose-50 text-slate-800 font-medium">
                                         Komisi V — Komisi Etik
+                                    </button>
+                                    <button type="button" wire:click="setAspirasiDisposisi({{ $asp['id'] }}, 6)"
+                                            class="w-full text-left rounded-lg px-2.5 py-1.5 text-[11.5px] hover:bg-indigo-50 text-slate-800 font-medium">
+                                        BP — Badan Pekerja
                                     </button>
                                 </div>
                             </div>

@@ -541,12 +541,18 @@ class PublicController extends Controller
 
         $committee = $validated['committee'] ?? '';
         $idKategori = 4;
-        if (str_contains($committee, 'Pendidikan') || str_contains($committee, 'Akademik') || str_contains($committee, 'I')) {
-            $idKategori = 1;
+        if (str_contains($committee, 'Badan Pekerja') || str_contains($committee, 'BP')) {
+            $idKategori = 6;
+        } elseif (str_contains($committee, 'Etik') || str_contains($committee, 'V')) {
+            $idKategori = 5;
+        } elseif (str_contains($committee, 'Pengembangan') || str_contains($committee, 'Kerja Sama') || str_contains($committee, 'IV')) {
+            $idKategori = 4;
+        } elseif (str_contains($committee, 'Kemahasiswaan') || str_contains($committee, 'Kelembagaan') || str_contains($committee, 'Tata Tertib') || str_contains($committee, 'III')) {
+            $idKategori = 3;
         } elseif (str_contains($committee, 'Penelitian') || str_contains($committee, 'Pengabdian') || str_contains($committee, 'Sarana') || str_contains($committee, 'Fasilitas') || str_contains($committee, 'II')) {
             $idKategori = 2;
-        } elseif (str_contains($committee, 'Kemahasiswaan') || str_contains($committee, 'Tata Tertib') || str_contains($committee, 'III')) {
-            $idKategori = 3;
+        } elseif (str_contains($committee, 'Pendidikan') || str_contains($committee, 'Akademik') || preg_match('/\bI\b/', $committee)) {
+            $idKategori = 1;
         }
 
         $isiFormatted = "[{$validated['subject']}]

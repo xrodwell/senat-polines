@@ -14,31 +14,33 @@
             <p class="senat-prose mt-4 max-w-sm">
                 Lembaga normatif tertinggi di bidang akademik Politeknik Negeri Semarang yang merumuskan kebijakan dan menjaga mutu akademik institusi.
             </p>
-            <p class="mt-4 font-medium">
-                Jl. Prof. Soedarto, S.H.<br>
-                Tembalang, Semarang<br>
-                Jawa Tengah 50275
-            </p>
         </div>
 
-        {{-- Kolom 2: komisi --}}
+        {{-- Kolom 2: komisi & BP --}}
         <div class="min-w-0">
-            <h2 class="text-sm font-bold leading-6 text-[#0f172a]">Komisi Senat</h2>
+            <h2 class="text-sm font-bold leading-6 text-[#0f172a]">Komisi &amp; BP Senat</h2>
             <ul class="mt-3 space-y-1">
                 @forelse (\App\Support\SenatDirectory::committees() as $committee)
+                    @php
+                        $isBp = ($committee['code'] ?? '') === 'BP';
+                        $footerLabel = $isBp
+                            ? 'BP — Badan Pekerja'
+                            : (\App\Support\SenatDirectory::committeeLabel($committee['code']) . ' — ' . \Illuminate\Support\Str::after($committee['name'], 'Komisi '));
+                    @endphp
                     <li>
-                        <a href="{{ route('public.profile.structure') }}"
+                        <a href="{{ route('public.profile.structure') }}#tupoksi-{{ $committee['code'] }}"
                            class="senat-tap grid min-h-[36px] grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-2 py-1.5 transition-colors hover:text-senat-primary">
-                            <span class="whitespace-nowrap">{{ \App\Support\SenatDirectory::committeeLabel($committee['code']) }} -</span>
-                            <span>{{ \Illuminate\Support\Str::after($committee['name'], 'Komisi ') }}</span>
+                            <span class="whitespace-nowrap">{{ \Illuminate\Support\Str::before($footerLabel, ' — ') }} —</span>
+                            <span>{{ \Illuminate\Support\Str::after($footerLabel, ' — ') }}</span>
                         </a>
                     </li>
                 @empty
-                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi I -</span><span>Pendidikan dan Pengajaran</span></li>
-                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi II -</span><span>Penelitian dan Pengabdian</span></li>
-                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi III -</span><span>Kelembagaan dan SDM</span></li>
-                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi IV -</span><span>Pengembangan dan Kerja Sama</span></li>
-                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi V -</span><span>Komisi Etik</span></li>
+                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi I —</span><span>Pendidikan dan Pengajaran</span></li>
+                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi II —</span><span>Penelitian dan Pengabdian</span></li>
+                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi III —</span><span>Kelembagaan dan SDM</span></li>
+                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi IV —</span><span>Pengembangan dan Kerja Sama</span></li>
+                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">Komisi V —</span><span>Komisi Etik</span></li>
+                    <li class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-2 py-1.5"><span class="whitespace-nowrap">BP —</span><span>Badan Pekerja</span></li>
                 @endforelse
             </ul>
         </div>
@@ -59,11 +61,16 @@
         <div class="min-w-0">
             <h2 class="text-sm font-bold leading-6 text-[#0f172a]">Kontak &amp; Jam Operasional</h2>
             <ul class="mt-3 space-y-1.5">
-                <li><a href="mailto:senat@polines.ac.id" class="senat-tap inline-flex min-h-[36px] items-center break-all py-1.5 transition-colors hover:text-senat-primary">senat@polines.ac.id</a></li>
-                <li>(024) 7473417</li>
-                <li>Senin – Jumat</li>
-                <li>08.00 – 16.00 WIB</li>
-                <li>Gedung Rektorat Lt. 2, Kampus Tembalang</li>
+                <li>Telp. +62 24 7473417, 7499585, 7499586</li>
+                <li>Fax. +62 24 7472396</li>
+                <li>Email: <a href="mailto:sekretariat@polines.ac.id" class="senat-tap inline-flex min-h-[36px] items-center break-all py-1.5 transition-colors hover:text-senat-primary">sekretariat@polines.ac.id</a></li>
+                <li>Website: <a href="https://www.polines.ac.id" target="_blank" rel="noopener noreferrer" class="senat-tap inline-flex min-h-[36px] items-center break-all py-1.5 transition-colors hover:text-senat-primary">www.polines.ac.id</a></li>
+                <li class="pt-1">Senin – Jumat · 08.00 – 16.00 WIB</li>
+                <li class="pt-1">
+                    Jl. Prof. H. Soedarto S.H.,<br>
+                    Tembalang, Semarang<br>
+                    Kode Pos 50275
+                </li>
             </ul>
         </div>
     </div>

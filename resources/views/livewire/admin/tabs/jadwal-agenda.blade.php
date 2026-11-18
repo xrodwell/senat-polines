@@ -34,6 +34,7 @@
                                             <option value="1">Rapat Pleno</option>
                                             <option value="2">Rapat Komisi</option>
                                             <option value="3">Rapat Koordinasi</option>
+                                            <option value="5">Rapat BP (Badan Pekerja)</option>
                                         </select>
                                     </div>
                                     <div>
@@ -87,6 +88,7 @@
                                             <option value="Sidang Komisi III">Sidang Komisi III (Kelembagaan &amp; SDM)</option>
                                             <option value="Sidang Komisi IV">Sidang Komisi IV (Kerjasama &amp; Alumni)</option>
                                             <option value="Sidang Komisi V">Sidang Komisi V (Kode Etik &amp; Advokasi)</option>
+                                            <option value="Rapat BP (Badan Pekerja)">Rapat BP (Badan Pekerja)</option>
                                         </select>
                                     </div>
                                     <div>
@@ -134,10 +136,13 @@
                                     {{-- Tombol Cepat / Preset Komisi --}}
                                     <div class="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
                                         <span class="text-senat-muted font-semibold mr-1">Pilih Cepat:</span>
-                                        <button type="button" wire:click="selectAllLecturers" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Semua (34)</button>
+                                        <button type="button" wire:click="selectAllLecturers" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Semua ({{ count($allLecturers) }})</button>
                                         <button type="button" wire:click="selectCommitteeLecturers('Komisi I')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi I</button>
                                         <button type="button" wire:click="selectCommitteeLecturers('Komisi II')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi II</button>
                                         <button type="button" wire:click="selectCommitteeLecturers('Komisi III')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi III</button>
+                                        <button type="button" wire:click="selectCommitteeLecturers('Komisi IV')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi IV</button>
+                                        <button type="button" wire:click="selectCommitteeLecturers('Komisi V')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Komisi V</button>
+                                        <button type="button" wire:click="selectCommitteeLecturers('BP')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">BP (Badan Pekerja)</button>
                                         <button type="button" wire:click="selectCommitteeLecturers('Pimpinan')" class="px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 font-semibold hover:border-senat-primary hover:text-senat-primary shadow-2xs">Pimpinan</button>
                                         <button type="button" wire:click="clearSelectedLecturers" class="px-2 py-1 rounded bg-white border border-rose-200 text-rose-600 font-semibold hover:bg-rose-50 shadow-2xs">Kosongkan</button>
                                     </div>

@@ -129,10 +129,10 @@
             </button>
             <button
                 type="button"
-                @click="sendPrompt('Apa tugas 5 Komisi Senat?')"
+                @click="sendPrompt('Apa tugas 5 Komisi dan BP (Badan Pekerja) Senat?')"
                 class="shrink-0 rounded-full border border-senat-line bg-senat-surface px-2.5 py-1 text-[11px] font-medium text-senat-body transition hover:border-senat-primary hover:text-senat-primary"
             >
-                🏛️ 5 Komisi
+                🏛️ 5 Komisi &amp; BP
             </button>
             <button
                 type="button"

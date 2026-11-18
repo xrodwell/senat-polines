@@ -62,8 +62,16 @@ class ApiCommitteeRepository implements CommitteeRepositoryInterface
                     return array_map(function ($fb) use ($apiById) {
                         $matched = $apiById->get($fb['id']);
                         if ($matched) {
+                            $fb['code'] = $matched['kode'] ?? $fb['code'];
                             $fb['name'] = $matched['nama_komisi'] ?? $fb['name'];
                             $fb['focus'] = $matched['deskripsi'] ?? $fb['focus'];
+                            if (! empty($matched['tugas']) && is_array($matched['tugas'])) {
+                                $items = collect($matched['tugas'])->pluck('uraian_tugas')->filter()->values()->all();
+                                if (! empty($items)) {
+                                    $fb['tupoksi_items'] = $items;
+                                    $fb['tupoksi'] = implode('; ', $items);
+                                }
+                            }
                         }
                         return $fb;
                     }, $fallbackData);

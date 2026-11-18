@@ -33,7 +33,7 @@
     @endphp
 
     {{-- ================= WEWENANG NORMATIF ================= --}}
-    <section class="senat-shell pt-12 pb-20 sm:pt-14 sm:pb-24 lg:pt-16 lg:pb-28">
+    <section class="senat-shell pt-12 pb-14 sm:pt-14 lg:pt-16 lg:pb-20">
         <div class="mx-auto max-w-4xl">
             <div>
                 <p class="text-xs font-bold uppercase tracking-[0.1em] text-senat-orange">Wewenang Normatif</p>

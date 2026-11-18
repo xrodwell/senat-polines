@@ -21,6 +21,19 @@ Route::get('/profil/struktur-organisasi', [PublicController::class, 'structure']
 Route::get('/direktori-komisi', [PublicController::class, 'directory'])->name('public.directory');
 Route::get('/direktori-komisi/{slug}', [PublicController::class, 'member'])->name('public.directory.member');
 
+// Fallback penyaji aset foto anggota (mendukung penyimpanan di folder frontend maupun backend)
+Route::get('/images/members/{filename}', function (string $filename) {
+    $path = public_path('images/members/' . $filename);
+    if (file_exists($path)) {
+        return response()->file($path);
+    }
+    $backendPath = base_path('../Backend-Senat-Polines/public/images/members/' . $filename);
+    if (file_exists($backendPath)) {
+        return response()->file($backendPath);
+    }
+    abort(404);
+})->where('filename', '.*');
+
 // Manajemen anggota komisi — dialihkan/dikhususkan ke Admin Sekretariat (/admin?tab=Direktori+Komisi+%26+Anggota)
 Route::middleware(['portal.auth', 'portal.role:admin'])->group(function (): void {
     Route::post('/direktori-komisi/anggota', [PublicController::class, 'storeMember'])->name('public.directory.store');
@@ -61,8 +74,12 @@ Route::prefix('portal')->group(function (): void {
     Route::middleware('portal.guest')->group(function (): void {
         Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
         Route::post('/login', [PortalController::class, 'authenticate'])
-            ->middleware('throttle:6,1')
+            ->middleware('throttle:30,1')
             ->name('portal.login.submit');
+        Route::get('/login/google', [PortalController::class, 'redirectToGoogle'])
+            ->name('portal.login.google');
+        Route::get('/login/google/callback', [PortalController::class, 'handleGoogleCallback'])
+            ->name('portal.login.google.callback');
     });
 
     Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('portal.logout');

@@ -9,11 +9,18 @@ use Symfony\Component\HttpFoundation\Response;
 class PortalGuestMiddleware
 {
     /**
-     * Prevent already authenticated users from accessing login page again.
+     * Prevent already authenticated users (with active <3 day session) from accessing login page again.
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (session()->has('auth_user')) {
+            if (PortalAuthMiddleware::isSessionVerificationExpired()) {
+                PortalAuthMiddleware::clearAuthSession($request);
+                session()->flash('info', 'Sesi login Anda telah melewati 3 hari. Silakan masuk kembali untuk verifikasi ulang akun.');
+
+                return $next($request);
+            }
+
             if (session('auth_user_role') === 'admin') {
                 return redirect()->route('admin.preview');
             }

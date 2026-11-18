@@ -145,6 +145,12 @@ trait HasAspirationManagement
                 'name' => 'Komisi V — Komisi Etik',
                 'badge_class' => 'bg-rose-50 text-rose-700 border-rose-200 ring-1 ring-rose-300',
             ],
+            6 => [
+                'id' => 6,
+                'code' => 'BP',
+                'name' => 'BP (Badan Pekerja)',
+                'badge_class' => 'bg-indigo-50 text-indigo-700 border-indigo-200 ring-1 ring-indigo-300',
+            ],
             default => [
                 'id' => 1,
                 'code' => 'Komisi I',
@@ -217,6 +223,7 @@ trait HasAspirationManagement
             'komisi_3' => 0,
             'komisi_4' => 0,
             'komisi_5' => 0,
+            'bp' => 0,
         ];
 
         foreach ($list as $asp) {
@@ -227,6 +234,8 @@ trait HasAspirationManagement
             $cId = (int) ($asp['committee_id'] ?? $asp['id_kategori'] ?? 1);
             if ($cId >= 1 && $cId <= 5) {
                 $stats['komisi_' . $cId]++;
+            } elseif ($cId === 6) {
+                $stats['bp']++;
             }
         }
 
