@@ -78,34 +78,62 @@
                             <x-senat.badge state="info">Whisper + Gemini</x-senat.badge>
                         </div>
 
-                        <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <label class="block">
-                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Rapat</span>
-                                    <select wire:model.live="rekamanRapatId"
-                                            class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-2 text-[13px] text-senat-ink">
-                                        @foreach ($rapatList as $r)
-                                            <option value="{{ $r['id_rapat'] ?? '' }}">{{ $r['nama_agenda'] ?? ('Rapat #' . ($r['id_rapat'] ?? '')) }}</option>
-                                        @endforeach
-                                    </select>
-                                </label>
+                        <div x-data="{ isUploading: false, uploadProgress: 0, uploadError: null }"
+                             x-on:livewire-upload-start="isUploading = true; uploadError = null; uploadProgress = 0"
+                             x-on:livewire-upload-finish="isUploading = false; uploadProgress = 100"
+                             x-on:livewire-upload-error="isUploading = false; uploadError = 'Gagal mengunggah berkas. Pastikan ukuran berkas di bawah 1 GB dan format berkas didukung.'"
+                             x-on:livewire-upload-progress="uploadProgress = $event.detail.progress"
+                             class="mt-4">
+                            <div class="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <label class="block">
+                                        <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Rapat</span>
+                                        <select wire:model.live="rekamanRapatId"
+                                                class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-2 text-[13px] text-senat-ink">
+                                            @foreach ($rapatList as $r)
+                                                <option value="{{ $r['id_rapat'] ?? '' }}">{{ $r['nama_agenda'] ?? ('Rapat #' . ($r['id_rapat'] ?? '')) }}</option>
+                                            @endforeach
+                                        </select>
+                                    </label>
 
-                                <label class="block">
-                                    <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Berkas Rekaman</span>
-                                    <input type="file" wire:model="rekamanFile"
-                                           accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.mp4,.mov,.mkv,.webm,.3gp"
-                                           class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12.5px] text-senat-body file:mr-3 file:rounded-md file:border-0 file:bg-senat-badgeBg file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-senat-ink">
-                                </label>
+                                    <label class="block">
+                                        <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Berkas Rekaman</span>
+                                        <input type="file" wire:model="rekamanFile"
+                                               accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.mp4,.mov,.mkv,.webm,.3gp"
+                                               class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12.5px] text-senat-body file:mr-3 file:rounded-md file:border-0 file:bg-senat-badgeBg file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-senat-ink">
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <button type="button" wire:click="mulaiRekaman" wire:loading.attr="disabled" wire:target="rekamanFile,mulaiRekaman" :disabled="isUploading"
+                                            class="inline-flex items-center gap-1.5 rounded-[10px] bg-senat-link px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
+                                        <x-senat.icon name="upload" class="h-4 w-4" />
+                                        <span x-show="!isUploading" wire:loading.remove wire:target="mulaiRekaman">Proses Jadi Notulensi</span>
+                                        <span x-show="isUploading" x-cloak>Mengunggah Berkas&hellip;</span>
+                                        <span wire:loading wire:target="mulaiRekaman">Memproses&hellip;</span>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <button type="button" wire:click="mulaiRekaman" wire:loading.attr="disabled" wire:target="rekamanFile,mulaiRekaman"
-                                        class="inline-flex items-center gap-1.5 rounded-[10px] bg-senat-link px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
-                                    <x-senat.icon name="upload" class="h-4 w-4" />
-                                    <span wire:loading.remove wire:target="mulaiRekaman">Proses Jadi Notulensi</span>
-                                    <span wire:loading wire:target="mulaiRekaman">Mengunggah&hellip;</span>
-                                </button>
+                            {{-- Live Upload Progress Bar --}}
+                            <div x-show="isUploading" x-cloak class="mt-3 rounded-lg border border-senat-border bg-blue-50/50 p-3">
+                                <div class="flex items-center justify-between text-[11.5px] text-senat-body">
+                                    <span>Sedang mengunggah berkas rekaman ke browser... Harap tunggu hingga 100%.</span>
+                                    <span class="font-mono font-bold text-senat-link" x-text="uploadProgress + '%'"></span>
+                                </div>
+                                <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                                    <div class="h-full bg-senat-link transition-all duration-200" :style="'width: ' + uploadProgress + '%'"></div>
+                                </div>
                             </div>
+
+                            <p x-show="uploadError" x-cloak x-text="uploadError" class="mt-2 text-[12px] text-rose-600 font-medium"></p>
+
+                            @if ($rekamanFile)
+                                <div class="mt-2.5 flex items-center gap-2 text-[11.5px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+                                    <span class="font-medium">Berkas siap:</span>
+                                    <span class="truncate">{{ method_exists($rekamanFile, 'getClientOriginalName') ? $rekamanFile->getClientOriginalName() : 'Berkas rekaman terpilih' }}</span>
+                                </div>
+                            @endif
                         </div>
 
                         @error('rekamanFile') <p class="mt-2 text-[12px] text-rose-600">{{ $message }}</p> @enderror
@@ -136,8 +164,20 @@
                             </div>
                         @endif
 
-                        @if ($rekamanError !== '' && $rekamanStatus !== 'gagal')
-                            <p class="mt-3 text-[12px] text-rose-600">{{ $rekamanError }}</p>
+                        @if ($rekamanStatus === 'gagal' || $rekamanError !== '')
+                            <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="mt-0.5 shrink-0 rounded-full bg-rose-100 p-1 text-rose-600">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-[12.5px] font-semibold text-rose-900">Pemrosesan Rekaman Gagal ({{ $rekamanProgres }}%)</p>
+                                        <p class="mt-1 text-[12px] text-rose-700 leading-relaxed">{{ $rekamanError ?: 'Terjadi kesalahan saat memproses rekaman.' }}</p>
+                                    </div>
+                                </div>
+                            </div>
                         @endif
 
                         {{-- Hasil --}}
