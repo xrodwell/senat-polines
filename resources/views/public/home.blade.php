@@ -15,7 +15,6 @@
     $memberCount   = $direktori['members'] ?? null;
     $committeeCount = $direktori['committees'] ?? count($committees);
     $releaseCount  = count($posts);
-    $hasActive     = (bool) $activeSession;
 
     $bulan = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
 @endphp
@@ -32,19 +31,9 @@
 
     <div class="senat-shell relative z-10 pb-4 pt-[72px]">
 
-        {{-- Info Sidang (2013:17 / 2013:18) --}}
-        @if ($hasActive)
-            <div class="inline-flex h-[38px] max-w-full items-center gap-2 rounded-[12px] border border-[#d8c79b]/35 bg-senat-primary/80 px-4 backdrop-blur-sm">
-                <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-[#d8c79b]" aria-hidden="true"></span>
-                <p class="truncate text-[11px] font-bold leading-none text-[#ecdfc3]">
-                    INFO SIDANG: Sedang berlangsung {{ $activeSession['title'] }}
-                </p>
-            </div>
-        @endif
-
         <div class="max-w-[700px]">
             {{-- Eyebrow (2013:19) --}}
-            <p class="text-[11px] font-bold uppercase leading-[1.1] tracking-[0.02em] text-senat-sky {{ $hasActive ? 'mt-[38px]' : '' }}">
+            <p class="text-[11px] font-bold uppercase leading-[1.1] tracking-[0.02em] text-senat-sky">
                 {{ $hero['eyebrow'] }}
             </p>
 
@@ -77,7 +66,7 @@
         </div>
 
         {{-- Statistik (2013:27) --}}
-        <dl class="mt-[46px] grid grid-cols-2 rounded-[14px] border border-white/12 bg-senat-primary/85 backdrop-blur-sm lg:grid-cols-4">
+        <dl class="mt-[122px] grid grid-cols-2 rounded-[14px] border border-white/12 bg-senat-primary/85 backdrop-blur-sm lg:grid-cols-4">
             @php
                 $stats = [
                     ['label' => 'ANGGOTA SENAT',   'value' => $memberCount,     'hint' => 'Guru Besar & Pendidik'],
