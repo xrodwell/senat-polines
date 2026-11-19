@@ -60,21 +60,13 @@
     {{-- Background subtle ambient gradient --}}
     <div class="fixed inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/50 via-slate-50 to-slate-100"></div>
 
-    {{-- Top Navigation: Back to Home (Clean Modern Pill in Top Left) --}}
-    <header class="absolute top-0 inset-x-0 p-4 sm:p-6 lg:p-8 flex items-center justify-between pointer-events-none z-10">
-        <a href="{{ route('public.home') }}" class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/90 px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-xs backdrop-blur transition-all hover:bg-white hover:text-slate-900 hover:border-slate-300 hover:shadow group">
-            <span class="text-slate-400 group-hover:-translate-x-0.5 group-hover:text-slate-700 transition-transform">←</span>
-            <span>Kembali ke Halaman Utama</span>
-        </a>
-    </header>
-
     {{-- Main Container Card (Fluid, Center, Simple & Minimalist) --}}
     <main class="w-full max-w-[440px] my-auto">
         <div class="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/60">
             {{-- Header & Branding --}}
             <div class="text-center">
-                <a href="{{ route('public.home') }}" class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-slate-50 border border-slate-100 p-2 shadow-xs transition hover:scale-105">
-                    <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-full w-full object-contain">
+                <a href="{{ route('public.home') }}" class="inline-flex items-center justify-center transition hover:scale-105">
+                    <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-16 w-16 object-contain">
                 </a>
                 <h1 class="mt-4 text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                     Masuk ke Portal Senat
@@ -213,6 +205,13 @@
                     Terbuka untuk seluruh akun Google berdomain <span class="font-medium text-slate-500">*@polines.ac.id</span>.
                 </p>
             </div>
+
+            {{-- Back to Home Link --}}
+            <div class="mt-3 pt-2.5 border-t border-slate-100 text-center">
+                <a href="{{ route('public.home') }}" class="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline transition">
+                    Kembali ke Halaman Utama
+                </a>
+            </div>
         </div>
     </main>
 
@@ -259,7 +258,7 @@
 
             <div class="mt-4 text-xs text-slate-600 leading-relaxed space-y-3">
                 <p>
-                    Akun Portal Senat Akademik Polines diterbitkan dan dikelola secara terpusat untuk menjaga keamanan hak suara dan dokumen sidang.
+                    Akun Portal Senat Akademik Polines diterbitkan dan dikelola secara terpusat untuk menjaga keamanan
                 </p>
                 <div class="rounded-xl bg-blue-50/70 border border-blue-200/80 p-3 text-slate-800">
                     <p class="font-semibold text-[11.5px] text-[#003366]">Cara Pemulihan Akun:</p>
