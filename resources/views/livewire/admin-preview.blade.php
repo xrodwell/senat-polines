@@ -15,72 +15,70 @@
          sidebarCollapsed: localStorage.getItem('admin_sidebar_collapsed') === 'true',
          animated: false,
          toggleSidebar() {
+             document.documentElement.classList.remove('sb-collapsed');
              this.animated = true;
              this.sidebarCollapsed = !this.sidebarCollapsed;
              localStorage.setItem('admin_sidebar_collapsed', this.sidebarCollapsed);
          }
      }">
+    <script>
+        if (localStorage.getItem('admin_sidebar_collapsed') === 'true') {
+            document.documentElement.classList.add('sb-collapsed');
+        }
+    </script>
+    <style>
+        @media (min-width: 1024px) {
+            html.sb-collapsed .admin-sidebar {
+                width: 80px;
+            }
+            html.sb-collapsed .admin-sidebar-label {
+                max-width: 0;
+                width: 0;
+                opacity: 0;
+            }
+            html.sb-collapsed .admin-sidebar-group {
+                max-height: 0;
+                opacity: 0;
+            }
+            html.sb-collapsed .admin-sidebar-divider {
+                margin-top: 0.5rem;
+                margin-bottom: 0.5rem;
+                opacity: 1;
+                height: auto;
+                border-top-width: 1px;
+            }
+            html.sb-collapsed .admin-sidebar-link {
+                width: 2.25rem;
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+                gap: 0;
+            }
+            html.sb-collapsed .admin-sidebar-ext {
+                width: 0;
+                opacity: 0;
+                border-width: 0;
+                pointer-events: none;
+            }
+            html.sb-collapsed .admin-sb-icon-menu {
+                display: flex !important;
+            }
+            html.sb-collapsed .admin-sb-icon-chevron {
+                display: none !important;
+            }
+        }
+    </style>
 
     {{-- Topbar khas Portal Senat (Figma 2269:728) --}}
     <header class="sticky top-0 z-40 flex h-[60px] items-center bg-senat-primary text-white lg:h-16 shadow-sm">
-        <div class="relative flex w-full items-center gap-3 px-4 sm:px-5 lg:px-6">
-            {{-- Tombol Toggle Sidebar --}}
-            <button type="button"
-                    @click="toggleSidebar()"
-                    class="senat-tap flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition cursor-pointer shrink-0"
-                    :title="sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'">
-                <x-senat.icon name="menu" class="h-4 w-4" />
-            </button>
-
-            <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-9 w-9 rounded-lg object-contain lg:h-[38px] lg:w-[38px]">
+        <div class="relative flex w-full items-center gap-3 px-4 sm:px-5 lg:px-[18px]">
+            <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Polines" class="h-9 w-9 rounded-lg object-contain">
             <span class="leading-none">
                 <span class="block text-[14px] font-bold">SENAT<span class="hidden sm:inline"> AKADEMIK</span></span>
                 <span class="mt-[6px] hidden text-[11px] font-medium text-[#bfdbfe] sm:block">Politeknik Negeri Semarang</span>
             </span>
 
             <div class="ml-auto flex items-center gap-2 lg:gap-4">
-                {{-- Quick Impersonate Dropdown --}}
-                <div class="relative hidden sm:block" x-data="{ openImpersonate: false }">
-                    <button type="button" @click="openImpersonate = !openImpersonate" :aria-expanded="openImpersonate.toString()"
-                            class="senat-tap flex h-9 items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-500/20 px-3 text-[12px] font-semibold text-amber-200 transition hover:bg-amber-500/30 cursor-pointer"
-                            title="Beralih akun ke anggota Senat">
-                        <svg class="h-3.5 w-3.5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span>Login Sebagai</span>
-                        <x-senat.icon name="chevron-down" class="h-3 w-3 text-amber-200/70" />
-                    </button>
-                    <div x-cloak x-show="openImpersonate" @click.outside="openImpersonate = false" x-transition.opacity
-                         class="absolute right-0 top-full z-50 mt-2 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-2xl text-slate-800">
-                        <div class="px-2.5 py-1.5 border-b border-slate-100 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
-                            Pilih Anggota Senat
-                        </div>
-                        <div class="divide-y divide-slate-100">
-                            @forelse ($allLecturers ?? [] as $lecturer)
-                                @if (($lecturer['id_user'] ?? 0) != session('auth_user_id'))
-                                    <form method="POST" action="{{ route('admin.impersonate', $lecturer['id_user']) }}" class="m-0">
-                                        @csrf
-                                        <button type="submit" class="w-full text-left px-2.5 py-2 rounded-lg hover:bg-slate-50 transition flex flex-col cursor-pointer">
-                                            <span class="text-xs font-semibold text-slate-900 truncate">{{ $lecturer['nama'] }}</span>
-                                            <span class="text-[11px] text-slate-500">{{ $lecturer['komisi'] ?? 'Komisi Senat' }} &middot; {{ $lecturer['nim_nip'] ?: '-' }}</span>
-                                        </button>
-                                    </form>
-                                @endif
-                            @empty
-                                <div class="px-2.5 py-3 text-center text-xs text-slate-500">
-                                    Tidak ada data anggota
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Badge Status Sistem --}}
-                <div class="hidden items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11.5px] font-medium text-white sm:flex">
-                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-                    <span>Admin Sekretariat</span>
-                </div>
-
                 <a href="{{ route('portal.dashboard') }}"
                    class="senat-tap flex h-9 items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 text-[12px] font-medium text-white transition hover:bg-white/20">
                     <x-senat.icon name="user" class="h-3.5 w-3.5 text-[#bfdbfe]" />
@@ -110,52 +108,40 @@
                    }
                }"
                @scroll.passive="sessionStorage.setItem('admin_sidebar_scroll', $el.scrollTop)"
-               class="w-full shrink-0 border-b border-senat-sidebarLine bg-white lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-[280px] lg:overflow-y-auto lg:border-b-0 lg:border-r flex flex-col justify-between"
+               class="admin-sidebar w-full shrink-0 border-b border-senat-sidebarLine bg-white lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-[280px] lg:overflow-y-auto lg:overflow-x-hidden lg:border-b-0 lg:border-r flex flex-col justify-between"
                :class="{
-                   'transition-all duration-200 ease-in-out': animated,
-                   'lg:!w-[72px]': sidebarCollapsed,
+                   'transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]': animated,
+                   '[&_*]:!transition-none': !animated,
+                   'lg:w-[80px]': sidebarCollapsed,
                    'lg:w-[280px]': !sidebarCollapsed
                }"
                aria-label="Navigasi Admin Sekretariat">
             
             <div>
-                <div class="border-b border-slate-100"
-                     :class="{
-                         'transition-all duration-200': animated,
-                         'p-3 text-center': sidebarCollapsed,
-                         'px-5 pt-5 pb-4': !sidebarCollapsed
-                     }">
-                    <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'justify-between gap-3'">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#003366] text-white shadow-xs"
-                                 :title="sidebarCollapsed ? 'Admin Sekretariat' : ''">
-                                <x-senat.icon name="dashboard" class="h-4 w-4 text-amber-400" />
-                            </div>
-                            <div class="min-w-0" x-show="!sidebarCollapsed" x-transition.opacity>
-                                <div class="flex items-center gap-1.5">
-                                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-900">ADMIN SEKRETARIAT</p>
-                                </div>
-                                <p class="mt-0.5 text-[11px] text-slate-500 truncate">Tata Kelola Sidang &amp; Publikasi</p>
-                            </div>
-                        </div>
-
-                        {{-- Tombol Toggle Inline --}}
+                <div class="border-b border-slate-100 px-[18px] py-4">
+                    <div class="flex items-center gap-3 min-w-0">
                         <button type="button"
                                 @click="toggleSidebar()"
-                                x-show="!sidebarCollapsed"
-                                class="hidden lg:flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                                title="Ciutkan Sidebar">
-                            <x-senat.icon name="chevron-left" class="h-4 w-4" />
+                                class="senat-tap flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#003366] text-white shadow-xs transition hover:bg-[#00264d] cursor-pointer"
+                                :title="sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'">
+                            <span x-show="sidebarCollapsed" x-cloak class="admin-sb-icon-menu flex items-center justify-center">
+                                <x-senat.icon name="menu" class="h-4 w-4 text-white" />
+                            </span>
+                            <span x-show="!sidebarCollapsed" class="admin-sb-icon-chevron flex items-center justify-center">
+                                <x-senat.icon name="chevron-left" class="h-4 w-4 text-white" />
+                            </span>
                         </button>
+                        <div class="admin-sidebar-label min-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out"
+                             :class="sidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'">
+                            <div class="flex items-center gap-1.5">
+                                <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-900">ADMIN SEKRETARIAT</p>
+                            </div>
+                            <p class="mt-0.5 text-[11px] text-slate-500 truncate">Tata Kelola Sidang &amp; Publikasi</p>
+                        </div>
                     </div>
                 </div>
 
-                <nav class="mt-4 space-y-6 pb-6"
-                     :class="{
-                         'transition-all duration-200': animated,
-                         'px-2': sidebarCollapsed,
-                         'px-3.5': !sidebarCollapsed
-                     }"
+                <nav class="mt-4 space-y-6 px-[18px] pb-6"
                      aria-label="Menu Admin">
                     @php
                         $iconMap = [
@@ -177,12 +163,14 @@
 
                     @foreach ($groups as $group => $items)
                         <div wire:key="group-{{ \Illuminate\Support\Str::slug($group) }}" aria-labelledby="grup-{{ $loop->index }}">
-                            <div x-show="!sidebarCollapsed" x-transition.opacity>
-                                <p id="grup-{{ $loop->index }}" class="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                            <div class="admin-sidebar-group overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out"
+                                 :class="sidebarCollapsed ? 'max-h-0 opacity-0' : 'max-h-8 opacity-100'">
+                                <p id="grup-{{ $loop->index }}" class="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
                                     {{ $group }}
                                 </p>
                             </div>
-                            <div x-show="sidebarCollapsed" class="my-2 border-t border-slate-100"></div>
+                            <div class="admin-sidebar-divider border-t border-slate-100 transition-all duration-200 ease-in-out"
+                                 :class="sidebarCollapsed ? 'my-2 opacity-100' : 'my-0 opacity-0 h-0 border-t-0'"></div>
 
                             <div class="space-y-1">
                                 @foreach ($items as $item)
@@ -196,15 +184,13 @@
                                        wire:key="menu-link-{{ $itemSlug }}"
                                        @if ($isActive) aria-current="page" @endif
                                        :title="sidebarCollapsed ? '{{ $item }}' : ''"
-                                       class="group relative flex min-h-[38px] w-full items-center rounded-xl transition-all duration-150 {{ $isActive ? 'bg-[#003366] text-white shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium' }}"
-                                       :class="sidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2'">
+                                       class="admin-sidebar-link group relative flex h-9 items-center rounded-xl transition-all duration-200 ease-in-out {{ $isActive ? 'bg-[#003366] text-white shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium' }}"
+                                       :class="sidebarCollapsed ? 'w-9 justify-center px-0 gap-0' : 'w-full px-2.5 gap-3'">
                                         <span class="shrink-0 transition-transform duration-150 group-hover:scale-110 {{ $isActive ? 'text-amber-300' : 'text-slate-400 group-hover:text-slate-700' }}">
                                             <x-senat.icon :name="$iconName" class="h-4 w-4" />
                                         </span>
-                                        <span class="truncate text-[12px] flex-1" x-show="!sidebarCollapsed" x-transition.opacity>{{ $item }}</span>
-                                        @if ($isActive)
-                                            <span class="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" aria-hidden="true" x-show="!sidebarCollapsed"></span>
-                                        @endif
+                                        <span class="admin-sidebar-label truncate text-[12px] whitespace-nowrap overflow-hidden transition-all duration-200 ease-in-out"
+                                              :class="sidebarCollapsed ? 'w-0 max-w-0 opacity-0' : 'max-w-[200px] opacity-100 flex-1'">{{ $item }}</span>
                                     </a>
                                 @endforeach
                             </div>
@@ -213,19 +199,16 @@
                 </nav>
             </div>
 
-            <div class="mt-auto border-t border-slate-100 bg-slate-50/60"
-                 :class="{
-                     'transition-all duration-200': animated,
-                     'p-2 text-center': sidebarCollapsed,
-                     'p-3': !sidebarCollapsed
-                 }">
-                <div class="flex items-center rounded-xl bg-white border border-slate-200/80 shadow-2xs"
-                     :class="sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-2'">
-                    <div class="flex items-center gap-2.5 min-w-0" :title="sidebarCollapsed ? 'Administrator (Sekretariat Senat)' : ''">
+            <div class="mt-auto border-t border-slate-100 bg-slate-50/60 p-3">
+                <div class="flex items-center justify-between rounded-xl bg-white border border-slate-200/80 p-2 shadow-2xs overflow-hidden">
+                    <div class="flex items-center min-w-0 transition-all duration-200 ease-in-out"
+                         :class="sidebarCollapsed ? 'gap-0' : 'gap-2.5'"
+                         :title="sidebarCollapsed ? 'Administrator (Sekretariat Senat)' : ''">
                         <div class="h-8 w-8 rounded-lg bg-[#003366]/10 text-[#003366] flex items-center justify-center text-xs font-bold shrink-0">
                             AS
                         </div>
-                        <div class="min-w-0" x-show="!sidebarCollapsed" x-transition.opacity>
+                        <div class="admin-sidebar-label min-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out"
+                             :class="sidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'">
                             <p class="text-[11.5px] font-bold text-slate-900 truncate">Administrator</p>
                             <p class="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
                                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
@@ -234,9 +217,9 @@
                         </div>
                     </div>
                     <a href="{{ route('public.home') }}"
-                       x-show="!sidebarCollapsed"
                        title="Ke Portal Publik"
-                       class="h-7 w-7 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 transition">
+                       class="admin-sidebar-ext shrink-0 h-7 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-800 overflow-hidden transition-all duration-200 ease-in-out"
+                       :class="sidebarCollapsed ? 'w-0 opacity-0 border-0 pointer-events-none' : 'w-7 opacity-100'">
                         <x-senat.icon name="external" class="h-3.5 w-3.5" />
                     </a>
                 </div>
@@ -284,13 +267,6 @@
                                     class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-3.5 text-[12px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm"
                                     title="Unduh Rekap Kehadiran ke CSV (.csv)">
                                 <span>Ekspor CSV</span>
-                            </button>
-                        @elseif ($active !== 'Pengaturan Informasi & Hero')
-                            <button type="button"
-                                    wire:click="saveAction(@js($active))"
-                                    class="senat-tap inline-flex h-9 items-center gap-1.5 rounded-md bg-senat-primary px-4 text-[12px] font-semibold text-white transition hover:bg-senat-primaryHover">
-                                <x-senat.icon name="check" class="h-3.5 w-3.5" />
-                                <span>Simpan Perubahan</span>
                             </button>
                         @endif
                     </div>

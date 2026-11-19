@@ -12,8 +12,6 @@
                             </div>
                             @if ($editingMeetingId)
                                 <span class="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-900 border border-amber-200">Mode Edit Aktif</span>
-                            @else
-                                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-senat-primary border border-blue-200">Sidang Senat</span>
                             @endif
                         </div>
 
@@ -195,7 +193,6 @@
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-senat-line pb-3">
                             <div>
                                 <h2 class="text-[18px] font-bold text-senat-ink">Agenda &amp; Riwayat Sidang</h2>
-                                <p class="text-[12px] text-senat-muted">Daftar Sidang Terjadwal, aktif, dan riwayat lalu (Data dinamis dari Backend API port 8001).</p>
                             </div>
                             <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
                                 {{ count($filteredMeetings) }} Agenda
@@ -214,7 +211,10 @@
                             @endforeach
                         </div>
 
-                        <ul class="mt-3 divide-y divide-senat-sidebarLine max-h-[620px] overflow-y-auto pr-1">
+                        <ul x-data="{ scrolling: false, _scrollTimer: null }"
+                            @scroll.passive="scrolling = true; clearTimeout(_scrollTimer); _scrollTimer = setTimeout(() => scrolling = false, 1500)"
+                            :class="{ 'is-scrolling': scrolling }"
+                            class="auto-hide-scroll mt-3 divide-y divide-senat-sidebarLine max-h-[680px] overflow-y-auto pr-1">
                             @forelse ($filteredMeetings as $meeting)
                                 <li wire:key="item-meeting-{{ $meeting['id'] ?? ($meeting['id_rapat'] ?? $loop->index) }}" class="py-3.5 first:pt-1">
                                     <div class="flex items-start justify-between gap-2">
@@ -223,11 +223,11 @@
                                                 <span class="font-mono text-[10.5px] font-bold text-senat-muted uppercase">{{ $meeting['session_code'] ?? 'PLN' }}</span>
                                                 <x-senat.badge :state="$this->chipState($meeting['type'] ?? '')">{{ $meeting['type'] ?? 'Sidang' }}</x-senat.badge>
                                                 @if (in_array(strtolower($meeting['status'] ?? ''), ['sedang berlangsung', 'aktif']))
-                                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Berlangsung
+                                                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span> Berlangsung
                                                     </span>
                                                 @elseif (in_array(strtolower($meeting['status'] ?? ''), ['terjadwal', 'dijadwalkan']))
-                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
                                                         Terjadwal
                                                     </span>
                                                 @elseif (in_array(strtolower($meeting['status'] ?? ''), ['draft', 'draf']))
@@ -235,7 +235,7 @@
                                                         Draft
                                                     </span>
                                                 @else
-                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                         {{ $meeting['status'] ?? 'Selesai' }}
                                                     </span>
                                                 @endif
@@ -244,20 +244,21 @@
                                             <p class="mt-1 text-[11.5px] text-senat-body">
                                                 {{ \Illuminate\Support\Carbon::parse($meeting['date'] ?? now())->format('d M Y') }} · {{ $meeting['time'] ?? '09:00 WIB' }}
                                             </p>
-                                            <p class="text-[11px] text-senat-muted truncate">📍 {{ $meeting['room'] ?? 'Ruang Sidang Senat' }}</p>
+                                            <p class="mt-0.5 text-[11px] text-senat-muted truncate">{{ $meeting['room'] ?? 'Ruang Sidang Senat' }}</p>
                                         </div>
                                     </div>
 
                                     <div class="mt-2.5 flex flex-wrap items-center justify-between border-t border-slate-100 pt-2.5 gap-2 text-[11px]">
-                                        <span class="font-semibold text-slate-600">
-                                            👥 {{ $meeting['total_invited'] ?? 34 }} Dosen Diundang
+                                        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-600">
+                                            <x-senat.icon name="users" class="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                                            <span>{{ $meeting['total_invited'] ?? 34 }} Dosen Diundang</span>
                                         </span>
                                         <div class="flex items-center gap-1.5">
                                             <button type="button"
                                                     wire:click="manageMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
-                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md bg-[#116a3c] px-2.5 text-[11px] font-semibold text-white transition hover:bg-[#0d542f] shadow-xs"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
                                                     title="Buka Presensi Sidang Ini">
-                                                <span>Kelola Presensi</span>
+                                                <span>Presensi</span>
                                             </button>
                                             <button type="button"
                                                     wire:click="manageMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }}, 'Kuorum & Kehadiran Anggota')"
@@ -267,14 +268,14 @@
                                             </button>
                                             <button type="button"
                                                     wire:click="editMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
-                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-blue-200 bg-blue-50/70 px-2 text-[11px] font-semibold text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition shadow-2xs"
                                                     title="Sunting Sidang">
                                                 <span>Edit</span>
                                             </button>
                                             <button type="button"
                                                     wire:click="deleteMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
                                                     onclick="return confirm('Hapus agenda sidang ini dari backend?') || event.stopImmediatePropagation()"
-                                                    class="rounded px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-rose-200 bg-rose-50/70 px-2 text-[11px] font-semibold text-rose-600 hover:bg-rose-100 hover:border-rose-300 transition shadow-2xs"
                                                     title="Hapus Sidang">
                                                 <span>Hapus</span>
                                             </button>
