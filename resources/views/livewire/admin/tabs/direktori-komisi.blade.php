@@ -218,12 +218,12 @@
         </div>
     </div>
 
-    {{-- Tabel Anggota Senat & Akses Cepat Impersonasi --}}
+    {{-- Tabel Akun Anggota Senat --}}
     <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-                <h3 class="text-[15px] font-bold text-slate-900">Daftar Akun Anggota Senat &amp; Akses Cepat Portal</h3>
-                <p class="text-[12px] text-slate-500">Administrator dapat beralih akun (&ldquo;Login As&rdquo;) ke anggota Senat untuk verifikasi tampilan portal atau mendampingi anggota.</p>
+                <h3 class="text-[15px] font-bold text-slate-900">Daftar Akun Anggota Senat</h3>
+                <p class="text-[12px] text-slate-500">Daftar akun anggota Senat Akademik yang terdaftar pada sistem.</p>
             </div>
             <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
                 {{ count($allLecturers ?? []) }} Anggota Terdaftar
@@ -238,14 +238,10 @@
                         <th class="px-4 py-3">NIP / Identitas</th>
                         <th class="px-4 py-3">Komisi / Penugasan</th>
                         <th class="px-4 py-3">Peran Akun</th>
-                        <th class="px-4 py-3 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
                     @forelse ($allLecturers ?? [] as $u)
-                        @php
-                            $isCurrentAdmin = ((int) ($u['id_user'] ?? 0) === (int) session('auth_user_id'));
-                        @endphp
                         <tr class="hover:bg-slate-50/80 transition">
                             <td class="px-4 py-3 font-semibold text-slate-900">
                                 {{ $u['nama'] ?? 'Anggota Senat' }}
@@ -263,29 +259,10 @@
                                     {{ $u['role'] ?? 'anggota' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-right">
-                                @if ($isCurrentAdmin)
-                                    <span class="inline-flex items-center rounded bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
-                                        Akun Anda Saat Ini
-                                    </span>
-                                @else
-                                    <form method="POST" action="{{ route('admin.impersonate', $u['id_user']) }}" class="inline m-0">
-                                        @csrf
-                                        <button type="submit"
-                                                class="inline-flex items-center gap-1.5 rounded-lg bg-senat-primary px-3 py-1 text-xs font-semibold text-white transition hover:bg-senat-primaryHover shadow-xs cursor-pointer"
-                                                title="Login sebagai {{ $u['nama'] }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                            </svg>
-                                            <span>Login Sebagai</span>
-                                        </button>
-                                    </form>
-                                @endif
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-slate-500">
+                            <td colspan="4" class="px-4 py-6 text-center text-slate-500">
                                 Belum ada data anggota senat.
                             </td>
                         </tr>

@@ -78,11 +78,6 @@
                 <h2 class="text-[22px] font-bold leading-snug text-senat-ink">{{ $currentName }}</h2>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
                     <x-senat.badge state="info" :dot="false">{{ $jabatanLabel }}</x-senat.badge>
-                    @if (session()->has('impersonator'))
-                        <span class="inline-flex items-center rounded border border-amber-300 bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
-                            Mode Impersonasi
-                        </span>
-                    @endif
                     <x-senat.badge state="neutral" :dot="false">Periode {{ $periode }}</x-senat.badge>
                 </div>
                 <p class="mt-2 text-[13px] text-senat-body">Politeknik Negeri Semarang</p>
