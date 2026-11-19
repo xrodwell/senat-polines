@@ -39,7 +39,12 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
 
     private function getBaseUrl(): string
     {
-        return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
+        // config(), bukan env(): env() tidak tersedia saat config di-cache.
+        $base = rtrim((string) config('services.backend_api.url', 'http://127.0.0.1:8001'), '/');
+        if (!str_ends_with($base, '/api')) {
+            $base .= '/api';
+        }
+        return $base;
     }
 
     public function all(): array

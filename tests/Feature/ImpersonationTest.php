@@ -7,6 +7,14 @@ use Tests\TestCase;
 
 class ImpersonationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Token sesi tes palsu: validasi /me middleware harus di-fake agar
+        // tidak menembak backend asli (hidup di laptop, mati di VPS).
+        Http::fake(['*/api/me' => Http::response(['data' => ['id_user' => 1]])]);
+    }
+
     public function test_unauthorized_member_cannot_impersonate(): void
     {
         $response = $this->withSession([
@@ -24,6 +32,7 @@ class ImpersonationTest extends TestCase
     public function test_admin_can_impersonate_member_successfully(): void
     {
         Http::fake([
+            '*/api/me' => Http::response(['data' => ['id_user' => 1]]),
             '*/admin/impersonate/3' => Http::response([
                 'status' => 'success',
                 'message' => 'Impersonasi berhasil dimulai.',
@@ -110,6 +119,7 @@ class ImpersonationTest extends TestCase
     public function test_leave_impersonate_restores_admin_session(): void
     {
         Http::fake([
+            '*/api/me' => Http::response(['data' => ['id_user' => 1]]),
             '*/logout' => Http::response(['message' => 'Logged out'], 200),
         ]);
 

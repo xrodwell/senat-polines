@@ -19,7 +19,7 @@ class RapatWorkspaceController extends Controller
 
     private function idUser(): int
     {
-        return (int) (auth()->id() ?: session('auth_user_id', (int) env('PORTAL_DEMO_USER_ID', 2)));
+        return (int) (auth()->id() ?: session('auth_user_id'));
     }
 
     /** Muat catatan + lampiran + berbagi untuk satu rapat. */

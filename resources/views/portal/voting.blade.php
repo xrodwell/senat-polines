@@ -1,11 +1,11 @@
 @extends('layouts.portal')
 
-@section('title', 'E-Voting — Portal Internal Senat Akademik Polines')
+@section('title', 'E-Voting - Portal Internal Senat Akademik Polines')
 
 @section('content')
 @php
     /**
-     * 12D — E-Voting Anggota Senat
+     * 12D - E-Voting Anggota Senat
      */
     $active = $activeVoting ?? null;
     $votingDibuka = $active && in_array(strtolower($active['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true);
@@ -50,6 +50,14 @@
                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-[#c63b50] text-white text-xs font-bold">!</span>
                 <span>{{ session('error') }}</span>
             </div>
+        </div>
+    @endif
+
+    {{-- ================= INDIKATOR BACKEND OFFLINE ================= --}}
+    @if (empty($votingBackendAvailable))
+        <div class="rounded-xl bg-amber-50 border border-amber-300 px-4 py-3 text-[13px] font-semibold text-amber-800">
+            Backend voting tidak terjangkau{{ !empty($votingBackendError) ? ' (' . $votingBackendError . ')' : '' }}.
+            Data voting tidak dapat dimuat dan pengiriman suara tidak dapat dilakukan sampai koneksi pulih.
         </div>
     @endif
 
@@ -184,7 +192,7 @@
                                         $style = match (true) {
                                             str_contains($opsiKey, 'tidak') || str_contains($opsiKey, 'tolak') => ['icon' => '✕', 'bg' => 'bg-[#fdecef]', 'border' => 'border-[#c63b50]/30', 'fg' => 'text-[#c63b50]'],
                                             str_contains($opsiKey, 'setuju') => ['icon' => '✓', 'bg' => 'bg-[#eaf8f0]', 'border' => 'border-[#147a4a]/30', 'fg' => 'text-[#147a4a]'],
-                                            default => ['icon' => '—', 'bg' => 'bg-[#eaf3fe]', 'border' => 'border-senat-link/30', 'fg' => 'text-senat-link'],
+                                            default => ['icon' => '-', 'bg' => 'bg-[#eaf3fe]', 'border' => 'border-senat-link/30', 'fg' => 'text-senat-link'],
                                         };
                                     @endphp
                                     <button type="button"
@@ -345,12 +353,12 @@
                     @php
                         $userVoted = $item['user_voted'] ?? false;
                         $statusPartisipasi = $item['status_partisipasi'] ?? ($userVoted ? 'voted' : 'absent');
-                        $userPilihan = $item['user_pilihan_nama'] ?? 'Setuju';
+                        $userPilihan = $item['user_pilihan_nama'] ?? 'Suara Tercatat';
 
                         $rapatInfo = $item['rapat'] ?? [];
                         $namaRapat = $rapatInfo['nama_rapat'] ?? $rapatInfo['title'] ?? 'Sidang Senat Akademik';
                         $kodeRapat = $rapatInfo['kode'] ?? 'SIDANG';
-                        $tanggalRapat = $rapatInfo['tanggal'] ?? ($item['waktu_mulai'] ? date('d M Y', strtotime($item['waktu_mulai'])) : '—');
+                        $tanggalRapat = $rapatInfo['tanggal'] ?? ($item['waktu_mulai'] ? date('d M Y', strtotime($item['waktu_mulai'])) : '-');
 
                         $hasilKeputusan = $item['hasil_keputusan'] ?? 'Disetujui';
                         $badgeState = $item['badge_state'] ?? 'success';
@@ -375,7 +383,7 @@
                             </div>
 
                             <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider
-                                {{ $badgeState === 'success' ? 'bg-emerald-100 text-emerald-800' : ($badgeState === 'danger' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800') }}">
+                                {{ $badgeState === 'success' ? 'bg-emerald-100 text-emerald-800' : ($badgeState === 'danger' ? 'bg-rose-100 text-rose-800' : ($badgeState === 'secondary' ? 'bg-slate-100 text-slate-600' : 'bg-amber-100 text-amber-800')) }}">
                                 {{ $hasilKeputusan }}
                             </span>
                         </div>
@@ -397,6 +405,11 @@
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
                                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                                     Hadir dalam Sidang (Tidak Memilih)
+                                </span>
+                            @elseif ($statusPartisipasi === 'not_invited')
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                                    Tidak Diundang ke Sidang Ini
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
@@ -449,7 +462,8 @@
                                 <div class="text-[11px] font-medium text-slate-500">
                                     Total: <strong class="text-slate-800">{{ $totalVoteItem }} suara</strong>
                                     @if (!empty($item['kuorum']['total']))
-                                        • Kehadiran: {{ $item['kuorum']['hadir'] ?? $totalVoteItem }}/{{ $item['kuorum']['total'] }} (Kuorum Terpenuhi)
+                                        • Kehadiran: {{ $item['kuorum']['hadir'] ?? $totalVoteItem }}/{{ $item['kuorum']['total'] }}
+                                        ({{ !empty($item['kuorum']['tercapai']) || !empty($item['kuorum']['terpenuhi']) ? 'Kuorum Terpenuhi' : 'Kuorum Belum Terpenuhi' }})
                                     @endif
                                 </div>
                             </div>

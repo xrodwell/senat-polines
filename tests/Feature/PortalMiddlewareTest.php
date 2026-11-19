@@ -2,10 +2,17 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PortalMiddlewareTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Http::fake(['*/api/me' => Http::response(['data' => ['id_user' => 1]])]);
+    }
+
     private function anggotaSession(): array
     {
         return [

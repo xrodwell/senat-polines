@@ -13,12 +13,12 @@ trait HasVotingManagement
     public string $votingMeetingCode = 'PLN-892';
     public string $votingDate = '';
     public array $votingStats = [
-        'Setuju' => ['suara' => 24, 'persentase' => 85.7],
-        'Tidak Setuju' => ['suara' => 2, 'persentase' => 7.1],
-        'Tolak' => ['suara' => 2, 'persentase' => 7.1],
-        'Abstain' => ['suara' => 2, 'persentase' => 7.1],
-        'total_suara' => 28,
-        'kuorum' => '28 / 34 anggota',
+        'Setuju' => ['suara' => 0, 'persentase' => 0],
+        'Tidak Setuju' => ['suara' => 0, 'persentase' => 0],
+        'Tolak' => ['suara' => 0, 'persentase' => 0],
+        'Abstain' => ['suara' => 0, 'persentase' => 0],
+        'total_suara' => 0,
+        'kuorum' => '-',
     ];
 
     // Riwayat seluruh sesi E-Voting Persidangan

@@ -244,7 +244,7 @@ class PortalController extends Controller
         return view('portal.minutes', [
             'meetings' => $this->meetings->all(),
             'archives' => $this->archives->all(),
-            'idUser' => (int) (auth()->id() ?: session('auth_user_id', (int) env('PORTAL_DEMO_USER_ID', 2))),
+            'idUser' => (int) (auth()->id() ?: session('auth_user_id')),
         ]);
     }
 
