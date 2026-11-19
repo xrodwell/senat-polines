@@ -354,7 +354,8 @@
                                 <input type="file" wire:model="memberPhoto" accept="image/jpeg,image/png,image/webp"
                                        class="block w-full text-[11.5px] text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-senat-primary file:px-3.5 file:py-2 file:text-[11.5px] file:font-semibold file:text-white hover:file:bg-senat-primaryHover cursor-pointer">
                                 <p class="mt-1.5 text-[10.5px] text-slate-500">
-                                    JPG, PNG, atau WebP — maksimal 2 MB.
+                                    JPG, PNG, atau WebP — maksimal 2 MB. Resolusi otomatis disesuaikan
+                                    ke ±200×300 px tanpa mengubah proporsi (tidak gepeng).
                                     @if ($memberExistingPhoto)
                                         Pilih file baru untuk mengganti foto saat ini.
                                     @endif
