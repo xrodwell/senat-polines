@@ -8,6 +8,17 @@ use Tests\TestCase;
 
 class AdminPreviewTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        session([
+            'auth_token'     => 'test-token-admin',
+            'auth_user'      => ['id_user' => 1, 'nama' => 'Admin Senat', 'role' => 'admin'],
+            'auth_user_id'   => 1,
+            'auth_user_role' => 'admin',
+        ]);
+    }
+
     public function test_admin_route_renders_preview(): void
     {
         $this->get('/admin')
@@ -36,7 +47,7 @@ class AdminPreviewTest extends TestCase
         Livewire::withQueryParams(['tab' => 'E-Voting & Pengambilan Keputusan'])
             ->test(AdminPreview::class)
             ->assertSet('active', 'E-Voting & Pengambilan Keputusan')
-            ->assertSee('Pemungutan Suara · Sidang Pleno Akreditasi Program Studi');
+            ->assertSee('Rekap Suara Masuk');
     }
 
     public function test_sidebar_has_exactly_two_groups_and_all_screens(): void
@@ -90,7 +101,9 @@ class AdminPreviewTest extends TestCase
 
     public function test_public_home_renders_livewire_scripts(): void
     {
-        $this->get('/')
+        $response = $this->get('/');
+
+        $response
             ->assertOk()
             ->assertDontSee('Panel Admin')
             ->assertDontSee('Peta Produk')
@@ -98,5 +111,8 @@ class AdminPreviewTest extends TestCase
             ->assertSee('livewire')
             ->assertSee('senatChatWidget()')
             ->assertSee('pointer-events-none invisible translate-y-3 scale-95 opacity-0', false);
+
+        preg_match_all('/href="[^"]*\/berita\/[^"]+"/', $response->getContent(), $newsLinks);
+        $this->assertLessThanOrEqual(6, count($newsLinks[0]));
     }
 }

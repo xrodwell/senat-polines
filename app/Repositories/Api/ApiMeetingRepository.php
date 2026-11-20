@@ -30,6 +30,13 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::$cachedLiveTime = [];
     }
 
+    private function http()
+    {
+        $token = session('auth_token');
+        $client = Http::acceptJson();
+        return $token ? $client->withToken($token) : $client;
+    }
+
     private function getBaseUrl(): string
     {
         return rtrim(env('SENAT_BACKEND_API_URL', env('BACKEND_API_URL', 'http://127.0.0.1:8001/api')), '/');
@@ -56,13 +63,25 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
                             2 => 'Terbuka',
                             3 => 'Pimpinan',
                             4 => 'Komisi',
-                            5 => 'Panitia Kerja / Badan Pekerja',
+                            5 => 'Badan Pekerja (BP)',
                             6 => 'Rapat/Sidang Lainnya',
                             default => 'Pleno',
                         };
 
                         $waktuRaw = $r['waktu'] ?? '09:00:00';
                         $waktuFmt = substr($waktuRaw, 0, 5) . ' WIB';
+
+                        $anggotaList = is_array($r['anggota_rapats'] ?? $r['anggotaRapats'] ?? null)
+                            ? ($r['anggota_rapats'] ?? $r['anggotaRapats'])
+                            : [];
+                        $totalInvited = isset($r['anggota_rapats_count'])
+                            ? (int) $r['anggota_rapats_count']
+                            : (isset($r['kuorum']['total_invited']) ? (int) $r['kuorum']['total_invited'] : (count($anggotaList) ?: 34));
+                        $presentCount = isset($r['hadir_count'])
+                            ? (int) $r['hadir_count']
+                            : (isset($r['kuorum']['present_count'])
+                                ? (int) $r['kuorum']['present_count']
+                                : collect($anggotaList)->filter(fn ($a) => strtolower((string) ($a['status_kehadiran'] ?? '')) === 'hadir' || !empty($a['waktu_presensi']))->count());
 
                         return [
                             'id' => $id,
@@ -74,8 +93,8 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
                             'status' => $r['status'] ?? 'Terjadwal',
                             'session_code' => $r['kode_sesi'] ?? ('PLN-' . str_pad((string) $id, 3, '0', STR_PAD_LEFT)),
                             'qr_token' => $r['token_qr'] ?? ('token-polines-session-' . $id),
-                            'total_invited' => 34,
-                            'present_count' => 0,
+                            'total_invited' => $totalInvited,
+                            'present_count' => $presentCount,
                             'is_presensi_open' => (bool) ($r['is_presensi_open'] ?? false),
                             'is_kuorum_locked' => (bool) ($r['is_kuorum_locked'] ?? false),
                             'id_jenis_rapat' => (int) ($r['id_jenis_rapat'] ?? 1),
@@ -155,7 +174,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::clearCache();
         $apiUrl = $this->getBaseUrl();
         try {
-            $response = Http::timeout(5)->post("{$apiUrl}/rapat/{$id}/generate-qr");
+            $response = $this->http()->timeout(5)->post("{$apiUrl}/rapat/{$id}/generate-qr");
             if ($response->successful()) {
                 return $response->json('data');
             }
@@ -173,7 +192,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::clearCache();
         $apiUrl = $this->getBaseUrl();
         try {
-            $response = Http::timeout(5)->post("{$apiUrl}/rapat/{$id}/freeze-presensi");
+            $response = $this->http()->timeout(5)->post("{$apiUrl}/rapat/{$id}/freeze-presensi");
             if ($response->successful()) {
                 return $response->json('data');
             }
@@ -191,7 +210,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
         self::clearCache();
         $apiUrl = $this->getBaseUrl();
         try {
-            $response = Http::timeout(5)->post("{$apiUrl}/rapat/presensi", [
+            $response = $this->http()->timeout(5)->post("{$apiUrl}/rapat/presensi", [
                 'id_user' => $userId,
                 'token_qr' => $tokenQr,
                 'kode_sesi' => $sessionCode,

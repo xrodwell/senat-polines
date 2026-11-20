@@ -1,0 +1,110 @@
+[
+    {
+        "id": "d8f3a3d4-2ee8-46fb-91be-2ad22f9a0e80",
+        "name": "880ab8ba-6da4-4627-a6ab-c46170eb9e17.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/880ab8ba-6da4-4627-a6ab-c46170eb9e17.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-28 05:32"
+    },
+    {
+        "id": 1793163328,
+        "name": "ada26a1e-e6ce-40cc-a824-4ee82016bec4.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/ada26a1e-e6ce-40cc-a824-4ee82016bec4.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-28 04:55"
+    },
+    {
+        "id": 1793163252,
+        "name": "1793163252_siaran-pers-senat.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/1793163252_siaran-pers-senat.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-28 04:54"
+    },
+    {
+        "id": 1793082797,
+        "name": "1793082797_siaran-pers-senat.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/1793082797_siaran-pers-senat.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-27 06:33"
+    },
+    {
+        "id": 1793082734,
+        "name": "1793082734_siaran-pers-senat.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/1793082734_siaran-pers-senat.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-27 06:32"
+    },
+    {
+        "id": 1793081185,
+        "name": "1793081185_siaran-pers-senat.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/1793081185_siaran-pers-senat.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-27 06:06"
+    },
+    {
+        "id": 1793067120,
+        "name": "1793067120_siaran-pers-senat.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/1793067120_siaran-pers-senat.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-27 02:12"
+    },
+    {
+        "id": 1793020835,
+        "name": "1793020835_siaran-pers-senat.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/1793020835_siaran-pers-senat.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-26 13:20"
+    },
+    {
+        "id": 1793019399,
+        "name": "1793019399_siaran-pers-senat.pdf",
+        "original_name": "siaran-pers-senat.pdf",
+        "url": "http://localhost:8000/storage/media/1793019399_siaran-pers-senat.pdf",
+        "size": "512 KB",
+        "type": "document",
+        "uploaded_at": "2026-10-26 12:56"
+    },
+    {
+        "id": 1,
+        "name": "sidang-pleno-kurikulum.jpg",
+        "original_name": "Dokumentasi Sidang Pleno MBKM.jpg",
+        "url": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+        "size": "2.4 MB",
+        "type": "image",
+        "uploaded_at": "2026-09-18 10:15"
+    },
+    {
+        "id": 2,
+        "name": "monev-komisi-1.jpg",
+        "original_name": "Monev Lab Terpadu Elektro.jpg",
+        "url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+        "size": "1.8 MB",
+        "type": "image",
+        "uploaded_at": "2026-09-12 14:30"
+    },
+    {
+        "id": 3,
+        "name": "siaran-pers-senat-polban.pdf",
+        "original_name": "Siaran_Pers_Kunjungan_Polban_2026.pdf",
+        "url": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+        "size": "1.2 MB",
+        "type": "document",
+        "uploaded_at": "2026-08-28 16:45"
+    }
+]

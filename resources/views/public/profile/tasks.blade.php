@@ -33,7 +33,7 @@
     @endphp
 
     {{-- ================= WEWENANG NORMATIF ================= --}}
-    <section class="senat-shell pt-14 lg:pt-16">
+    <section class="senat-shell py-14 lg:py-20">
         <div>
             <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-orange">Wewenang Normatif</p>
             <h2 class="mt-3 text-[28px] font-bold leading-[1.15] text-senat-ink">Fungsi Utama Senat Berdasarkan Statuta Polines</h2>

@@ -8,8 +8,8 @@
      * 03 — Direktori Komisi & Anggota — Figma node 2075:2 (1440×2532).
      * Data dari PublicController@directory: $committees, $members, $leadership, $period, $direktori.
      */
-    $komisiLabel = fn (string $code): string => str_replace('KOM-', 'Komisi ', $code);
-    $komisiShort = fn (string $name): string => preg_replace('/^Komisi\s+/', '', $name);
+    $komisiLabel = fn (string $code): string => \App\Support\SenatDirectory::committeeLabel($code);
+    $komisiShort = fn (string $name): string => str_contains(strtolower($name), 'badan pekerja') ? 'Badan Pekerja' : preg_replace('/^Komisi\s+/', '', $name);
     $initialsOf = function (string $name): string {
         $parts = collect(explode(' ', preg_replace('/,.*$/', '', $name)))
             ->filter(fn ($part) => $part !== '' && ! str_contains($part, '.'))
@@ -32,6 +32,7 @@
             'name' => $committee['name'],
             'focus' => $committee['focus'],
             'tupoksi' => $committee['tupoksi'] ?? null,
+            'tupoksi_items' => $committee['tupoksi_items'] ?? [],
             'total' => $committee['members_count'],
             'lead' => $rows->first(fn (array $person) => $person['name'] === $committee['lead']),
             'secretary' => $rows->first(fn (array $person) => $person['name'] === $committee['secretary']),
@@ -40,6 +41,7 @@
     }
 
     $heroPanels = array_map(fn (array $panel) => [
+        'code' => $panel['code'],
         'title' => $panel['label'].' · '.$panel['short'],
         'focus' => $panel['focus'],
         'badge' => $panel['total'].' Anggota Komisi',
@@ -51,10 +53,16 @@
         ->merge($leadership['bph'] ?? [])
         ->filter()
         ->values();
+    $requestedCode = strtoupper((string) request()->query('komisi', ''));
+    $initialActive = collect($panels)->search(fn (array $panel) => strtoupper($panel['code']) === $requestedCode);
+    $initialActive = $initialActive !== false ? (int) $initialActive : 0;
 @endphp
 
 @section('content')
-    <div x-data="{ active: 0, panels: @js($heroPanels) }">
+    <div x-data="{
+        active: {{ $initialActive }},
+        panels: @js($heroPanels)
+    }">
 
         {{-- Breadcrumb bar --}}
         <div class="border-b border-[#d6e0ed] bg-white">
@@ -77,15 +85,17 @@
                         <h1 class="mt-3 text-[26px] font-bold leading-[1.08] text-white sm:text-[35px]"
                             x-text="panels[active].title">{{ $panels[0]['label'] ?? 'Direktori Komisi' }}@if (isset($panels[0])) · {{ $panels[0]['short'] }}@endif</h1>
                         <p class="mt-4 max-w-[690px] text-[13px] leading-relaxed text-senat-skySoft"
-                           x-text="panels[active].focus">{{ $panels[0]['focus'] ?? $period }}</p>
+                            x-text="panels[active].focus">{{ $panels[0]['focus'] ?? $period }}</p>
                     </div>
 
                     <div class="mt-8 lg:mt-0 lg:ml-auto lg:w-[330px]">
-                        <span class="inline-flex items-center rounded-full bg-[#e8fcf5] px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#008c66]"
-                              x-text="panels[active].badge">{{ $panels[0]['total'] ?? 0 }} Anggota Komisi</span>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="inline-flex items-center rounded-full bg-[#e8fcf5] px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#008c66]"
+                                  x-text="panels[active].badge">{{ $panels[0]['total'] ?? 0 }} Anggota Komisi</span>
+                        </div>
                         <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#94c4f5]">Masa Bakti</p>
                         <p class="mt-1 text-[18px] font-bold text-white">{{ $period }}</p>
-                        <p class="mt-2 text-[10px] text-[#b8d6f5]">Struktur dapat diperbarui Sekretariat</p>
+                        <p class="mt-2 text-[10px] text-[#b8d6f5]">Struktur diperbarui berkala oleh Sekretariat</p>
                     </div>
                 </div>
             </div>
@@ -94,8 +104,8 @@
         <div class="senat-shell pb-16 pt-10">
 
             {{-- Selector surface: pilih komisi --}}
-            <section class="rounded-[13px] border border-[#d6e0ed] bg-white p-5 sm:p-6" aria-label="Pilih komisi">
-                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-body">Pilih Komisi</p>
+            <section class="rounded-[13px] border border-[#d6e0ed] bg-white p-5 sm:p-6" aria-label="Pilih komisi dan Badan Pekerja">
+                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-body">Pilih Komisi &amp; BP (Badan Pekerja)</p>
 
                 @if (count($panels))
                     <div class="mt-4 flex flex-wrap gap-3">
@@ -130,33 +140,46 @@
                                 <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Susunan Keanggotaan</p>
                                 <h2 class="mt-2 text-[26px] font-bold leading-tight text-senat-ink">Anggota {{ $panel['label'] }}</h2>
                                 <p class="mt-2 max-w-[800px] text-[11px] leading-relaxed text-senat-body">
-                                    Pilih kartu anggota untuk membuka profil jabatan. Nama atau data yang belum tersedia ditandai
-                                    sebagai data Sekretariat.
+                                    Pilih kartu anggota untuk membuka rincian profil jabatan dan mandat keanggotaan komisi.
                                 </p>
                             </div>
-                            <span class="shrink-0 self-start rounded-full bg-senat-badgeBg px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-senat-hero lg:self-end"
-                                  x-text="panels[{{ $i }}].composition">1 Ketua • 1 Sekretaris • {{ count($panel['anggota']) }} Anggota</span>
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <span class="shrink-0 rounded-full bg-senat-badgeBg px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-senat-hero"
+                                      x-text="panels[{{ $i }}].composition">1 Ketua • 1 Sekretaris • {{ count($panel['anggota']) }} Anggota</span>
+                            </div>
                         </div>
                     </section>
 
-                    {{-- Leadership zone: pimpinan komisi --}}
+                    {{-- Leadership zone: pimpinan unit --}}
                     <section class="rounded-[15px] border border-[#d6e0ed] bg-white p-6 sm:p-8">
-                        <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Pimpinan Komisi</p>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">{{ ($panel['code'] ?? '') === 'BP' ? 'Pimpinan BP (Badan Pekerja)' : 'Pimpinan Komisi' }}</p>
 
                         <div class="mt-6 grid gap-5 lg:grid-cols-2">
                             @if (! empty($panel['lead']))
-                                <a href="{{ route('public.directory.member', $panel['lead']['slug']) }}"
-                                   class="group flex items-center gap-5 rounded-[12px] border border-[#a3c2e3] bg-senat-badgeBg p-6 transition-colors duration-150 hover:border-senat-link">
+                                <div class="group relative flex items-center gap-5 rounded-[12px] border border-[#a3c2e3] bg-senat-badgeBg p-6 transition-colors duration-150 hover:border-senat-link">
                                     <span class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link">
-                                        <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['lead']['name']) }}</span>
+                                        @php
+                                            $leadPhoto = $panel['lead']['photo'] ?? (! empty($panel['lead']['nip']) ? 'images/members/' . $panel['lead']['nip'] . '.jpg' : null);
+                                            $hasLeadPhoto = ! empty($leadPhoto) && (
+                                                file_exists(public_path($leadPhoto)) || 
+                                                file_exists(base_path('../Backend-Senat-Polines/public/' . $leadPhoto))
+                                            );
+                                        @endphp
+                                        @if ($hasLeadPhoto)
+                                            <img src="{{ asset($leadPhoto) }}" alt="{{ $panel['lead']['name'] }}" class="h-[74px] w-[74px] rounded-full object-cover object-top border border-[#bdd4eb]">
+                                        @else
+                                            <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['lead']['name']) }}</span>
+                                        @endif
                                     </span>
                                     <span class="min-w-0 flex-1">
-                                        <span class="block text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">Ketua {{ $panel['label'] }}</span>
-                                        <span class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink group-hover:text-senat-link">{{ $panel['lead']['name'] }}</span>
+                                        <span class="flex items-center justify-between gap-2">
+                                            <span class="block text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">Ketua {{ $panel['label'] }}</span>
+                                        </span>
+                                        <span class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink">{{ $panel['lead']['name'] }}</span>
                                         <span class="mt-1.5 block text-[11px] text-senat-body">{{ $panel['lead']['organ'] }}</span>
-                                        <span class="mt-3 block text-[11px] font-bold text-senat-link">Lihat profil anggota &nbsp;›</span>
+                                        <a href="{{ route('public.directory.member', $panel['lead']['slug']) }}" class="mt-3 inline-block text-[11px] font-bold text-senat-link hover:underline">Lihat profil anggota &nbsp;›</a>
                                     </span>
-                                </a>
+                                </div>
                             @else
                                 <div class="rounded-[12px] border border-dashed border-senat-border bg-white p-6 text-[11px] text-senat-muted">
                                     Data ketua {{ $panel['label'] }} belum diisi pada dokumen Sekretariat.
@@ -164,18 +187,30 @@
                             @endif
 
                             @if (! empty($panel['secretary']))
-                                <a href="{{ route('public.directory.member', $panel['secretary']['slug']) }}"
-                                   class="group flex items-center gap-5 rounded-[12px] border border-[#d6e0ed] bg-white p-6 transition-colors duration-150 hover:border-senat-link">
+                                <div class="group relative flex items-center gap-5 rounded-[12px] border border-[#d6e0ed] bg-white p-6 transition-colors duration-150 hover:border-senat-link">
                                     <span class="relative flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[16px] font-bold text-senat-link">
-                                        <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['secretary']['name']) }}</span>
+                                        @php
+                                            $secPhoto = $panel['secretary']['photo'] ?? (! empty($panel['secretary']['nip']) ? 'images/members/' . $panel['secretary']['nip'] . '.jpg' : null);
+                                            $hasSecPhoto = ! empty($secPhoto) && (
+                                                file_exists(public_path($secPhoto)) || 
+                                                file_exists(base_path('../Backend-Senat-Polines/public/' . $secPhoto))
+                                            );
+                                        @endphp
+                                        @if ($hasSecPhoto)
+                                            <img src="{{ asset($secPhoto) }}" alt="{{ $panel['secretary']['name'] }}" class="h-[74px] w-[74px] rounded-full object-cover object-top border border-[#bdd4eb]">
+                                        @else
+                                            <span class="flex h-[74px] w-[74px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($panel['secretary']['name']) }}</span>
+                                        @endif
                                     </span>
                                     <span class="min-w-0 flex-1">
-                                        <span class="block text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">Sekretaris {{ $panel['label'] }}</span>
-                                        <span class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink group-hover:text-senat-link">{{ $panel['secretary']['name'] }}</span>
+                                        <span class="flex items-center justify-between gap-2">
+                                            <span class="block text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">Sekretaris {{ $panel['label'] }}</span>
+                                        </span>
+                                        <span class="mt-1.5 block text-[16px] font-bold leading-snug text-senat-ink">{{ $panel['secretary']['name'] }}</span>
                                         <span class="mt-1.5 block text-[11px] text-senat-body">{{ $panel['secretary']['organ'] }}</span>
-                                        <span class="mt-3 block text-[11px] font-bold text-senat-link">Lihat profil anggota &nbsp;›</span>
+                                        <a href="{{ route('public.directory.member', $panel['secretary']['slug']) }}" class="mt-3 inline-block text-[11px] font-bold text-senat-link hover:underline">Lihat profil anggota &nbsp;›</a>
                                     </span>
-                                </a>
+                                </div>
                             @else
                                 <div class="rounded-[12px] border border-[#d6e0ed] bg-white p-6">
                                     <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">Sekretaris {{ $panel['label'] }}</p>
@@ -198,10 +233,21 @@
                         @if (count($panel['anggota']))
                             <div class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                                 @foreach ($panel['anggota'] as $person)
-                                    <article class="flex flex-col rounded-[13px] border border-[#d6e0ed] bg-white p-6">
+                                    <article class="flex flex-col rounded-[13px] border border-[#d6e0ed] bg-white p-6 shadow-2xs hover:shadow-xs transition-shadow">
                                         <div class="flex items-start gap-4">
                                             <span class="relative flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[14px] font-bold text-senat-link">
-                                                <span class="flex h-[62px] w-[62px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($person['name']) }}</span>
+                                                @php
+                                                    $personPhoto = $person['photo'] ?? (! empty($person['nip']) ? 'images/members/' . $person['nip'] . '.jpg' : null);
+                                                    $hasPersonPhoto = ! empty($personPhoto) && (
+                                                        file_exists(public_path($personPhoto)) || 
+                                                        file_exists(base_path('../Backend-Senat-Polines/public/' . $personPhoto))
+                                                    );
+                                                @endphp
+                                                @if ($hasPersonPhoto)
+                                                    <img src="{{ asset($personPhoto) }}" alt="{{ $person['name'] }}" class="h-[62px] w-[62px] rounded-full object-cover object-top border border-[#bdd4eb]">
+                                                @else
+                                                    <span class="flex h-[62px] w-[62px] items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg">{{ $initialsOf($person['name']) }}</span>
+                                                @endif
                                             </span>
                                             <div class="min-w-0">
                                                 <p class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ strtoupper($person['role']) }}</p>
@@ -212,10 +258,10 @@
 
                                         <p class="mt-4 text-[10px] leading-relaxed text-senat-body">Data jabatan dikelola Sekretariat Senat.</p>
 
-                                        <div class="mt-auto pt-4">
+                                        <div class="mt-auto flex items-center gap-2 pt-4 border-t border-slate-100">
                                             <a href="{{ route('public.directory.member', $person['slug']) }}"
-                                               class="flex h-[30px] w-full items-center justify-center rounded-[7px] border border-[#bdd1e5] bg-senat-badgeBg text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link transition-colors duration-150 hover:border-senat-link">
-                                                Lihat profil anggota &nbsp;›
+                                               class="flex h-[32px] flex-1 items-center justify-center rounded-[7px] border border-[#bdd1e5] bg-senat-badgeBg text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link transition-colors duration-150 hover:border-senat-link">
+                                                Profil &nbsp;›
                                             </a>
                                         </div>
                                     </article>
@@ -259,24 +305,32 @@
 
                             <div class="rounded-[6px] border border-[#e2e8f0] bg-white p-5 lg:col-span-2">
                                 <p class="text-[11px] font-bold uppercase tracking-[0.06em] text-senat-orange">Tupoksi Komisi</p>
-                                <p class="mt-3 max-w-[1100px] text-[12.5px] leading-relaxed text-[#475569]">
-                                    {{ $panel['tupoksi'] ?: 'Rincian tugas pokok dan fungsi komisi ini belum tersedia pada dokumen Sekretariat Senat.' }}
-                                </p>
+                                @if (! empty($panel['tupoksi_items']))
+                                    <ol class="mt-3 max-w-[1100px] list-decimal space-y-2 pl-5 text-[12.5px] leading-relaxed text-[#475569]">
+                                        @foreach ($panel['tupoksi_items'] as $item)
+                                            <li>{{ $item }}</li>
+                                        @endforeach
+                                    </ol>
+                                @else
+                                    <p class="mt-3 max-w-[1100px] text-[12.5px] leading-relaxed text-[#475569]">
+                                        {{ $panel['tupoksi'] ?: 'Rincian tugas pokok dan fungsi komisi ini belum tersedia pada dokumen Sekretariat Senat.' }}
+                                    </p>
+                                @endif
                             </div>
                         </div>
                     </section>
                 </div>
             @endforeach
 
-            {{-- Pimpinan Senat & BPH --}}
+            {{-- Pimpinan Senat & BP --}}
             @if ($leaderRows->isNotEmpty())
                 <section class="mt-14 rounded-[15px] border border-[#d6e0ed] bg-white p-6 sm:p-8">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                            <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Pimpinan Senat &amp; BPH</p>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Pimpinan Senat &amp; BP</p>
                             <h2 class="mt-2 text-[26px] font-bold leading-tight text-senat-ink">Pimpinan Senat Akademik</h2>
                             <p class="mt-2 text-[11px] leading-relaxed text-senat-body">
-                                Ketua, Sekretaris, dan Badan Pekerja Harian Senat Akademik periode {{ $period }}.
+                                Ketua, Sekretaris, dan Badan Pekerja (BP) Senat Akademik periode {{ $period }}.
                             </p>
                         </div>
                         <span class="shrink-0 self-start rounded-full bg-senat-badgeBg px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-senat-hero lg:self-end">
@@ -286,10 +340,38 @@
 
                     <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         @foreach ($leaderRows as $leader)
+                            @php
+                                $leadPhoto = $leader['photo'] ?? null;
+                                if (empty($leadPhoto)) {
+                                    $lName = $leader['name'] ?? '';
+                                    $lNip = $leader['nip'] ?? (\App\Support\SenatDirectory::LECTURER_DATA[$lName]['nip'] ?? null);
+                                    if (! $lNip) {
+                                        foreach (\App\Support\SenatDirectory::members() as $m) {
+                                            if (! empty($m['name']) && (str_contains($m['name'], $lName) || str_contains($lName, $m['name']))) {
+                                                $lNip = $m['nip'] ?? null;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (! empty($lNip)) {
+                                        $leadPhoto = 'images/members/' . $lNip . '.jpg';
+                                    }
+                                }
+                                $hasLeadPhoto = ! empty($leadPhoto) && (
+                                    file_exists(public_path($leadPhoto)) || 
+                                    file_exists(base_path('../Backend-Senat-Polines/public/' . $leadPhoto))
+                                );
+                            @endphp
                             <a href="{{ route('public.directory.member', $leader['slug']) }}"
                                class="group rounded-[12px] border border-[#d6e0ed] bg-white p-5 transition-colors duration-150 hover:border-senat-link">
                                 <span class="flex items-center gap-3">
-                                    <span class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[12px] font-bold text-senat-link">{{ $initialsOf($leader['name']) }}</span>
+                                    @if ($hasLeadPhoto)
+                                        <div class="h-[48px] w-[48px] shrink-0 overflow-hidden rounded-full border-2 border-[#a3bdd6] shadow-sm">
+                                            <img src="{{ asset($leadPhoto) }}" alt="{{ $leader['name'] }}" class="h-full w-full object-cover object-top scale-110 origin-top transition-transform duration-200 group-hover:scale-120">
+                                        </div>
+                                    @else
+                                        <span class="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[13px] font-bold text-senat-link">{{ $initialsOf($leader['name']) }}</span>
+                                    @endif
                                     <span class="min-w-0">
                                         <span class="block text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ $leader['role'] }}</span>
                                         <span class="mt-1 block text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-link">{{ $leader['name'] }}</span>
@@ -301,8 +383,8 @@
                     </div>
 
                     <div class="mt-6 grid gap-5 sm:grid-cols-3">
-                        <x-senat.stat label="Total Anggota" :value="$direktori['members']" hint="Pimpinan, BPH, dan anggota komisi" icon="users" />
-                        <x-senat.stat label="Komisi Kerja" :value="$direktori['committees']" hint="Komisi I–V Senat Akademik" icon="dashboard" />
+                        <x-senat.stat label="Total Anggota" :value="$direktori['members']" hint="Pimpinan, BP, dan anggota komisi" icon="users" />
+                        <x-senat.stat label="Komisi & BP" :value="count($committees) ?: $direktori['committees']" hint="Komisi I–V & BP (Badan Pekerja)" icon="dashboard" />
                         <x-senat.stat label="Masa Bakti" :value="$direktori['period']" hint="Periode kepengurusan Senat" icon="calendar" />
                     </div>
                 </section>

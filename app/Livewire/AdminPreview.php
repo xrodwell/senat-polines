@@ -8,22 +8,41 @@ use App\Contracts\CommitteeRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Livewire\Admin\Traits\HasAspirationManagement;
+use App\Livewire\Admin\Traits\HasAttendanceAndQr;
+use App\Livewire\Admin\Traits\HasCommitteeManagement;
+use App\Livewire\Admin\Traits\HasMeetingManagement;
+use App\Livewire\Admin\Traits\HasNewsAndMedia;
+use App\Livewire\Admin\Traits\HasNotulensiManagement;
+use App\Livewire\Admin\Traits\HasPimpinanAndStruktur;
+use App\Livewire\Admin\Traits\HasRegulasiManagement;
+use App\Livewire\Admin\Traits\HasVotingManagement;
 use App\Repositories\Api\ApiMeetingRepository;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminPreview extends Component
 {
-    /**
-     * Sidebar IA — PRD 5. Dua kelompok kerja saja.
-     * Menggunakan slug ID agar aman dari karakter HTML entity (&).
-     *
-     * @var array<string, list<string>>
-     */
-     public const MENU_KEYS = [
+    use WithFileUploads;
+    use HasAspirationManagement;
+    use HasAttendanceAndQr;
+    use HasCommitteeManagement;
+    use HasMeetingManagement;
+    use HasNewsAndMedia;
+    use HasNotulensiManagement;
+    use HasPimpinanAndStruktur;
+    use HasRegulasiManagement;
+    use HasVotingManagement;
+    use \App\Livewire\Admin\Traits\HasHeroSettings;
+
+    public const MENU_KEYS = [
          'dashboard-rapat' => 'Dashboard Rapat',
          'jadwal-agenda-sidang' => 'Jadwal & Agenda Sidang',
          'presensi-verifikasi-qr' => 'Presensi & Verifikasi QR',
@@ -59,61 +78,15 @@ class AdminPreview extends Component
         ],
     ];
 
+
     #[Url(as: 'tab', history: true)]
     public string $active = 'Dashboard Rapat';
 
-    // Form inputs state
+    // Form inputs state umum
     public string $formTitle = '';
     public string $formCategory = '';
     public string $formStatus = '';
     public string $flashMessage = '';
-
-    // Form Pimpinan Kolektif Senat (Tersambung Backend API)
-    public ?int $ketuaUserId = 1;
-    public string $ketuaNama = 'Dr. Sukamto, S.Kom., M.T.';
-    public string $ketuaNip = '196803121993031002';
-
-    public ?int $sekretarisUserId = 2;
-    public string $sekretarisNama = 'Andi Setyawan, S.E., M.M.';
-    public string $sekretarisNip = '197405191999031001';
-
-    public string $meetingTitle = '';
-    public int $meetingJenisRapatId = 1;
-    public string $meetingDateTime = '';
-    public string $meetingRoom = '';
-    public string $meetingPeserta = '';
-    public ?int $editingMeetingId = null;
-    // State Risalah & Notulensi Sidang (Backend API Integration)
-    public array $notulensiList = [];
-    public array $rapatList = [];
-    public array $userList = [];
-    public ?int $selectedNotulensiId = null;
-    public ?int $notulensiRapatId = null;
-    public ?int $notulensiUserId = 1;
-    public string $notulensiIsi = '';
-    public string $notulensiFile = '';
-    public string $notulensiStatus = 'draf';
-    public string $notulensiSearch = '';
-    public string $notulensiFilterStatus = 'all';
-    public ?int $viewingNotulensiId = null;
-    public bool $isFormOpen = false;
-
-    // State Katalog Regulasi & Produk Hukum (Backend API Integration)
-    public array $regulasiList = [];
-    public array $periodeList = [];
-    public bool $isRegulasiFormOpen = false;
-    public ?int $regulasiId = null;
-    public string $regulasiNomor = '';
-    public string $regulasiJudul = '';
-    public string $regulasiKategori = 'Peraturan Senat';
-    public string $regulasiTahap = 'Draf';
-    public ?int $regulasiPeriodeId = null;
-    public string $regulasiFile = '';
-    public string $regulasiTanggal = '';
-    public string $regulasiSearch = '';
-    public string $regulasiFilterKategori = 'all';
-    public string $regulasiFilterTahap = 'all';
-    public ?int $viewingRegulasiId = null;
 
     public const REGULASI_KATEGORI = [
         'Peraturan Senat',
@@ -132,39 +105,6 @@ class AdminPreview extends Component
         'Ditolak',
     ];
 
-    // State Presensi QR & Kuorum Live
-    public ?int $activeMeetingId = null;
-    public array $liveMeeting = [];
-    public array $liveAnggota = [];
-    public array $liveKuorum = [];
-    public bool $showQrModal = false;
-    public string $qrToken = '';
-    public string $sessionCode = '';
-    public bool $isPresensiOpen = false;
-    public bool $isKuorumLocked = false;
-    public string $filterKehadiran = 'semua'; // semua, hadir, izin, menunggu
-
-    // State Modul E-Voting & Pengambilan Keputusan (Tersambung Backend API)
-    public ?int $votingId = 1;
-    public string $votingTitle = 'Pemungutan Suara · Sidang Pleno Akreditasi Program Studi';
-    public string $votingStatus = 'dibuka';
-    public string $votingMeetingCode = 'PLN-892';
-    public string $votingDate = '';
-    public array $votingStats = [
-        'Setuju' => ['suara' => 24, 'persentase' => 85.7],
-        'Tidak Setuju' => ['suara' => 2, 'persentase' => 7.1],
-        'Tolak' => ['suara' => 2, 'persentase' => 7.1],
-        'Abstain' => ['suara' => 2, 'persentase' => 7.1],
-        'total_suara' => 28,
-        'kuorum' => '28 / 34 anggota',
-    ];
-
-    // Form Modal Gelar Voting Baru
-    public bool $showNewVotingModal = false;
-    public string $newVotingTitle = '';
-    public string $newVotingDescription = '';
-    public ?int $newVotingMeetingId = 1;
-    public array $availableMeetings = [];
 
     public function mount(MeetingRepositoryInterface $meetingsRepo): void
     {
@@ -181,11 +121,25 @@ class AdminPreview extends Component
             $this->active = 'Dashboard Rapat';
         }
 
+        if ($this->active === 'Pengaturan Informasi & Hero') {
+            $this->reloadHeroSettings();
+        }
+
+        $this->postDate = date('Y-m-d');
+
+        $this->loadLecturersMaster();
         $this->loadLiveAttendanceData($meetingsRepo);
 
         $this->loadNotulensiData();
         $this->loadRegulasiData();
         $this->loadVotingData();
+
+        // Panggil API backend hanya untuk tab aktif yang membutuhkannya (anti-lag)
+        if ($this->active === 'Profil, Tupoksi & Struktur') {
+            $this->loadStructureFromApi();
+        } elseif ($this->active === 'Pusat Aspirasi & Tindak Lanjut') {
+            $this->loadAspirationsFromApi();
+        }
     }
 
     public function select(string $screen): void
@@ -203,8 +157,20 @@ class AdminPreview extends Component
         $this->active = $screen;
         $this->flashMessage = '';
 
+        if ($screen === 'Pengaturan Informasi & Hero' && !$this->heroAttempted) {
+            $this->reloadHeroSettings();
+        }
+
         if (in_array($screen, ['Presensi & Verifikasi QR', 'Kuorum & Kehadiran Anggota'])) {
             $this->refreshAttendance();
+        }
+
+        if ($this->active === 'Pusat Aspirasi & Tindak Lanjut' && empty($this->apiAspirations)) {
+            $this->loadAspirationsFromApi();
+        }
+
+        if ($this->active === 'E-Voting & Pengambilan Keputusan') {
+            $this->loadVotingData();
         }
     }
 
@@ -215,962 +181,12 @@ class AdminPreview extends Component
             $url = 'http://127.0.0.1:8001/api';
         }
 
-        return rtrim($url, '/');
-    }
-    /**
-     * Polling / Refresh data presensi dan kuorum live
-     */
-    public function refreshAttendance(): void
-    {
-        $repo = app(ApiMeetingRepository::class);
-        $this->loadLiveAttendanceData($repo, true);
-    }
-
-    public function loadLiveAttendanceData(MeetingRepositoryInterface $meetingsRepo, bool $force = false): void
-    {
-        $activeSession = $meetingsRepo->getActiveSession($force);
-        if ($activeSession && isset($activeSession['id'])) {
-            $this->activeMeetingId = (int) $activeSession['id'];
-            $this->liveMeeting = $activeSession;
-            $this->qrToken = $activeSession['qr_token'] ?? '';
-            $this->sessionCode = $activeSession['session_code'] ?? 'PLN-892';
-            $this->isPresensiOpen = (bool) ($activeSession['is_presensi_open'] ?? true);
-            $this->isKuorumLocked = (bool) ($activeSession['is_kuorum_locked'] ?? false);
-
-            if ($meetingsRepo instanceof ApiMeetingRepository) {
-                $liveData = $meetingsRepo->getLiveAttendance($this->activeMeetingId, $force);
-                if ($liveData) {
-                    $this->liveAnggota = $liveData['anggota'] ?? [];
-                    $this->liveKuorum = $liveData['kuorum'] ?? ($activeSession['kuorum'] ?? []);
-                    $this->isPresensiOpen = (bool) ($liveData['is_presensi_open'] ?? $this->isPresensiOpen);
-                    $this->isKuorumLocked = (bool) ($liveData['is_kuorum_locked'] ?? $this->isKuorumLocked);
-                    $this->qrToken = $liveData['token_qr'] ?? $this->qrToken;
-                    $this->sessionCode = $liveData['kode_sesi'] ?? $this->sessionCode;
-                    return;
-                }
-            }
-
-            // Fallback kuorum mock
-            $this->liveKuorum = [
-                'total_invited' => $activeSession['total_invited'] ?? 34,
-                'present_count' => $activeSession['present_count'] ?? 23,
-                'izin_count' => 3,
-                'tidak_hadir_count' => 0,
-                'menunggu_count' => 8,
-                'ambang_kuorum' => 23,
-                'present_percentage' => 67.6,
-                'is_kuorum' => true,
-                'status_kuorum_label' => 'Kuorum Terpenuhi',
-                'is_presensi_open' => $this->isPresensiOpen,
-                'is_kuorum_locked' => $this->isKuorumLocked,
-            ];
-        }
-    }
-
-    /**
-     * Generate QR Presensi & Kode Sesi Baru
-     */
-    public function generateQrPresensi(): void
-    {
-        if (!$this->activeMeetingId) {
-            $this->flashMessage = 'Tidak ada sidang aktif yang dapat diaktifkan QR presensinya.';
-            return;
+        $url = rtrim($url, '/');
+        if (! str_ends_with($url, '/api')) {
+            $url .= '/api';
         }
 
-        $repo = app(ApiMeetingRepository::class);
-        $res = $repo->generateQr($this->activeMeetingId);
-
-        if ($res) {
-            $this->qrToken = $res['token_qr'] ?? '';
-            $this->sessionCode = $res['kode_sesi'] ?? '';
-            $this->isPresensiOpen = true;
-            $this->isKuorumLocked = false;
-            if (!empty($res['kuorum'])) {
-                $this->liveKuorum = $res['kuorum'];
-            }
-            $this->flashMessage = 'QR Presensi dan Kode Sesi resmi telah diaktifkan!';
-            $this->showQrModal = true;
-            $this->dispatch('open-qr-modal');
-            $this->dispatch('qr-updated', token: $this->qrToken);
-        } else {
-            $this->flashMessage = 'Gagal menghasilkan token QR dari Backend.';
-        }
-    }
-
-    /**
-     * Buka Modal Tampilan QR
-     */
-    public function openQrModal(): void
-    {
-        if (empty($this->qrToken) || !$this->isPresensiOpen) {
-            $this->generateQrPresensi();
-        } else {
-            $this->showQrModal = true;
-            $this->dispatch('open-qr-modal');
-            $this->dispatch('qr-updated', token: $this->qrToken);
-        }
-    }
-
-    public function closeQrModal(): void
-    {
-        $this->showQrModal = false;
-    }
-
-    /**
-     * Bekukan sesi presensi dan kunci status kuorum
-     */
-    public function freezePresensi(): void
-    {
-        if (!$this->activeMeetingId) {
-            $this->flashMessage = 'Tidak ada sidang aktif yang dipilih.';
-            return;
-        }
-
-        $repo = app(ApiMeetingRepository::class);
-        $res = $repo->freezePresensi($this->activeMeetingId);
-
-        $this->isPresensiOpen = false;
-        $this->isKuorumLocked = true;
-        $this->showQrModal = false;
-        if ($res && !empty($res['kuorum'])) {
-            $this->liveKuorum = $res['kuorum'];
-        }
-        $this->flashMessage = 'Sesi presensi telah dibekukan. QR Code langsung kedaluwarsa dan status kuorum telah dikunci!';
-    }
-
-    /**
-     * Validasi manual kehadiran anggota dengan cap Admin
-     */
-    public function validateMember(int $userId, string $status): void
-    {
-        if (!$this->activeMeetingId) {
-            return;
-        }
-
-        $repo = app(ApiMeetingRepository::class);
-        $notes = 'Divalidasi Sekretariat (' . ucfirst($status) . ') pada ' . now()->format('H:i');
-        $res = $repo->validateMemberAttendance($this->activeMeetingId, $userId, $status, $notes);
-
-        if ($res && isset($res['undangan'])) {
-            $undangan = $res['undangan'];
-            // Update in-memory liveAnggota directly - avoids extra HTTP roundtrips that cause UI freeze
-            foreach ($this->liveAnggota as &$item) {
-                if ((int) $item['id_user'] === $userId) {
-                    $item['status_kehadiran'] = $undangan['status_kehadiran'];
-                    $item['is_edited_by_admin'] = (bool) $undangan['is_edited_by_admin'];
-                    $item['catatan_admin'] = $undangan['catatan_admin'];
-                    $item['waktu_presensi'] = $undangan['waktu_presensi'];
-                    $item['metode_presensi'] = 'manual_admin';
-                    break;
-                }
-            }
-            unset($item);
-
-            if (!empty($res['kuorum'])) {
-                $this->liveKuorum = $res['kuorum'];
-            }
-
-            $label = match($status) {
-                'hadir' => 'HADIR',
-                'izin' => 'IZIN RESMI',
-                'tidak_hadir' => 'TIDAK HADIR',
-                default => strtoupper($status)
-            };
-            $this->flashMessage = "Status kehadiran anggota berhasil diubah menjadi: {$label} (Berstempel Verifikasi Admin).";
-        } else {
-            $this->flashMessage = "Gagal memperbarui status kehadiran anggota.";
-        }
-    }
-
-    public function saveAction(string $entity): void
-    {
-        $this->flashMessage = "Data {$entity} berhasil disimpan.";
-    }
-
-    public function updatePimpinan(): void
-    {
-        try {
-            $base = $this->getBackendUrl();
-            if ($this->ketuaUserId) {
-                Http::timeout(5)->put("{$base}/user/{$this->ketuaUserId}", [
-                    'nama' => $this->ketuaNama,
-                    'nim_nip' => $this->ketuaNip,
-                ]);
-            }
-            if ($this->sekretarisUserId) {
-                Http::timeout(5)->put("{$base}/user/{$this->sekretarisUserId}", [
-                    'nama' => $this->sekretarisNama,
-                    'nim_nip' => $this->sekretarisNip,
-                ]);
-            }
-            $this->flashMessage = 'Data pimpinan Senat Akademik berhasil diperbarui.';
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Gagal menyimpan perubahan data pimpinan: ' . $e->getMessage();
-        }
-    }
-
-    public function saveMeeting(string $status = 'Terjadwal'): void
-    {
-        $this->validate([
-            'meetingTitle' => 'required|string|max:255',
-            'meetingDateTime' => 'required',
-            'meetingRoom' => 'required|string|max:255',
-        ], [
-            'meetingTitle.required' => 'Judul / agenda sidang wajib diisi.',
-            'meetingDateTime.required' => 'Tanggal dan waktu sidang wajib diisi.',
-            'meetingRoom.required' => 'Lokasi atau tautan hybrid wajib diisi.',
-        ]);
-
-        try {
-            $base = $this->getBackendUrl();
-            $carbon = \Illuminate\Support\Carbon::parse($this->meetingDateTime);
-            $tanggal = $carbon->format('Y-m-d');
-            $waktu = $carbon->format('H:i');
-
-            $payload = [
-                'id_user' => $this->ketuaUserId ?? 1,
-                'id_jenis_rapat' => (int) $this->meetingJenisRapatId,
-                'nama_agenda' => $this->meetingTitle,
-                'tanggal' => $tanggal,
-                'waktu' => $waktu,
-                'tempat' => $this->meetingRoom,
-                'status' => $status,
-            ];
-
-            if ($this->editingMeetingId) {
-                $response = Http::timeout(5)->put("{$base}/rapat/{$this->editingMeetingId}", $payload);
-                if ($response->successful()) {
-                    $this->flashMessage = "Berhasil memperbarui sidang: {$this->meetingTitle} (Status: {$status}) ke Backend!";
-                    $this->resetMeetingForm();
-                } else {
-                    $this->flashMessage = 'Gagal memperbarui ke Backend: ' . ($response->json('message') ?? $response->body());
-                }
-            } else {
-                $response = Http::timeout(5)->post("{$base}/rapat", $payload);
-                if ($response->successful()) {
-                    $this->flashMessage = "Berhasil membuat jadwal sidang: {$this->meetingTitle} (Status: {$status}) di Backend!";
-                    $this->resetMeetingForm();
-                } else {
-                    $this->flashMessage = 'Gagal menyimpan ke Backend: ' . ($response->json('message') ?? $response->body());
-                }
-            }
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Gagal menghubungi Backend API: ' . $e->getMessage();
-        }
-    }
-
-    public function editMeeting(int $id): void
-    {
-        try {
-            $base = $this->getBackendUrl();
-            $response = Http::timeout(5)->get("{$base}/rapat/{$id}");
-            if ($response->successful()) {
-                $item = $response->json();
-                $item = $item['data'] ?? $item;
-
-                $this->editingMeetingId = $id;
-                $this->meetingTitle = $item['nama_agenda'] ?? '';
-                $this->meetingJenisRapatId = (int) ($item['id_jenis_rapat'] ?? 1);
-                $this->meetingRoom = $item['tempat'] ?? '';
-
-                $tgl = isset($item['tanggal']) ? substr($item['tanggal'], 0, 10) : date('Y-m-d');
-                $wkt = isset($item['waktu']) ? substr($item['waktu'], 0, 5) : '09:00';
-                $this->meetingDateTime = "{$tgl}T{$wkt}";
-
-                $this->flashMessage = "Mode sunting aktif untuk sidang #{$id}. Silakan perbarui isian di formulir.";
-            } else {
-                $this->flashMessage = "Gagal memuat detail sidang #{$id} dari Backend.";
-            }
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Gagal memuat sidang dari Backend: ' . $e->getMessage();
-        }
-    }
-
-    public function deleteMeeting(int $id): void
-    {
-        try {
-            $base = $this->getBackendUrl();
-            $response = Http::timeout(5)->delete("{$base}/rapat/{$id}");
-            if ($response->successful()) {
-                $this->flashMessage = "Sidang #{$id} berhasil dihapus dari database Backend!";
-                if ($this->editingMeetingId === $id) {
-                    $this->resetMeetingForm();
-                }
-            } else {
-                $this->flashMessage = "Gagal menghapus sidang #{$id} dari Backend.";
-            }
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Gagal menghapus ke Backend: ' . $e->getMessage();
-        }
-    }
-
-    public function resetMeetingForm(): void
-    {
-        $this->editingMeetingId = null;
-        $this->meetingTitle = '';
-        $this->meetingJenisRapatId = 1;
-        $this->meetingDateTime = date('Y-m-d\T09:00');
-        $this->meetingRoom = '';
-        $this->meetingPeserta = '';
-    }
-
-    public function loadVotingData(): void
-    {
-        $this->votingDate = date('d M Y');
-        $base = $this->getBackendUrl();
-
-        try {
-            $rapatRes = Http::timeout(3)->get("{$base}/rapat");
-            if ($rapatRes->successful()) {
-                $payloadRapat = $rapatRes->json('data') ?? $rapatRes->json();
-                $this->availableMeetings = is_array($payloadRapat) ? $payloadRapat : [];
-            }
-        } catch (\Throwable $e) {}
-
-        try {
-            $response = Http::timeout(3)->get("{$base}/voting");
-            if ($response->successful()) {
-                $payload = $response->json('data') ?? $response->json();
-                $items = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
-
-                if (is_array($items) && !empty($items)) {
-                    $active = null;
-                    foreach ($items as $item) {
-                        if (is_array($item) && in_array(strtolower($item['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
-                            $active = $item;
-                            break;
-                        }
-                    }
-
-                    $v = $active ?? $items[0];
-                    if (is_array($v)) {
-                        $this->votingId = $v['id_voting'] ?? $v['id'] ?? $this->votingId;
-                        $this->votingTitle = $v['judul_voting'] ?? $v['judul'] ?? $this->votingTitle;
-                        $this->votingStatus = strtolower($v['status'] ?? $this->votingStatus);
-                        if (!empty($v['rapat']['kode'])) {
-                            $this->votingMeetingCode = $v['rapat']['kode'];
-                        }
-                        if (!empty($v['waktu_mulai'])) {
-                            $this->votingDate = date('d M Y', strtotime($v['waktu_mulai']));
-                        }
-
-                        $totalSuara = (int) ($v['total_suara'] ?? 0);
-                        $rekapList = $v['hasil_rekap'] ?? null;
-
-                        if (!empty($rekapList) && is_array($rekapList)) {
-                            $newStats = [
-                                'total_suara' => $totalSuara,
-                                'kuorum' => "{$totalSuara} / 34 anggota",
-                            ];
-
-                            foreach ($rekapList as $r) {
-                                $nama = $r['nama_opsi'] ?? '';
-                                $newStats[$nama] = [
-                                    'suara' => (int) ($r['jumlah_suara'] ?? 0),
-                                    'persentase' => (float) ($r['persentase'] ?? 0),
-                                ];
-                                if ($nama === 'Tidak Setuju') {
-                                    $newStats['Tolak'] = $newStats[$nama];
-                                }
-                            }
-                            $this->votingStats = array_merge($this->votingStats, $newStats);
-                        } else {
-                            $opsiRaw = $v['opsi_votings'] ?? $v['opsiVotings'] ?? $v['opsi'] ?? [];
-                            if (!empty($opsiRaw) && is_array($opsiRaw)) {
-                                $newStats = [
-                                    'total_suara' => $totalSuara,
-                                    'kuorum' => "{$totalSuara} / 34 anggota",
-                                ];
-
-                                foreach ($opsiRaw as $opt) {
-                                    $namaOpsi = $opt['nama_opsi'] ?? $opt['label'] ?? '';
-                                    $suara = (int) ($opt['jumlah_suara'] ?? $opt['suara_votings_count'] ?? $opt['total'] ?? 0);
-                                    $persen = $totalSuara > 0 ? round(($suara / $totalSuara) * 100, 1) : 0;
-                                    if (isset($opt['persentase'])) {
-                                        $persen = (float) $opt['persentase'];
-                                    }
-                                    $newStats[$namaOpsi] = [
-                                        'suara' => $suara,
-                                        'persentase' => $persen,
-                                    ];
-                                    if ($namaOpsi === 'Tidak Setuju') {
-                                        $newStats['Tolak'] = $newStats[$namaOpsi];
-                                    }
-                                }
-                                $this->votingStats = array_merge($this->votingStats, $newStats);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // Backend offline, fallback state already set
-        }
-    }
-
-    public function toggleVotingStatus(): void
-    {
-        $target = ($this->votingStatus === 'dibuka') ? 'ditutup' : 'dibuka';
-        $base = $this->getBackendUrl();
-        $action = ($target === 'dibuka') ? 'buka' : 'tutup';
-
-        try {
-            if ($this->votingId) {
-                $response = Http::timeout(3)->post("{$base}/voting/{$this->votingId}/{$action}");
-                if (! $response->successful()) {
-                    Http::timeout(3)->put("{$base}/voting/{$this->votingId}", [
-                        'status' => $target,
-                    ]);
-                }
-            }
-            $this->votingStatus = $target;
-            $this->flashMessage = ($target === 'dibuka')
-                ? 'Sesi pemungutan suara resmi dibuka untuk seluruh anggota Senat.'
-                : 'Sesi pemungutan suara resmi ditutup dan dikunci.';
-        } catch (\Throwable $e) {
-            $this->votingStatus = $target;
-            $this->flashMessage = ($target === 'dibuka')
-                ? 'Sesi pemungutan suara resmi dibuka untuk seluruh anggota Senat.'
-                : 'Sesi pemungutan suara resmi ditutup dan dikunci.';
-        }
-    }
-
-    public function simpanSesiVoting(): void
-    {
-        $base = $this->getBackendUrl();
-
-        try {
-            if ($this->votingId) {
-                Http::timeout(3)->put("{$base}/voting/{$this->votingId}", [
-                    'judul_voting' => $this->votingTitle,
-                    'status' => $this->votingStatus,
-                ]);
-            }
-            $this->flashMessage = 'Rekapitulasi dan berita acara voting berhasil disimpan ke sistem persidangan.';
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Rekapitulasi dan berita acara voting berhasil disimpan ke sistem persidangan.';
-        }
-    }
-
-    public function openNewVotingModal(): void
-    {
-        $this->showNewVotingModal = true;
-        if (empty($this->newVotingMeetingId) && !empty($this->availableMeetings)) {
-            $this->newVotingMeetingId = $this->availableMeetings[0]['id_rapat'] ?? 1;
-        }
-    }
-
-    public function closeNewVotingModal(): void
-    {
-        $this->showNewVotingModal = false;
-        $this->newVotingTitle = '';
-        $this->newVotingDescription = '';
-    }
-
-    public function deployNewVoting(): void
-    {
-        $this->validate([
-            'newVotingTitle' => 'required|string|min:2|max:255',
-        ], [
-            'newVotingTitle.required' => 'Pokok putusan atau judul voting wajib diisi.',
-            'newVotingTitle.min' => 'Judul voting minimal 2 karakter.',
-        ]);
-
-        $base = $this->getBackendUrl();
-        try {
-            $res = Http::timeout(5)->post("{$base}/voting", [
-                'id_rapat' => $this->newVotingMeetingId ?? 1,
-                'judul_voting' => $this->newVotingTitle,
-                'deskripsi' => $this->newVotingDescription ?: 'Musyawarah mufakat & pemungutan suara resmi sidang Senat Akademik Polines.',
-                'status' => 'dibuka',
-                'waktu_mulai' => now()->toDateTimeString(),
-                'opsi' => ['Setuju', 'Tidak Setuju', 'Abstain'],
-            ]);
-
-            if ($res->successful()) {
-                $created = $res->json();
-                $this->votingId = $created['id_voting'] ?? $created['id'] ?? $this->votingId;
-                $this->showNewVotingModal = false;
-                $this->newVotingTitle = '';
-                $this->newVotingDescription = '';
-                $this->loadVotingData();
-                $this->flashMessage = 'Sesi pemungutan suara baru berhasil dibuka untuk persidangan.';
-                $this->dispatch('voting-created');
-                return;
-            }
-
-            $this->flashMessage = 'Gagal membuka sesi voting baru: ' . ($res->json('message') ?? 'Terjadi kesalahan sistem.');
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Gagal menghubungi server persidangan: ' . $e->getMessage();
-        }
-    }
-
-    public function refreshVotingData(): void
-    {
-        $this->loadVotingData();
-
-        if ($this->votingId) {
-            try {
-                $base = $this->getBackendUrl();
-                $response = Http::timeout(3)->get("{$base}/voting/{$this->votingId}/rekap");
-                if ($response->successful()) {
-                    $rekap = $response->json('data') ?? $response->json();
-                    $rekapList = $rekap['rekapitulasi'] ?? $rekap['opsi'] ?? [];
-                    if (!empty($rekapList) && is_array($rekapList)) {
-                        $total = (int) ($rekap['total_suara'] ?? $this->votingStats['total_suara']);
-                        $this->votingStats['total_suara'] = $total;
-                        $this->votingStats['kuorum'] = "{$total} / 34 anggota";
-                        foreach ($rekapList as $opt) {
-                            $label = $opt['nama_opsi'] ?? $opt['label'] ?? '';
-                            $suara = (int) ($opt['jumlah_suara'] ?? $opt['total'] ?? 0);
-                            $persen = (float) ($opt['persentase'] ?? 0);
-                            $this->votingStats[$label] = [
-                                'suara' => $suara,
-                                'persentase' => $persen,
-                            ];
-                            if ($label === 'Tidak Setuju') {
-                                $this->votingStats['Tolak'] = $this->votingStats[$label];
-                            }
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Keep local stats
-            }
-        }
-
-        $this->flashMessage = 'Data rekapitulasi kehadiran dan perolehan suara berhasil dimutakhirkan.';
-    }
-
-    public function loadNotulensiData(): void
-    {
-        $base = $this->getBackendUrl();
-        try {
-            $res = Http::timeout(4)->get("{$base}/notulensi", ['all' => 1]);
-            if ($res->successful()) {
-                $data = $res->json();
-                $this->notulensiList = is_array($data) ? (isset($data['data']) ? $data['data'] : $data) : [];
-            }
-        } catch (\Throwable $e) {}
-
-        try {
-            $resRapat = Http::timeout(4)->get("{$base}/rapat", ['all' => 1]);
-            if ($resRapat->successful()) {
-                $dataRapat = $resRapat->json();
-                $this->rapatList = is_array($dataRapat) ? (isset($dataRapat['data']) ? $dataRapat['data'] : $dataRapat) : [];
-                if (! $this->notulensiRapatId && ! empty($this->rapatList)) {
-                    $this->notulensiRapatId = $this->rapatList[0]['id_rapat'] ?? null;
-                }
-            }
-        } catch (\Throwable $e) {}
-
-        try {
-            $resUser = Http::timeout(4)->get("{$base}/user", ['all' => 1]);
-            if ($resUser->successful()) {
-                $dataUser = $resUser->json();
-                $this->userList = is_array($dataUser) ? (isset($dataUser['data']) ? $dataUser['data'] : $dataUser) : [];
-            }
-        } catch (\Throwable $e) {}
-
-        if (empty($this->rapatList)) {
-            $this->rapatList = [
-                ['id_rapat' => 1, 'nama_agenda' => 'Sidang Pleno Khusus Penetapan Draft OTK Senat 2026', 'tempat' => 'Ruang Sidang Utama', 'tanggal' => '2026-10-09'],
-                ['id_rapat' => 2, 'nama_agenda' => 'Rapat Koordinasi Komisi I: Penyelarasan Kurikulum MBKM', 'tempat' => 'Ruang Rapat Senat', 'tanggal' => '2026-10-16'],
-                ['id_rapat' => 3, 'nama_agenda' => 'Sidang Pleno Evaluasi Akreditasi Prodi Teknik', 'tempat' => 'Ruang Sidang Utama', 'tanggal' => '2026-10-24'],
-            ];
-            $this->notulensiRapatId = 1;
-        }
-
-        if (empty($this->userList)) {
-            $this->userList = [
-                ['id_user' => 1, 'nama' => 'Administrator Senat', 'nim_nip' => '198001012005011001'],
-                ['id_user' => 2, 'nama' => 'Dr. Sukamto, S.Kom., M.T.', 'nim_nip' => '196803121993031002'],
-                ['id_user' => 3, 'nama' => 'Andi Setyawan, S.E., M.M.', 'nim_nip' => '197405191999031001'],
-            ];
-        }
-    }
-
-    public function openNotulensiForm(): void
-    {
-        $this->isFormOpen = true;
-    }
-
-    public function closeNotulensiForm(): void
-    {
-        $this->isFormOpen = false;
-        $this->resetNotulensiForm();
-    }
-
-    public function resetNotulensiForm(): void
-    {
-        $this->selectedNotulensiId = null;
-        $this->notulensiRapatId = $this->rapatList[0]['id_rapat'] ?? null;
-        $this->notulensiUserId = $this->userList[0]['id_user'] ?? 1;
-        $this->notulensiIsi = '';
-        $this->notulensiFile = '';
-        $this->notulensiStatus = 'draf';
-    }
-
-    public function editNotulensi(int $id): void
-    {
-        $item = collect($this->notulensiList)->firstWhere('id_notulensi', $id);
-        if ($item) {
-            $this->selectedNotulensiId = $id;
-            $this->notulensiRapatId = $item['id_rapat'] ?? null;
-            $this->notulensiUserId = $item['id_user'] ?? 1;
-            $this->notulensiIsi = $item['isi_notulensi'] ?? '';
-            $this->notulensiFile = $item['file_risalah'] ?? '';
-            $this->notulensiStatus = strtolower($item['status'] ?? 'draf');
-            $this->isFormOpen = true;
-        }
-    }
-
-    public function saveNotulensi(): void
-    {
-        if (empty(trim($this->notulensiIsi))) {
-            $this->flashMessage = 'Peringatan: Jalannya pembahasan dan isi notulensi tidak boleh kosong!';
-            return;
-        }
-
-        if (! $this->notulensiRapatId) {
-            $this->flashMessage = 'Peringatan: Silakan pilih sidang/rapat terkait!';
-            return;
-        }
-
-        $base = $this->getBackendUrl();
-        $payload = [
-            'id_rapat' => (int) $this->notulensiRapatId,
-            'id_user' => (int) ($this->notulensiUserId ?: 1),
-            'isi_notulensi' => $this->notulensiIsi,
-            'file_risalah' => $this->notulensiFile ?: null,
-            'status' => $this->notulensiStatus ?: 'draf',
-        ];
-
-        try {
-            if ($this->selectedNotulensiId) {
-                $res = Http::timeout(5)->put("{$base}/notulensi/{$this->selectedNotulensiId}", $payload);
-                if ($res->successful()) {
-                    $this->flashMessage = 'Berhasil! Notulensi & Risalah sidang berhasil diperbarui di database Backend.';
-                } else {
-                    $this->flashMessage = 'Gagal menyimpan: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
-                }
-            } else {
-                $res = Http::timeout(5)->post("{$base}/notulensi", $payload);
-                if ($res->successful()) {
-                    $this->flashMessage = 'Berhasil! Notulensi & Risalah sidang baru sukses disimpan ke database Backend.';
-                } else {
-                    $this->flashMessage = 'Gagal membuat notulensi: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
-                }
-            }
-            $this->loadNotulensiData();
-            $this->closeNotulensiForm();
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
-        }
-    }
-
-    public function deleteNotulensi(int $id): void
-    {
-        $base = $this->getBackendUrl();
-        try {
-            $res = Http::timeout(5)->delete("{$base}/notulensi/{$id}");
-            if ($res->successful() || $res->status() === 204) {
-                $this->flashMessage = "Notulensi ID #{$id} berhasil dihapus dari database.";
-            } else {
-                $this->flashMessage = "Gagal menghapus: HTTP " . $res->status();
-            }
-            $this->loadNotulensiData();
-            if ($this->selectedNotulensiId === $id) {
-                $this->resetNotulensiForm();
-                $this->isFormOpen = false;
-            }
-            if ($this->viewingNotulensiId === $id) {
-                $this->viewingNotulensiId = null;
-            }
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
-        }
-    }
-
-    public function setNotulensiStatus(int $id, string $status): void
-    {
-        $base = $this->getBackendUrl();
-        try {
-            $res = Http::timeout(5)->put("{$base}/notulensi/{$id}", ['status' => $status]);
-            if ($res->successful()) {
-                $this->flashMessage = "Status risalah berhasil diubah menjadi: " . ucfirst($status);
-                $this->loadNotulensiData();
-            }
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Gagal memperbarui status: ' . $e->getMessage();
-        }
-    }
-
-    public function viewNotulensi(?int $id): void
-    {
-        $this->viewingNotulensiId = $id;
-    }
-
-    #[Computed]
-    public function filteredNotulensi(): array
-    {
-        return collect($this->notulensiList)
-            ->filter(function ($item) {
-                if ($this->notulensiFilterStatus !== 'all') {
-                    if (strtolower($item['status'] ?? 'draf') !== strtolower($this->notulensiFilterStatus)) {
-                        return false;
-                    }
-                }
-                if (! empty($this->notulensiSearch)) {
-                    $search = strtolower($this->notulensiSearch);
-                    $agenda = strtolower($item['rapat']['nama_agenda'] ?? '');
-                    $isi = strtolower($item['isi_notulensi'] ?? '');
-                    $tempat = strtolower($item['rapat']['tempat'] ?? '');
-                    $notulis = strtolower($item['user']['nama'] ?? '');
-                    if (! str_contains($agenda, $search) && ! str_contains($isi, $search) && ! str_contains($tempat, $search) && ! str_contains($notulis, $search)) {
-                        return false;
-                    }
-                }
-                return true;
-            })
-            ->values()
-            ->all();
-    }
-
-
-
-    /* ================= KATALOG REGULASI & PRODUK HUKUM ================= */
-
-    public function loadRegulasiData(): void
-    {
-        $base = $this->getBackendUrl();
-
-        try {
-            $res = Http::timeout(4)->get("{$base}/peraturan", ['all' => 1]);
-            if ($res->successful()) {
-                $data = $res->json();
-                $this->regulasiList = is_array($data) ? (isset($data['data']) ? $data['data'] : $data) : [];
-            }
-        } catch (\Throwable $e) {}
-
-        try {
-            $periode = Http::timeout(4)->get("{$base}/periode-senat", ['all' => 1]);
-            if ($periode->successful()) {
-                $dataP = $periode->json();
-                $this->periodeList = is_array($dataP) ? (isset($dataP['data']) ? $dataP['data'] : $dataP) : [];
-            }
-        } catch (\Throwable $e) {}
-
-        if (empty($this->periodeList)) {
-            $this->periodeList = [
-                ['id_periode_senat' => 1, 'nama_periode' => '2025/2026'],
-                ['id_periode_senat' => 2, 'nama_periode' => '2026-2029'],
-            ];
-        }
-
-        if (! $this->regulasiPeriodeId) {
-            $lastPeriode = end($this->periodeList);
-            $this->regulasiPeriodeId = $lastPeriode['id_periode_senat'] ?? 1;
-        }
-    }
-
-    public function openRegulasiForm(): void
-    {
-        $this->resetRegulasiForm();
-        $this->regulasiTanggal = now()->format('Y-m-d');
-        $this->isRegulasiFormOpen = true;
-    }
-
-    public function closeRegulasiForm(): void
-    {
-        $this->isRegulasiFormOpen = false;
-        $this->resetRegulasiForm();
-    }
-
-    public function resetRegulasiForm(): void
-    {
-        $this->regulasiId = null;
-        $this->regulasiNomor = '';
-        $this->regulasiJudul = '';
-        $this->regulasiKategori = 'Peraturan Senat';
-        $this->regulasiTahap = 'Draf';
-        $this->regulasiFile = '';
-        $this->regulasiTanggal = '';
-        if (empty($this->regulasiPeriodeId)) {
-            $this->regulasiPeriodeId = $this->periodeList[0]['id_periode_senat'] ?? 1;
-        }
-    }
-
-    public function editRegulasi(int $id): void
-    {
-        $item = collect($this->regulasiList)->firstWhere('id_peraturan', $id);
-        if (! $item) {
-            return;
-        }
-
-        $this->regulasiId = $id;
-        $this->regulasiNomor = $item['nomor_sk'] ?? '';
-        $this->regulasiJudul = $item['judul'] ?? '';
-        $this->regulasiKategori = $item['kategori'] ?? 'Peraturan Senat';
-        $this->regulasiTahap = $item['tahap_pembentukan'] ?? 'Draf';
-        $this->regulasiPeriodeId = $item['id_periode_senat'] ?? 1;
-        $this->regulasiFile = $item['file_dokumen'] ?? '';
-        $this->regulasiTanggal = ! empty($item['tanggal_terbit'])
-            ? substr((string) $item['tanggal_terbit'], 0, 10)
-            : now()->format('Y-m-d');
-        $this->isRegulasiFormOpen = true;
-    }
-
-    public function saveRegulasi(): void
-    {
-        if (trim($this->regulasiNomor) === '' || trim($this->regulasiJudul) === '') {
-            $this->flashMessage = 'Peringatan: Nomor dokumen dan judul regulasi wajib diisi!';
-            return;
-        }
-
-        if (! $this->regulasiPeriodeId) {
-            $this->flashMessage = 'Peringatan: Periode senat wajib dipilih!';
-            return;
-        }
-
-        $base = $this->getBackendUrl();
-        $payload = [
-            'id_periode_senat' => (int) $this->regulasiPeriodeId,
-            'nomor_sk' => $this->regulasiNomor,
-            'judul' => $this->regulasiJudul,
-            'kategori' => $this->regulasiKategori,
-            'tahap_pembentukan' => $this->regulasiTahap,
-            'file_dokumen' => $this->regulasiFile ?: null,
-            'tanggal_terbit' => $this->regulasiTanggal ?: now()->format('Y-m-d'),
-        ];
-
-        try {
-            if ($this->regulasiId) {
-                $res = Http::timeout(6)->put("{$base}/peraturan/{$this->regulasiId}", $payload);
-                $this->flashMessage = $res->successful()
-                    ? 'Berhasil! Produk hukum berhasil diperbarui di database Backend.'
-                    : 'Gagal memperbarui: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
-            } else {
-                $res = Http::timeout(6)->post("{$base}/peraturan", $payload);
-                $this->flashMessage = $res->successful()
-                    ? 'Berhasil! Produk hukum baru sukses ditambahkan ke database Backend.'
-                    : 'Gagal menambahkan: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
-            }
-
-            $this->loadRegulasiData();
-            $this->closeRegulasiForm();
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
-        }
-    }
-
-    public function deleteRegulasi(int $id): void
-    {
-        $base = $this->getBackendUrl();
-        try {
-            $res = Http::timeout(6)->delete("{$base}/peraturan/{$id}");
-            $this->flashMessage = ($res->successful() || $res->status() === 204)
-                ? "Produk hukum ID #{$id} berhasil dihapus dari database."
-                : 'Gagal menghapus: HTTP ' . $res->status();
-            $this->loadRegulasiData();
-            if ($this->viewingRegulasiId === $id) {
-                $this->viewingRegulasiId = null;
-            }
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Koneksi API Backend gagal: ' . $e->getMessage();
-        }
-    }
-
-    public function setRegulasiTahap(int $id, string $tahap): void
-    {
-        $base = $this->getBackendUrl();
-        try {
-            $res = Http::timeout(6)->put("{$base}/peraturan/{$id}", ['tahap_pembentukan' => $tahap]);
-            if ($res->successful()) {
-                $this->flashMessage = "Tahap produk hukum diubah menjadi: {$tahap}";
-                $this->loadRegulasiData();
-            }
-        } catch (\Throwable $e) {
-            $this->flashMessage = 'Gagal memperbarui tahap: ' . $e->getMessage();
-        }
-    }
-
-    public function viewRegulasi(?int $id): void
-    {
-        $this->viewingRegulasiId = $id;
-    }
-
-    #[Computed]
-    public function filteredRegulasi(): array
-    {
-        return collect($this->regulasiList)
-            ->filter(function ($item) {
-                if ($this->regulasiFilterKategori !== 'all'
-                    && ($item['kategori'] ?? '') !== $this->regulasiFilterKategori) {
-                    return false;
-                }
-
-                if ($this->regulasiFilterTahap !== 'all'
-                    && strtolower($item['tahap_pembentukan'] ?? '') !== strtolower($this->regulasiFilterTahap)) {
-                    return false;
-                }
-
-                if (! empty($this->regulasiSearch)) {
-                    $search = strtolower($this->regulasiSearch);
-                    $haystack = strtolower(
-                        ($item['judul'] ?? '') . ' ' .
-                        ($item['nomor_sk'] ?? '') . ' ' .
-                        ($item['kategori'] ?? '') . ' ' .
-                        ($item['tahap_pembentukan'] ?? '')
-                    );
-                    if (! str_contains($haystack, $search)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            })
-            ->values()
-            ->all();
-    }
-
-    public function regulasiStatistik(): array
-    {
-        $all = collect($this->regulasiList);
-        return [
-            'total' => $all->count(),
-            'disahkan' => $all->filter(fn ($r) => strtolower($r['tahap_pembentukan'] ?? '') === 'disahkan')->count(),
-            'proses' => $all->filter(fn ($r) => in_array(strtolower($r['tahap_pembentukan'] ?? ''), ['draf', 'pembahasan', 'harmonisasi'], true))->count(),
-            'kategori' => $all->pluck('kategori')->filter()->unique()->count(),
-        ];
-    }
-
-    public function chipState(string $val): string
-    {
-        if (str_contains($val, 'Pleno') || str_contains($val, 'Ditindaklanjuti')) {
-            return 'warning';
-        }
-        if (str_contains($val, 'Komisi') || str_contains($val, 'Sedang') || str_contains($val, 'Penetapan')) {
-            return 'info';
-        }
-        if (str_contains($val, 'Selesai') || str_contains($val, 'Disahkan') || str_contains($val, 'Keputusan')) {
-            return 'success';
-        }
-        if (str_contains($val, 'Pertimbangan') || str_contains($val, 'Pimpinan') || str_contains($val, 'Terbuka')) {
-            return 'warning';
-        }
-        return 'neutral';
-    }
-
-    public function chipLabel(string $val): string
-    {
-        if (str_contains($val, 'Pleno')) {
-            return 'Pleno';
-        }
-        if (str_contains($val, 'Komisi')) {
-            return 'Komisi';
-        }
-        return $val;
+        return $url;
     }
 
     public function render(
@@ -1185,8 +201,27 @@ class AdminPreview extends Component
         $aspirations = $aspirationsRepo->all();
         $archives = $archivesRepo->all();
         $regulations = $regulationsRepo->all();
-        $posts = $postsRepo->all();
+        $allPosts = $postsRepo->all();
         $committees = $committeesRepo->all();
+        $mediaList = $this->getMediaList();
+
+        // Filter berita berdasarkan pencarian & kategori jika diisi
+        $posts = collect($allPosts)->filter(function ($item) {
+            $matchSearch = true;
+            if (!empty($this->postSearch)) {
+                $q = strtolower($this->postSearch);
+                $title = strtolower($item['title'] ?? '');
+                $cat = strtolower($item['category'] ?? '');
+                $matchSearch = str_contains($title, $q) || str_contains($cat, $q);
+            }
+
+            $matchCat = true;
+            if ($this->postFilterCategory !== 'Semua') {
+                $matchCat = ($item['category'] ?? '') === $this->postFilterCategory;
+            }
+
+            return $matchSearch && $matchCat;
+        })->values()->all();
 
         // Fetch Notulensi from Backend API
         $notulensis = [];
@@ -1214,7 +249,7 @@ class AdminPreview extends Component
             'attendance_rate' => $totalInvited > 0 ? (int) round(($totalPresent / $totalInvited) * 100) : 82,
             'pending_aspirations' => collect($aspirations)->where('status', '!=', 'Selesai')->count(),
             'total_regulations' => count($regulations),
-            'total_posts' => count($posts),
+            'total_posts' => count($allPosts),
             'total_archives' => count($archives),
             'total_committees' => count($committees),
         ];
@@ -1256,8 +291,45 @@ class AdminPreview extends Component
             return true;
         })->values()->all();
 
+        $filteredMeetings = $meetings;
+        if ($this->meetingFilterTab === 'berlangsung') {
+            $filteredMeetings = array_values(array_filter($meetings, fn($m) => in_array(strtolower($m['status'] ?? ''), ['sedang berlangsung', 'aktif', 'open', 'dibuka'])));
+        } elseif ($this->meetingFilterTab === 'terjadwal') {
+            $filteredMeetings = array_values(array_filter($meetings, fn($m) => strtolower($m['status'] ?? '') === 'terjadwal'));
+        } elseif ($this->meetingFilterTab === 'selesai') {
+            $filteredMeetings = array_values(array_filter($meetings, fn($m) => in_array(strtolower($m['status'] ?? ''), ['selesai', 'ditutup', 'closed'])));
+        }
+
         return view('livewire.admin-preview', [
+            'active' => $this->active,
+            'flashMessage' => $this->flashMessage,
+            'selectedMeetingId' => $this->selectedMeetingId,
+            'isPresensiOpen' => $this->isPresensiOpen,
+            'isKuorumLocked' => $this->isKuorumLocked,
+            'showQrModal' => $this->showQrModal,
+            'sessionCode' => $this->sessionCode,
+            'qrToken' => $this->qrToken,
+            'liveMeeting' => $this->liveMeeting,
+            'liveKuorum' => $this->liveKuorum,
+            'liveAnggota' => $this->liveAnggota,
+            'filterKehadiran' => $this->filterKehadiran,
+            'meetingFilterTab' => $this->meetingFilterTab,
+            'newMeetingTitle' => $this->newMeetingTitle,
+            'newMeetingType' => $this->newMeetingType,
+            'newMeetingDate' => $this->newMeetingDate,
+            'newMeetingTime' => $this->newMeetingTime,
+            'newMeetingRoom' => $this->newMeetingRoom,
+            'selectedLecturerIds' => $this->selectedLecturerIds,
+            'lecturerSearch' => $this->lecturerSearch,
             'meetings' => $meetings,
+            'filteredMeetings' => $filteredMeetings,
+            'availableMeetings' => array_map(function ($m) {
+                $mId = $m['id'] ?? ($m['id_rapat'] ?? 1);
+                $mTitle = $m['title'] ?? ($m['nama_agenda'] ?? 'Sidang Senat');
+                return array_merge($m, ['id' => $mId, 'id_rapat' => $mId, 'title' => $mTitle, 'nama_agenda' => $mTitle]);
+            }, !empty($this->availableMeetings) ? $this->availableMeetings : $meetings),
+            'allLecturers' => $this->allLecturers,
+            'filteredLecturers' => $this->filteredLecturers,
             'activeMeeting' => $activeMeeting,
             'aspirations' => $aspirations,
             'archives' => $archives,
@@ -1267,9 +339,12 @@ class AdminPreview extends Component
             'aksiCepat' => $aksiCepat,
             'regulations' => $regulations,
             'posts' => $posts,
+            'mediaList' => $mediaList,
             'committees' => $committees,
             'stats' => $stats,
             'filteredAnggota' => $filteredAnggota,
         ])->layout('layouts.admin-preview');
     }
+
+
 }

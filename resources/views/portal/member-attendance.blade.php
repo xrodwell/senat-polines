@@ -42,7 +42,9 @@
         
         {{-- Kolom Kiri: E-Voting Sidang, Presensi Sesi Berlangsung & Notulensi --}}
         <div class="lg:col-span-8 space-y-8">
-            
+
+            @include('portal.partials.rapat-workspace-pemilih')
+
             {{-- ================= MODUL 1: E-VOTING SIDANG PLENO (INTERAKTIF) ================= --}}
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
@@ -50,13 +52,25 @@
                     <div class="flex items-center gap-2 text-xs">
                         <span class="text-slate-500">Status Bilik Suara:</span>
                         <span class="font-semibold px-2 py-0.5 rounded text-[11px] border"
-                              :class="activeVote && activeVote.isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-100 text-emerald-800 border-slate-300'">
-                            <span x-text="activeVote && activeVote.isOpen ? 'DIBUKA UNTUK ANGGOTA' : 'DITUTUP'"></span>
+                              :class="!selectedMeetingId ? 'bg-amber-50 text-amber-700 border-amber-300' : (activeVote && activeVote.isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-100 text-emerald-800 border-slate-300')">
+                            <span x-text="!selectedMeetingId ? 'TERKUNCI — PILIH RAPAT' : (activeVote && activeVote.isOpen ? 'DIBUKA UNTUK ANGGOTA' : 'DITUTUP')"></span>
                         </span>
                     </div>
                 </div>
 
-                <div class="p-6 sm:p-8" x-show="activeVote">
+                {{-- Bilik suara terkunci sampai anggota memilih rapat --}}
+                <div x-show="!selectedMeetingId" class="p-6 sm:p-8">
+                    <div class="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-6 text-center">
+                        <div class="w-10 h-10 rounded-xl bg-white border border-amber-300 text-amber-700 flex items-center justify-center mx-auto mb-3 font-bold">!</div>
+                        <p class="text-sm font-bold text-slate-900">Hak suara belum dibuka</p>
+                        <p class="text-xs text-slate-600 mt-1 max-w-md mx-auto leading-relaxed">
+                            Pilih rapat terlebih dahulu pada modul <strong>Langkah 1 &mdash; Pilih Rapat</strong> di atas.
+                            Setelah rapat dipilih, bilik suara untuk rapat tersebut akan terbuka.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="p-6 sm:p-8" x-show="selectedMeetingId && activeVote" x-cloak>
                     <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-5 sm:p-6 mb-6">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-4">
                             <span class="text-[11px] font-mono font-semibold text-slate-500 uppercase" x-text="'Pokok Putusan: ' + activeVote.id"></span>
@@ -320,38 +334,8 @@
                 </div>
             @endif
 
-            {{-- ================= MODUL 3: NOTULENSI MANDIRI ================= --}}
-            <div class="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-8 shadow-sm"
-                 x-data="{
-                     savedNote: false,
-                     noteText: '',
-                     saveNotes() {
-                         if (!this.noteText) return;
-                         this.savedNote = true;
-                         setTimeout(() => this.savedNote = false, 3000);
-                     }
-                 }">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-lg font-extrabold text-slate-900">Catatan Risalah Musyawarah Komisi</h3>
-                    <span class="text-xs text-slate-400 font-mono">Komisi I — Pendidikan dan Pengajaran</span>
-                </div>
-                <p class="text-xs text-slate-500 mb-4">
-                    Catatan poin telaah, argumentasi pasal, atau pertimbangan norma yang Anda sampaikan selama sidang berlangsung.
-                </p>
+            @include('portal.partials.rapat-workspace-catatan')
 
-                <textarea rows="5" x-model="noteText" placeholder="Ketik catatan risalah rapat di sini..." class="w-full rounded-xl border border-slate-300 p-4 text-sm focus:border-polines-blue focus:ring-1 focus:ring-polines-blue outline-none transition-all leading-relaxed"></textarea>
-
-                <div class="flex items-center justify-between mt-4">
-                    <span class="text-xs text-emerald-600 font-semibold" x-show="savedNote" x-cloak>
-                        ✓ Draf risalah berhasil diamankan ke penyimpanan lokal.
-                    </span>
-                    <span x-show="!savedNote"></span>
-
-                    <button @click="saveNotes()" type="button" class="inline-flex items-center gap-2 rounded-lg bg-polines-navy hover:bg-polines-navyDark text-white px-5 py-2.5 text-xs font-bold transition-colors">
-                        Simpan Catatan Risalah
-                    </button>
-                </div>
-            </div>
 
         </div>
 
@@ -404,67 +388,4 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('memberAttendance', () => ({
-        activeVote: null,
-        myVote: null,
-        voteSubmitted: false,
-        isNumericTitle: false,
-
-        init() {
-            this.loadVoteState();
-            window.addEventListener('storage', () => this.loadVoteState());
-        },
-
-        loadVoteState() {
-            const stored = localStorage.getItem('polines_senat_voting');
-            if (stored) {
-                this.activeVote = JSON.parse(stored);
-            } else {
-                this.activeVote = {
-                    isOpen: true,
-                    id: 'VOTE-2026-001',
-                    title: 'Persetujuan Pengesahan Perubahan Kurikulum MBKM Vokasi 2026/2027',
-                    description: 'Apakah Sidang Pleno menyetujui draf revisi kurikulum vokasi berbasis industri untuk disahkan menjadi Peraturan Senat Akademik?',
-                    options: [
-                        { id: 'setuju', label: 'Setuju / Mufakat', count: 22 },
-                        { id: 'tolak', label: 'Menolak / Keberatan', count: 2 },
-                        { id: 'abstain', label: 'Abstain / Pikir-pikir', count: 4 }
-                    ]
-                };
-                localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
-            }
-            this.computeNumericTitle();
-
-            const savedMyVote = localStorage.getItem('polines_member_my_vote');
-            if (savedMyVote) {
-                this.myVote = savedMyVote;
-                this.voteSubmitted = true;
-            }
-        },
-
-        castVote(optionId) {
-            if (this.voteSubmitted || !this.activeVote || !this.activeVote.isOpen) return;
-            this.myVote = optionId;
-            this.voteSubmitted = true;
-            localStorage.setItem('polines_member_my_vote', optionId);
-
-            const opt = this.activeVote.options.find(o => o.id === optionId);
-            if (opt) opt.count++;
-            localStorage.setItem('polines_senat_voting', JSON.stringify(this.activeVote));
-        },
-
-        computeNumericTitle() {
-            const t = (this.activeVote && this.activeVote.title ? this.activeVote.title : '').trim();
-            this.isNumericTitle = t.length > 0 && t.length <= 12 && /^[\d\s.\-\/]+$/.test(t);
-        },
-
-        voteLabel(id) {
-            const map = { setuju: 'Setuju', tolak: 'Tolak', abstain: 'Abstain' };
-            return map[id] || id;
-        }
-    }));
-});
-</script>
-@endsection
+@include('portal.partials.rapat-workspace-script')

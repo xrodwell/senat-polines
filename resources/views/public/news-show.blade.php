@@ -6,6 +6,11 @@
 
     @php
         $body = $post['body'] ?? [];
+        $images = array_values(array_unique(array_filter(
+            [$post['thumbnail'] ?? null, ...(is_array($post['images'] ?? null) ? $post['images'] : [])],
+            fn ($image) => is_string($image) && $image !== ''
+        )));
+        $attachments = is_array($post['attachments'] ?? null) ? $post['attachments'] : [];
         $wordCount = collect($body)->sum(fn ($paragraph) => str_word_count(strip_tags($paragraph)));
         $readMinutes = max(1, (int) ceil($wordCount / 200));
     @endphp
@@ -64,9 +69,9 @@
         </p>
 
         {{-- Dokumentasi foto (Figma 2225:251) --}}
-        @if (! empty($post['thumbnail']))
-            <figure class="relative mt-7 h-[240px] overflow-hidden rounded-[10px] bg-[#0f172a] sm:h-[340px]">
-                <img src="{{ $post['thumbnail'] }}" alt="{{ $post['title'] }}"
+        @if (count($images) > 0)
+            <figure class="relative mt-12 h-[240px] overflow-hidden rounded-[10px] bg-[#0f172a] sm:mt-14 sm:h-[340px]">
+                <img src="{{ $images[0] }}" alt="{{ $post['title'] }}"
                      class="absolute inset-0 h-full w-full object-cover" loading="lazy">
                 <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/40 to-transparent"></div>
                 <figcaption class="absolute inset-x-0 bottom-0 p-6 sm:p-8">
@@ -76,9 +81,20 @@
                     </p>
                 </figcaption>
             </figure>
+
+            @if (count($images) > 1)
+                <div class="mt-6 grid grid-cols-2 gap-3 sm:mt-7 sm:grid-cols-3 sm:gap-4">
+                    @foreach (array_slice($images, 1) as $image)
+                        <figure class="overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                            <img src="{{ $image }}" alt="Dokumentasi tambahan {{ $loop->iteration }} — {{ $post['title'] }}"
+                                 class="aspect-[4/3] h-full w-full object-cover" loading="lazy">
+                        </figure>
+                    @endforeach
+                </div>
+            @endif
         @endif
 
-        <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div class="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
 
             {{-- ===================== BODY ARTIKEL ===================== --}}
             <div class="rounded-[10px] border border-slate-200 bg-white p-6 sm:p-9">
@@ -91,6 +107,23 @@
                 @empty
                     <p class="text-[14px] text-slate-500">Isi warta belum tersedia.</p>
                 @endforelse
+
+                @if (count($attachments) > 0)
+                    <section class="mt-8 border-t border-slate-200 pt-5" aria-labelledby="attachments-title">
+                        <h2 id="attachments-title" class="text-[14px] font-bold text-[#0f172a]">Lampiran Berita</h2>
+                        <ul class="mt-3 space-y-2">
+                            @foreach ($attachments as $attachment)
+                                <li>
+                                    <a href="{{ $attachment['url'] }}" target="_blank" rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-2 text-[13px] font-semibold text-senat-link hover:underline">
+                                        <x-senat.icon name="file-text" class="h-4 w-4 shrink-0" />
+                                        <span>{{ $attachment['name'] ?? 'Unduh lampiran' }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </section>
+                @endif
             </div>
 
             {{-- ===================== SIDEBAR ===================== --}}

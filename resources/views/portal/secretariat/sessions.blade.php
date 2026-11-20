@@ -5,7 +5,7 @@
 @section('content')
     @php
         /* 13B — Dashboard Sekretariat / Manajemen Sidang (Figma node 2280:938) */
-        $jenisSidang = ['Pleno', 'Terbuka', 'Pimpinan', 'Komisi', 'Panitia Kerja / Badan Pekerja', 'Lainnya'];
+        $jenisSidang = ['Pleno', 'Terbuka', 'Pimpinan', 'Komisi', 'BP (Badan Pekerja)', 'Lainnya'];
 
         $chipState = function (string $type): string {
             if (str_contains($type, 'Pleno')) {

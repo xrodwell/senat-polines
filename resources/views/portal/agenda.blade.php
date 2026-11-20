@@ -72,7 +72,7 @@
     @endif
 
     {{-- ================= TABS ================= --}}
-    <div class="rounded-[14px] border border-senat-line bg-white shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
+    <div class="rounded-[14px] border border-senat-line bg-white shadow-[0_3px_12px_rgba(13,26,41,0.07)] overflow-hidden">
         <div class="flex flex-wrap" role="tablist" aria-label="Kelompok agenda">
             @foreach ([
                 'hari-ini' => ['label' => 'HARI INI', 'icon' => 'calendar'],
@@ -81,12 +81,12 @@
             ] as $key => $meta)
                 <button type="button" role="tab" @click="tab = '{{ $key }}'"
                         :aria-selected="tab === '{{ $key }}'"
-                        class="relative flex flex-1 items-center justify-center gap-3 py-4 text-[12px] font-semibold tracking-[0.02em] transition-colors sm:flex-none sm:px-8"
+                        class="relative flex flex-1 items-center justify-center gap-2.5 py-4 text-[12px] font-semibold tracking-[0.02em] transition-colors sm:flex-none sm:px-8 cursor-pointer"
                         :class="tab === '{{ $key }}' ? 'text-senat-link' : 'text-senat-ink hover:text-senat-link'">
-                    <span class="text-[15px]" aria-hidden="true">{{ $meta['icon'] }}</span>
-                    {{ $meta['label'] }}
+                    <x-senat.icon :name="$meta['icon']" class="h-4 w-4 shrink-0" />
+                    <span>{{ $meta['label'] }}</span>
                     <span x-cloak x-show="tab === '{{ $key }}'"
-                          class="absolute inset-x-0 bottom-0 h-[3px] rounded-[2px] bg-senat-link"></span>
+                          class="absolute inset-x-4 sm:inset-x-6 bottom-0 h-[3px] rounded-full bg-senat-link"></span>
                 </button>
             @endforeach
         </div>

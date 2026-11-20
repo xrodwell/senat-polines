@@ -8,14 +8,21 @@ use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use App\Contracts\VotingRepositoryInterface;
+use App\Http\Controllers\Portal\Traits\HasPortalAuth;
+use App\Http\Controllers\Portal\Traits\HasSecretariatPortal;
+use App\Http\Controllers\Portal\Traits\HasVotingAndAttendance;
 use App\Support\SenatDirectory;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PortalController extends Controller
 {
+    use HasPortalAuth;
+    use HasSecretariatPortal;
+    use HasVotingAndAttendance;
+
     public function __construct(
         private MeetingRepositoryInterface $meetings,
         private AspirationRepositoryInterface $aspirations,
@@ -25,7 +32,11 @@ class PortalController extends Controller
         private VotingRepositoryInterface $votings,
     ) {}
 
-    /** @return array<string, mixed> */
+    /**
+     * Ringkasan statistik sidang & rapat senat
+     *
+     * @return array<string, mixed>
+     */
     private function meetingStats(): array
     {
         $meetings = $this->meetings->all();
@@ -42,24 +53,71 @@ class PortalController extends Controller
         ];
     }
 
-    /** 11 — Login Portal Senat */
-    public function login(): View
-    {
-        return view('portal.login');
-    }
-
-    /** 12A — Dashboard Anggota · Ringkasan */
+    /**
+     * 12A — Dashboard Anggota · Ringkasan
+     */
     public function dashboard(): View
     {
+        $allPosts = $this->posts->all();
+        $published = array_values(array_filter($allPosts, fn($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
+
         return view('portal.dashboard', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
             'aspirations' => $this->aspirations->all(),
-            'announcements' => $this->posts->all(),
+            'announcements' => $published,
+            'allPosts' => $allPosts,
         ]);
     }
 
-    /** 12B — Agenda & Presensi */
+    /**
+     * Tambah & Publikasikan Berita langsung dari Dashboard
+     */
+    public function storePost(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|min:3|max:255',
+            'category' => 'required|string',
+            'body' => 'required|string',
+            'thumbnail' => 'nullable|string',
+            'status' => 'nullable|string|in:Terpublikasi,Draf',
+        ], [
+            'title.required' => 'Judul berita wajib diisi.',
+            'title.min' => 'Judul berita minimal 3 karakter.',
+            'category.required' => 'Kategori berita wajib dipilih.',
+            'body.required' => 'Isi berita lengkap wajib diisi.',
+        ]);
+
+        $status = $validated['status'] ?? 'Terpublikasi';
+        $excerpt = Str::limit(strip_tags($validated['body']), 180);
+        $thumbnail = !empty($validated['thumbnail'])
+            ? $validated['thumbnail']
+            : 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80';
+
+        $payload = [
+            'title' => $validated['title'],
+            'category' => $validated['category'],
+            'date' => date('Y-m-d'),
+            'status' => $status,
+            'excerpt' => $excerpt,
+            'body_text' => $validated['body'],
+            'body' => explode("\n\n", $validated['body']),
+            'thumbnail' => $thumbnail,
+            'author' => 'Sekretariat Senat Polines',
+        ];
+
+        $this->posts->create($payload);
+
+        $msg = $status === 'Terpublikasi'
+            ? "Berita \"{$validated['title']}\" sukses dipublikasikan dan langsung tampil di dashboard!"
+            : "Draf berita \"{$validated['title']}\" berhasil disimpan.";
+
+        return redirect()->route('portal.dashboard')->with('success', $msg);
+    }
+
+    /**
+     * 12B — Agenda & Presensi
+     */
     public function agenda(): View
     {
         $userId = auth()->id() ?: session('auth_user_id', 6);
@@ -77,65 +135,21 @@ class PortalController extends Controller
         ]);
     }
 
-    /** Submit Presensi Anggota (QR Scan atau Kode Sesi) */
-    public function submitPresensi(Request $request): JsonResponse
-    {
-        $userId = $request->input('id_user') ?: (auth()->id() ?: session('auth_user_id', 6));
-        $tokenQr = $request->input('token_qr');
-        $sessionCode = $request->input('kode_sesi');
-        $meetingId = $request->input('id_rapat');
-
-        $result = $this->meetings->submitPresensi((int) $userId, $tokenQr, $sessionCode, $meetingId ? (int) $meetingId : null);
-
-        $status = ($result['success'] ?? false) ? 200 : 422;
-        return response()->json($result, $status);
-    }
-
-    /** 12C — Notulensi & Risalah */
+    /**
+     * 12C — Notulensi & Risalah
+     */
     public function minutes(): View
     {
         return view('portal.minutes', [
             'meetings' => $this->meetings->all(),
             'archives' => $this->archives->all(),
+            'idUser' => (int) (auth()->id() ?: session('auth_user_id', (int) env('PORTAL_DEMO_USER_ID', 2))),
         ]);
     }
 
-    /** 12D — E-Voting */
-    public function voting(): View
-    {
-        return view('portal.voting', [
-            'stats' => $this->meetingStats(),
-            'meetings' => $this->meetings->all(),
-            'activeVoting' => $this->votings->getActive(),
-        ]);
-    }
-
-    /** Submit Suara E-Voting */
-    public function submitVote(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'id_voting' => ['required', 'integer'],
-            'id_opsi' => ['required', 'integer'],
-        ]);
-
-        try {
-            $result = $this->votings->castVote(
-                (int) $validated['id_voting'],
-                (int) $validated['id_opsi'],
-                auth()->id() ?? 1
-            );
-
-            if (isset($result['success']) && ! $result['success']) {
-                return back()->with('error', $result['message'] ?? 'Gagal mengirim suara.');
-            }
-
-            return back()->with('success', $result['message'] ?? 'Suara Anda berhasil dicatat.');
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
-        }
-    }
-
-    /** 12E — Aspirasi & RUU Kampus */
+    /**
+     * 12E — Aspirasi & RUU Kampus
+     */
     public function aspirations(): View
     {
         return view('portal.aspirations', [
@@ -143,7 +157,9 @@ class PortalController extends Controller
         ]);
     }
 
-    /** 12F — Dokumen & Arsip */
+    /**
+     * 12F — Dokumen & Arsip
+     */
     public function documents(): View
     {
         return view('portal.documents', [
@@ -152,7 +168,9 @@ class PortalController extends Controller
         ]);
     }
 
-    /** 12G — Profil Anggota */
+    /**
+     * 12G — Profil Anggota
+     */
     public function profile(): View
     {
         return view('portal.profile', [
@@ -162,96 +180,6 @@ class PortalController extends Controller
                 'secretary' => SenatDirectory::secretary(),
             ],
             'committees' => SenatDirectory::committees(),
-        ]);
-    }
-
-    /** Presensi cepat (QR) — layar operasional lama, dipertahankan */
-    public function memberAttendance(): View
-    {
-        return view('portal.member-attendance', [
-            'activeSession' => $this->meetings->getActiveSession(),
-            'upcomingMeetings' => $this->meetings->getUpcoming(),
-            'meetings' => $this->meetings->all(),
-        ]);
-    }
-
-    /** Konsol sidang (operator) — layar operasional lama, dipertahankan */
-    public function adminMeetingSession(): View
-    {
-        return view('portal.admin-meeting-session', [
-            'activeSession' => $this->meetings->getActiveSession(),
-            'meetings' => $this->meetings->all(),
-            'aspirations' => $this->aspirations->all(),
-        ]);
-    }
-
-    // ---------------------------------------------------------------------
-    // 13 — Portal Internal · Sekretariat
-    // ---------------------------------------------------------------------
-
-    /** 13A — Dashboard Sekretariat · Ringkasan */
-    public function secretariatDashboard(): View
-    {
-        return view('portal.secretariat.dashboard', [
-            'stats' => $this->meetingStats(),
-            'meetings' => $this->meetings->all(),
-            'aspirations' => $this->aspirations->all(),
-            'archives' => $this->archives->all(),
-            'regulations' => $this->regulations->all(),
-        ]);
-    }
-
-    /** 13B — Sidang & Agenda */
-    public function secretariatSessions(): View
-    {
-        return view('portal.secretariat.sessions', [
-            'stats' => $this->meetingStats(),
-            'meetings' => $this->meetings->all(),
-        ]);
-    }
-
-    /** 13D — Presensi & QR */
-    public function secretariatAttendance(): View
-    {
-        return view('portal.secretariat.attendance', [
-            'stats' => $this->meetingStats(),
-            'meetings' => $this->meetings->all(),
-        ]);
-    }
-
-    /** 13C — Notulensi & Tindak Lanjut */
-    public function secretariatMinutes(): View
-    {
-        return view('portal.secretariat.minutes', [
-            'meetings' => $this->meetings->all(),
-            'archives' => $this->archives->all(),
-        ]);
-    }
-
-    /** 13E — E-Voting */
-    public function secretariatVoting(): View
-    {
-        return view('portal.secretariat.voting', [
-            'stats' => $this->meetingStats(),
-            'meetings' => $this->meetings->all(),
-        ]);
-    }
-
-    /** 13F — Aspirasi & RUU Kampus */
-    public function secretariatAspirations(): View
-    {
-        return view('portal.secretariat.aspirations', [
-            'aspirations' => $this->aspirations->all(),
-        ]);
-    }
-
-    /** 13G — Produk, Arsip & Berita */
-    public function secretariatPublications(): View
-    {
-        return view('portal.secretariat.publications', [
-            'regulations' => $this->regulations->all(),
-            'archives' => $this->archives->all(),
-            'posts' => $this->posts->all(),
         ]);
     }
 }

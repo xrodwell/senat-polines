@@ -42,6 +42,12 @@
         </p>
     </header>
 
+    {{-- ================= WORKSPACE ANGGOTA: pilih rapat → catatan, lampiran, export, berbagi ================= --}}
+    <div x-data="memberAttendance" class="mb-6 space-y-6">
+        @include('portal.partials.rapat-workspace-pemilih')
+        @include('portal.partials.rapat-workspace-catatan')
+    </div>
+
     {{-- ================= HEADER NOTULEN ================= --}}
     <section class="rounded-[14px] border border-senat-line bg-white p-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
         <div class="flex flex-wrap items-start justify-between gap-4">
@@ -74,7 +80,7 @@
     </section>
 
     {{-- ================= TABS ================= --}}
-    <div class="mt-6 rounded-[14px] border border-senat-line bg-white shadow-[0_2px_8px_rgba(13,26,41,0.05)]">
+    <div class="mt-6 rounded-[14px] border border-senat-line bg-white shadow-[0_2px_8px_rgba(13,26,41,0.05)] overflow-hidden">
         <div class="flex flex-wrap" role="tablist" aria-label="Bagian risalah">
             @foreach (['ringkasan' => 'Ringkasan', 'keputusan' => 'Keputusan', 'action' => 'Action Items', 'lampiran' => 'Lampiran'] as $key => $label)
                 <button type="button" role="tab" @click="tab = '{{ $key }}'"
@@ -194,3 +200,5 @@
 
 </div>
 @endsection
+
+@include('portal.partials.rapat-workspace-script')

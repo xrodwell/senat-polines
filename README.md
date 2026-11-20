@@ -43,6 +43,13 @@ Buka peramban di:
 - **Portal Anggota**: `http://127.0.0.1:8000/portal/dashboard`
 - **Panel Admin Sekretariat**: `http://127.0.0.1:8000/admin`
 
+Untuk unggahan dokumentasi hingga 10 MB di XAMPP, sesuaikan `C:\xampp\php\php.ini`:
+```ini
+upload_max_filesize=12M
+post_max_size=16M
+```
+Simpan perubahan lalu restart Apache. Nilai ini harus lebih besar dari batas validasi aplikasi agar unggahan tidak ditolak PHP sebelum mencapai Livewire.
+
 ## Arsitektur & Interoperabilitas
 
 Sistem mendukung arsitektur **Hybrid Interoperabilitas**:

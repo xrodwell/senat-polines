@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Beranda — Senat Akademik Politeknik Negeri Semarang')
-@section('description', 'Portal resmi Senat Akademik Politeknik Negeri Semarang — agenda sidang, lima komisi, fitur unggulan, dan warta keputusan akademik terbaru.')
+@section('description', 'Portal resmi Senat Akademik Politeknik Negeri Semarang — agenda sidang, lima komisi & Badan Pekerja (BP), fitur unggulan, dan warta keputusan akademik terbaru.')
 
 @section('content')
 
@@ -15,81 +15,74 @@
     $memberCount   = $direktori['members'] ?? null;
     $committeeCount = $direktori['committees'] ?? count($committees);
     $releaseCount  = count($posts);
-    $hasActive     = (bool) $activeSession;
 
     $bulan = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
 @endphp
 
 {{-- ============================ HERO (Figma 2013:16) ============================ --}}
 <section class="relative overflow-hidden bg-senat-hero">
-    {{-- Latar foto gedung dengan lapisan biru pekat sesuai desain (bg #003c75) --}}
+    {{-- Latar foto gedung dengan gradasi biru tua & biru Polines yang proporsional --}}
     <div class="absolute inset-0 z-0 select-none overflow-hidden">
-        <img src="{{ asset('images/gedung-polines.jpg') }}" alt=""
-             class="h-full w-full object-cover object-center" loading="eager">
-        <div class="absolute inset-0 bg-gradient-to-r from-senat-hero via-senat-hero/95 to-senat-hero/85"></div>
+        <img src="{{ $hero['background_image'] }}" alt="Gedung Kuliah Terpadu Polines"
+             class="h-full w-full object-cover object-[80%_10%] lg:object-[82%_15%]" loading="eager">
+        <div class="absolute inset-0 bg-gradient-to-r from-senat-primary via-senat-primary/85 to-senat-hero/35"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-senat-primary/95 via-transparent to-transparent"></div>
     </div>
 
     <div class="senat-shell relative z-10 pb-4 pt-[72px]">
 
-        {{-- Info Sidang (2013:17 / 2013:18) --}}
-        @if ($hasActive)
-            <div class="inline-flex h-[38px] max-w-full items-center gap-2 rounded-[12px] border border-[#cc9421] bg-[#1c334d] px-4">
-                <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-[#ffd66b]" aria-hidden="true"></span>
-                <p class="truncate text-[11px] font-bold leading-none text-[#ffd66b]">
-                    INFO SIDANG: Sedang berlangsung {{ $activeSession['title'] }}
-                </p>
-            </div>
-        @endif
-
         <div class="max-w-[700px]">
             {{-- Eyebrow (2013:19) --}}
-            <p class="text-[11px] font-bold uppercase leading-[1.1] tracking-[0.02em] text-senat-sky {{ $hasActive ? 'mt-[38px]' : '' }}">
-                Organ Tertinggi Normatif Akademik
+            <p class="text-[11px] font-bold uppercase leading-[1.1] tracking-[0.02em] text-senat-sky">
+                {{ $hero['eyebrow'] }}
             </p>
 
             {{-- Judul (2013:20 / 2013:21) --}}
             <h1 class="mt-[14px] text-[34px] font-bold leading-[1.05] tracking-tight text-white sm:text-[42px] lg:text-[50px]">
-                Senat Akademik<br>
-                <span class="text-senat-orange">Politeknik Negeri Semarang</span>
+                @php
+                    $heroLines = explode("\n", $hero['title'], 2);
+                @endphp
+                {{ $heroLines[0] }}@if (isset($heroLines[1]))<br>
+                <span class="text-[#ecdfc3]">{{ $heroLines[1] }}</span>@endif
             </h1>
 
             {{-- Deskripsi (2013:22) --}}
             <p class="mt-[26px] max-w-[650px] text-[15px] leading-[1.45] text-senat-skySoft">
-                Perumus kebijakan akademik, penjaga mutu pendidikan vokasi, dan penyalur aspirasi civitas akademika
-                — memastikan tata kelola Polines berjalan transparan, akuntabel, dan berintegritas.
+                {{ $hero['description'] }}
             </p>
 
             {{-- CTA (2013:23 / 2013:25) --}}
             <div class="mt-10 flex flex-wrap items-center gap-[18px]">
                 <a href="{{ route('public.profile') }}"
-                   class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-senat-orange px-5 text-[12px] font-bold text-white transition-colors duration-150 hover:bg-senat-orangeHover">
-                    Profil &amp; Komisi
+                   class="inline-flex h-11 items-center gap-1.5 rounded-lg bg-white px-5 text-[12px] font-bold text-senat-primary shadow-[0_6px_18px_rgba(4,12,39,0.18)] transition-[transform,background-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#f4f1ea] hover:shadow-[0_10px_24px_rgba(4,12,39,0.22)]">
+                    {{ $hero['primary_label'] }}
                     <span aria-hidden="true">›</span>
                 </a>
                 <a href="{{ route('public.regulations') }}"
-                   class="inline-flex h-10 items-center rounded-lg bg-[#1f3859] px-6 text-[12px] font-bold text-white transition-colors duration-150 hover:bg-[#274568]">
-                    Repositori Produk Hukum
+                   class="inline-flex h-11 items-center rounded-lg border border-white/25 bg-white/[0.06] px-6 text-[12px] font-bold text-white backdrop-blur-sm transition-[transform,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.12]">
+                    {{ $hero['secondary_label'] }}
                 </a>
             </div>
         </div>
 
         {{-- Statistik (2013:27) --}}
-        <dl class="mt-[46px] grid grid-cols-2 rounded-[14px] border border-[#33577a] bg-[#05264d] lg:grid-cols-4">
+        <dl class="mt-[122px] grid grid-cols-2 rounded-[14px] border border-white/12 bg-senat-primary/85 backdrop-blur-sm lg:grid-cols-4">
             @php
                 $stats = [
                     ['label' => 'ANGGOTA SENAT',   'value' => $memberCount,     'hint' => 'Guru Besar & Pendidik'],
-                    ['label' => 'KOMISI AKTIF',    'value' => $committeeCount,  'hint' => 'Komisi I s.d. V'],
+                    ['label' => 'KOMISI & BP',     'value' => $committeeCount,  'hint' => 'Komisi I–V & BP'],
                     ['label' => 'WARTA TERBIT',    'value' => $releaseCount,    'hint' => 'Rilis & keputusan senat'],
                     ['label' => 'TAHUN PERIODE',   'value' => $period,          'hint' => 'Senat Akademik'],
                 ];
             @endphp
             @foreach ($stats as $i => $stat)
-                <div class="px-[22px] py-[21px] border-[#33577a]
+                <div class="border-white/12 px-[22px] py-[21px]
                             {{ $i % 2 === 1 ? 'border-l' : '' }}
-                            lg:border-l lg:first:border-l-0">
-                    <dt class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-sky">{{ $stat['label'] }}</dt>
+                            {{ $i >= 2 ? 'border-t' : '' }}
+                            lg:border-t-0 lg:border-l lg:first:border-l-0">
+                    <dt class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-white/90">{{ $stat['label'] }}</dt>
                     <dd class="mt-[6px] text-[19px] font-bold leading-none text-white tabular-nums sm:text-[22px] lg:text-[27px]">{{ $stat['value'] }}</dd>
-                    <dd class="mt-[7px] text-[10px] leading-[1.1] text-[#adcff0]">{{ $stat['hint'] }}</dd>
+                    <dd class="mt-[7px] text-[10px] leading-[1.1] text-white/75">{{ $stat['hint'] }}</dd>
                 </div>
             @endforeach
         </dl>
@@ -101,7 +94,7 @@
     <div class="senat-shell">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Kalender Senat</p>
+                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-link">Kalender Senat</p>
                 <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
                     Agenda Sidang Terdekat
                 </h2>
@@ -112,12 +105,12 @@
             </a>
         </div>
 
-        <div class="mt-[31px] space-y-5">
+        <div class="mt-[31px] space-y-4">
             @forelse ($upcomingMeetings as $meeting)
                 @php
                     $d = \Carbon\Carbon::parse($meeting['date']);
                 @endphp
-                <article class="flex items-center gap-[18px] rounded-[14px] border border-[#d9e3f0] bg-white p-[18px]">
+                <article class="flex items-center gap-[18px] rounded-[14px] border border-[#e1e7ef] bg-white p-5">
                     {{-- Blok tanggal (2013:44) --}}
                     <div class="flex h-[58px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[10px] bg-senat-hero text-white">
                         <span class="text-[19px] font-bold leading-none tabular-nums">{{ $d->format('d') }}</span>
@@ -149,7 +142,7 @@
     <div class="senat-shell">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Siaran Pers</p>
+                <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-link">Siaran Pers</p>
                 <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
                     Warta &amp; Keputusan Senat Terbaru
                 </h2>
@@ -160,15 +153,15 @@
             </a>
         </div>
 
-        <div class="mt-[30px] grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            @forelse ($posts as $post)
+        <div class="mt-[30px] grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            @forelse (array_slice($posts, 0, 6) as $post)
                 <a href="{{ route('public.news.show', $post['slug']) }}"
-                   class="group flex flex-col overflow-hidden rounded-[14px] border border-[#d9e3f0] bg-white transition-colors duration-150 hover:border-senat-primary/50">
+                   class="group flex flex-col overflow-hidden rounded-[14px] border border-[#e1e7ef] bg-white transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-senat-primary/35 hover:shadow-[0_10px_28px_rgba(24,26,88,0.08)]">
                     {{-- Thumbnail / placeholder (2013:92) --}}
-                    <div class="h-[125px] w-full overflow-hidden bg-[#d4dee5]">
+                    <div class="h-[160px] w-full overflow-hidden bg-[#d4dee5]">
                         @if (! empty($post['thumbnail']))
                             <img src="{{ $post['thumbnail'] }}" alt="{{ $post['title'] }}" loading="lazy"
-                                 class="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105">
+                                 class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]">
                         @endif
                     </div>
 
@@ -176,7 +169,7 @@
                         <p class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-link">
                             {{ $post['category'] }}
                         </p>
-                        <h3 class="mt-[6px] text-[13px] font-bold leading-snug text-senat-ink line-clamp-3 group-hover:text-senat-primary">
+                        <h3 class="mt-[6px] text-[13px] font-bold leading-snug text-senat-ink line-clamp-3 transition-colors duration-200 group-hover:text-senat-primary">
                             {{ $post['title'] }}
                         </h3>
                         <p class="mt-2 text-[11px] leading-[1.3] text-senat-body line-clamp-2">
@@ -193,38 +186,41 @@
     </div>
 </section>
 
-{{-- ==================== LIMA KOMISI SENAT (2013:57 → 2013:88) ==================== --}}
+{{-- ==================== KOMISI & BADAN PEKERJA SENAT (2013:57 → 2013:88) ==================== --}}
 <section class="pb-[50px] pt-[68px]">
     <div class="senat-shell">
         <div>
-            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-orange">Struktur Kerja</p>
+            <p class="text-[11px] font-bold uppercase leading-[1.1] text-senat-link">Struktur Kerja</p>
             <h2 class="mt-2 text-[20px] font-bold leading-[1.15] text-senat-ink sm:text-[24px] lg:text-[27px]">
-                Lima Komisi Senat Polines
+                Komisi &amp; Badan Pekerja (BP) Senat Polines
             </h2>
         </div>
 
-        <div class="mt-[33px] grid grid-cols-1 gap-[19px] sm:grid-cols-2 lg:grid-cols-5">
+        <div class="mt-[33px] grid grid-cols-1 gap-[19px] sm:grid-cols-2 lg:grid-cols-3">
             @forelse ($committees as $committee)
                 @php
-                    $roman = \Illuminate\Support\Str::after($committee['code'], 'KOM-');
+                    $isBp = ($committee['code'] ?? '') === 'BP';
+                    $badgeText = $isBp ? 'BP' : \Illuminate\Support\Str::after($committee['code'], 'KOM-');
+                    $eyebrowText = $isBp ? 'BADAN PEKERJA' : ('KOMISI ' . $badgeText);
+                    $headingText = $isBp ? 'BP (Badan Pekerja)' : \Illuminate\Support\Str::after($committee['name'], 'Komisi ');
                 @endphp
                 <a href="{{ route('public.profile.structure') }}"
-                   class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#d9e3f0] bg-white p-[18px] transition-colors duration-150 hover:border-senat-primary/50">
-                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] bg-senat-hero text-[12px] font-bold text-white">
-                        {{ $roman }}
+                   class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#e1e7ef] bg-white p-[18px] transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-senat-primary/35 hover:shadow-[0_10px_28px_rgba(24,26,88,0.08)]">
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] {{ $isBp ? 'border border-[#d6c7a6] bg-[#ecdfc3] text-[#302d45]' : 'bg-senat-hero text-white' }} text-[12px] font-bold">
+                        {{ $badgeText }}
                     </span>
                     <p class="mt-3 text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-body">
-                        KOMISI {{ $roman }}
+                        {{ $eyebrowText }}
                     </p>
                     <h3 class="mt-[6px] text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary">
-                        {{ \Illuminate\Support\Str::after($committee['name'], 'Komisi ') }}
+                        {{ $headingText }}
                     </h3>
                     <p class="mt-[14px] text-[11px] leading-[1.3] text-senat-body line-clamp-4">
                         {{ $committee['focus'] }}
                     </p>
                 </a>
             @empty
-                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-5">
+                <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-3">
                     <p class="text-[13px] text-senat-muted">Data komisi belum dimuat.</p>
                 </div>
             @endforelse

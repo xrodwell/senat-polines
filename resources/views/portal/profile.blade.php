@@ -15,6 +15,45 @@
         ['label' => 'Ketua Senat', 'person' => $chair],
         ['label' => 'Sekretaris Senat', 'person' => $secretary],
     ];
+
+    $currentName = session('auth_user_name', 'Anggota Senat');
+    $currentNip = session('auth_user_nip', '-');
+    $currentEmail = session('auth_user_email', '-');
+    $currentRole = session('auth_user_role', 'anggota');
+
+    $memberInfo = null;
+    foreach (\App\Support\SenatDirectory::members() as $m) {
+        if (!empty($m['name']) && (
+            strcasecmp($m['name'], $currentName) === 0 ||
+            str_contains(strtolower($m['name']), strtolower($currentName)) ||
+            str_contains(strtolower($currentName), strtolower($m['name']))
+        )) {
+            $memberInfo = $m;
+            break;
+        }
+    }
+
+    $organLabel = $memberInfo['organ'] ?? ($currentRole === 'admin' ? 'Sekretariat Senat' : 'Komisi Senat Akademik');
+    $jabatanLabel = $memberInfo['role'] ?? ($currentRole === 'admin' ? 'Administrator Sistem' : 'Anggota Senat');
+    $focusDesc = $memberInfo['focus'] ?? 'Menjalankan fungsi pengawasan normatif, penetapan kurikulum, dan pertimbangan akademik Politeknik Negeri Semarang.';
+
+    $initialsOf = function (string $name): string {
+        $parts = collect(explode(' ', preg_replace('/,.*$/', '', $name)))
+            ->filter(fn ($part) => $part !== '' && ! str_contains($part, '.'))
+            ->values();
+        $out = $parts->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
+
+        return $out !== '' ? $out : mb_strtoupper(mb_substr($name, 0, 1));
+    };
+
+    // Standar foto profil: images/members/{nip}.jpg
+    $effectiveNip = ($currentNip && $currentNip !== '-') ? $currentNip : ($memberInfo['nip'] ?? null);
+    $defaultNipPhoto = ! empty($effectiveNip) ? 'images/members/' . $effectiveNip . '.jpg' : null;
+    $photoCandidate = session('auth_user_foto') ?: ($memberInfo['photo'] ?? $defaultNipPhoto);
+    $avatarPhoto = ($photoCandidate && (
+        file_exists(public_path($photoCandidate)) || 
+        file_exists(base_path('../Backend-Senat-Polines/public/' . $photoCandidate))
+    )) ? $photoCandidate : null;
 @endphp
 
 <div class="mx-auto w-full max-w-[1116px] space-y-6">
@@ -28,11 +67,17 @@
     {{-- ================= PROFIL ================= --}}
     <section class="rounded-[14px] border border-senat-line bg-white p-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
         <div class="flex flex-wrap items-center gap-5">
-            <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-[42px] bg-[#eaf3fe] text-[30px] font-bold text-senat-link" aria-hidden="true"><x-senat.icon name="eye-off" class="h-[18px] w-[18px]" /></span>
+            @if (! empty($avatarPhoto))
+                <img src="{{ asset($avatarPhoto) }}" alt="{{ $currentName }}" class="h-[84px] w-[84px] shrink-0 rounded-full object-cover object-top border-2 border-[#c7dcf0] shadow-sm">
+            @else
+                <span class="flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-full bg-[#eaf3fe] text-[28px] font-bold text-senat-primary border-2 border-[#c7dcf0] shadow-xs" aria-hidden="true">
+                    {{ $initialsOf($currentName) }}
+                </span>
+            @endif
             <div class="min-w-0">
-                <h2 class="text-[22px] font-bold leading-snug text-senat-ink">{{ $chair['name'] ?? 'Data anggota internal' }}</h2>
+                <h2 class="text-[22px] font-bold leading-snug text-senat-ink">{{ $currentName }}</h2>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
-                    <x-senat.badge state="info" :dot="false">{{ $chair['role'] ?? 'Anggota Senat' }}</x-senat.badge>
+                    <x-senat.badge state="info" :dot="false">{{ $jabatanLabel }}</x-senat.badge>
                     <x-senat.badge state="neutral" :dot="false">Periode {{ $periode }}</x-senat.badge>
                 </div>
                 <p class="mt-2 text-[13px] text-senat-body">Politeknik Negeri Semarang</p>
@@ -42,15 +87,15 @@
         <dl class="mt-6 grid grid-cols-1 gap-x-8 gap-y-5 border-t border-senat-line pt-5 sm:grid-cols-2">
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">NIP</dt>
-                <dd class="mt-1.5 text-[14px] font-medium tabular-nums text-senat-ink">{{ $chair['nip'] ?? 'Data anggota internal' }}</dd>
+                <dd class="mt-1.5 text-[14px] font-medium tabular-nums text-senat-ink">{{ $currentNip ?: '-' }}</dd>
             </div>
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Organ</dt>
-                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $chair['organ'] ?? 'Pimpinan Senat' }}</dd>
+                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $organLabel }}</dd>
             </div>
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Jabatan</dt>
-                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $chair['role'] ?? 'Anggota Komisi' }}</dd>
+                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $jabatanLabel }}</dd>
             </div>
             <div>
                 <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Periode</dt>
@@ -61,23 +106,23 @@
                 <dd class="mt-1.5 text-[14px] font-medium tabular-nums text-senat-ink">{{ $stats['attendance_rate'] }}% periode berjalan</dd>
             </div>
             <div>
-                <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Laporan</dt>
-                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">Belum ada LPJ individual</dd>
+                <dt class="text-[11px] font-semibold uppercase tracking-[0.06em] text-senat-body">Email</dt>
+                <dd class="mt-1.5 text-[14px] font-medium text-senat-ink">{{ $currentEmail ?: '-' }}</dd>
             </div>
         </dl>
 
-        @if (! empty($chair['focus']))
-            <p class="mt-5 border-t border-senat-line pt-5 text-[13px] leading-relaxed text-senat-muted">{{ $chair['focus'] }}</p>
+        @if (! empty($focusDesc))
+            <p class="mt-5 border-t border-senat-line pt-5 text-[13px] leading-relaxed text-senat-muted">{{ $focusDesc }}</p>
         @endif
     </section>
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[730px_1fr]">
 
-        {{-- ================= KEANGGOTAAN KOMISI ================= --}}
+        {{-- ================= KEANGGOTAAN KOMISI & BP ================= --}}
         <section class="rounded-[14px] border border-senat-line bg-white p-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
-            <h2 class="text-[18px] font-bold text-senat-ink">Keanggotaan Komisi</h2>
+            <h2 class="text-[18px] font-bold text-senat-ink">Keanggotaan Komisi &amp; BP</h2>
             <p class="mt-2 text-[13px] text-senat-muted">
-                Lima komisi tetap Senat Akademik periode {{ $periode }}.
+                Lima komisi tetap dan Badan Pekerja (BP) Senat Akademik periode {{ $periode }}.
             </p>
 
             <ul class="mt-5 divide-y divide-senat-line">
@@ -110,7 +155,7 @@
             <div class="mt-5 flex items-center gap-4 rounded-[14px] bg-[#eaf8f0] px-5 py-5 shadow-[0_3px_12px_rgba(13,26,41,0.07)]">
                 <span class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-[#116a3c] text-[16px] font-bold text-white" aria-hidden="true"><x-senat.icon name="eye" class="h-[18px] w-[18px]" /></span>
                 <div>
-                    <p class="text-[28px] font-bold leading-none tabular-nums text-senat-ink">{{ $stats['attendance_rate'] }}%</p>
+                    <p class="text-[28px] font-bold leading-none tabular-nums text-senat-ink">{{ $stats['attendance_rate'] ?? $stats['persentase'] ?? 0 }}%</p>
                     <p class="mt-1.5 text-[12px] font-medium text-senat-body">Kehadiran</p>
                 </div>
             </div>
@@ -118,11 +163,11 @@
             <dl class="mt-5 divide-y divide-senat-line border-t border-senat-line">
                 <div class="flex items-center justify-between gap-4 py-3">
                     <dt class="text-[12px] text-senat-muted">Total agenda tercatat</dt>
-                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['total'] }}</dd>
+                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['total'] ?? 0 }}</dd>
                 </div>
                 <div class="flex items-center justify-between gap-4 py-3">
                     <dt class="text-[12px] text-senat-muted">Kehadiran tercatat</dt>
-                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['present'] }}/{{ $stats['invited'] }}</dd>
+                    <dd class="text-[13px] font-semibold tabular-nums text-senat-ink">{{ $stats['present'] ?? 0 }}/{{ $stats['invited'] ?? 0 }}</dd>
                 </div>
             </dl>
 

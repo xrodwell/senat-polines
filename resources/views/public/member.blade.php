@@ -17,12 +17,13 @@
         return $out !== '' ? $out : mb_strtoupper(mb_substr($name, 0, 1));
     };
 
-    $committeeLabel = isset($member['committee_code']) ? str_replace('KOM-', 'Komisi ', $member['committee_code']) : null;
+    $committeeCode = $member['committee_code'] ?? null;
+    $isBpMember = $committeeCode === 'BP';
+    $committeeLabel = $committeeCode !== null ? \App\Support\SenatDirectory::committeeLabel($committeeCode) : null;
+    $committeeDisplay = $isBpMember ? 'BP (Badan Pekerja)' : $committeeLabel;
     $isCommitteeMember = $committeeLabel !== null && $committee !== null;
-    $badge = $committeeLabel ?? ($member['organ'] ?? 'Pimpinan Senat');
-    $metaLine = $isCommitteeMember
-        ? 'Anggota '.$committeeLabel.' • Masa Bakti '.$period
-        : 'Anggota ex officio • Masa Bakti '.$period;
+    $badge = $committeeDisplay ?? ($member['organ'] ?? 'Pimpinan Senat');
+    $metaLine = 'Masa Bakti ' . $period;
 
     /** Pimpinan komisi (ketua & sekretaris) untuk kartu ringkasan komisi. */
     $komisiPimpinan = [];
@@ -39,25 +40,13 @@
 
 @section('content')
 
-    {{-- Breadcrumb strip --}}
-    <div class="border-b border-[#d9e3f0] bg-white">
-        <div class="senat-shell py-4">
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-                <a href="{{ route('public.profile') }}" class="font-bold text-senat-link hover:underline">‹&nbsp; Profil &amp; Komisi</a>
-                <span class="text-senat-body">/</span>
-                <span class="font-medium text-senat-body">Detail Anggota Senat</span>
-            </div>
-            <p class="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Profil Anggota Senat</p>
-        </div>
-    </div>
-
-    {{-- Hero --}}
+    {{-- Hero Banner Asli (Figma 2061:2) --}}
     <section class="relative overflow-hidden bg-senat-hero">
-        <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[502px] bg-[#052e57] lg:block" aria-hidden="true"></div>
-        <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[360px] bg-[#0a4073] lg:block" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[502px] bg-senat-primary/50 lg:block" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[360px] bg-senat-hero/70 lg:block" aria-hidden="true"></div>
 
-        <div class="senat-shell relative py-14 pb-[190px]">
-            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#99ccff]">Direktori Senat Akademik</p>
+        <div class="senat-shell relative z-10 py-12 pb-[180px] sm:py-14 sm:pb-[200px]">
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#add4ff]">Direktori Senat Akademik</p>
             <h1 class="mt-3 text-[26px] font-bold leading-tight text-white sm:text-[34px]">Profil Anggota Senat</h1>
             <p class="mt-4 max-w-[650px] text-[13px] leading-relaxed text-senat-skySoft">
                 Informasi jabatan, mandat, dan rekam kontribusi institusional yang diumumkan melalui Sekretariat Senat.
@@ -65,46 +54,104 @@
         </div>
     </section>
 
-    {{-- Portrait + identity card (overlapping hero) --}}
-    <div class="senat-shell -mt-[170px]">
-        <div class="grid gap-5 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-start">
+    {{-- Portrait + identity card (Melayang di atas hero dengan z-index yang tepat) --}}
+    <div class="senat-shell relative z-20 -mt-[140px] sm:-mt-[160px]">
+        <div class="grid gap-5 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-stretch">
 
-            <div class="rounded-[18px] border border-[#d9e3f0] bg-white p-7">
-                <div class="mx-auto flex h-[228px] w-[228px] max-w-full items-center justify-center rounded-full border border-[#a3c2e0] bg-[#eef5fc]">
-                    <span class="text-[48px] font-bold tracking-[0.04em] text-senat-primary">{{ $initialsOf($member['name']) }}</span>
+            {{-- Kartu Foto Anggota --}}
+            <div class="flex flex-col justify-center rounded-[18px] border border-[#d9e3f0] bg-white p-7 shadow-xl">
+                <div class="mx-auto flex h-[210px] w-[210px] max-w-full items-center justify-center overflow-hidden rounded-full border-4 border-[#c7dcf0] bg-[#eef5fc] shadow-inner">
+                    @php
+                        $photo = $member['photo'] ?? null;
+                        if (empty($photo) && ! empty($member['nip'])) {
+                            $photo = 'images/members/' . $member['nip'] . '.jpg';
+                        }
+                        $hasPhoto = ! empty($photo) && (
+                            file_exists(public_path($photo)) || 
+                            file_exists(base_path('../Backend-Senat-Polines/public/' . $photo))
+                        );
+                    @endphp
+                    @if ($hasPhoto)
+                        <img src="{{ asset($photo) }}" alt="{{ $member['name'] }}" class="h-full w-full rounded-full object-cover object-top">
+                    @else
+                        <span class="text-[52px] font-extrabold tracking-[0.04em] text-senat-primary">{{ $initialsOf($member['name']) }}</span>
+                    @endif
                 </div>
-                <p class="mt-5 text-center text-[10px] leading-relaxed text-senat-muted">
-                    Foto resmi anggota dikelola Sekretariat Senat.
-                </p>
+                <div class="mt-4 flex items-center justify-center gap-2.5">
+                    <span class="h-px w-6 bg-emerald-200" aria-hidden="true"></span>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] tracking-wide text-emerald-700">
+                        <svg class="h-3.5 w-3.5 text-emerald-600 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="font-medium text-slate-500">Status:</span>
+                        <span class="font-bold text-emerald-700">Aktif Menjabat</span>
+                    </span>
+                    <span class="h-px w-6 bg-emerald-200" aria-hidden="true"></span>
+                </div>
             </div>
 
-            <div class="rounded-[18px] border border-[#d9e3f0] bg-white p-6 sm:p-8">
-                <span class="inline-flex items-center rounded-full bg-senat-badgeBg px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-senat-hero">
-                    {{ $badge }}
-                </span>
+            {{-- Kartu Identitas & Gelar --}}
+            <div class="flex flex-col justify-between rounded-[18px] border border-[#d9e3f0] bg-white p-6 sm:p-8 shadow-xl">
+                <div>
+                    <h1 class="text-[22px] font-bold leading-tight text-senat-primary sm:text-[28px]">{{ $member['name'] }}</h1>
+                    <p class="mt-1.5 text-[15px] font-bold text-senat-orange">{{ $member['role'] }}</p>
+                    <div class="mt-3 grid max-w-md grid-cols-[auto_auto_1fr] items-baseline gap-x-2.5 gap-y-1 text-[11px] text-senat-body">
+                        <span class="text-slate-500">Masa Bakti</span>
+                        <span class="text-slate-400">:</span>
+                        <span class="font-medium text-senat-ink">{{ $period }}</span>
 
-                <h1 class="mt-4 text-[24px] font-bold leading-tight text-senat-primary sm:text-[30px]">{{ $member['name'] }}</h1>
-                <p class="mt-2 text-[15px] font-bold text-senat-ink">{{ $member['role'] }}</p>
-                <p class="mt-2 text-[11px] text-senat-body">{{ $metaLine }}</p>
+                        @if (! empty($member['nip']))
+                            <span class="text-slate-500">NIP</span>
+                            <span class="text-slate-400">:</span>
+                            <span class="font-mono font-medium text-senat-ink">{{ $member['nip'] }}</span>
+                        @endif
 
-                @if (! empty($member['nip']))
-                    <p class="mt-1 text-[11px] text-senat-muted">NIP {{ $member['nip'] }}</p>
-                @endif
+                        @if (! empty($member['email']))
+                            <span class="text-slate-500">Email</span>
+                            <span class="text-slate-400">:</span>
+                            <span>
+                                <a href="mailto:{{ $member['email'] }}" class="text-senat-link hover:underline">{{ $member['email'] }}</a>
+                            </span>
+                        @endif
+                    </div>
+                </div>
 
                 <div class="mt-6 h-px w-full bg-[#d9e3f0]" aria-hidden="true"></div>
 
-                <dl class="mt-5 grid gap-5 sm:grid-cols-3">
-                    <div>
+                <dl class="mt-5 grid gap-4 sm:grid-cols-3">
+                    <div class="rounded-xl bg-[#f8fafc] p-3.5 border border-[#eef2f6]">
                         <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Kedudukan</dt>
-                        <dd class="mt-1.5 text-[11px] font-bold leading-snug text-senat-ink">{{ $member['organ'] }}</dd>
+                        <dd class="mt-1 text-[11px] font-bold leading-snug text-senat-ink">
+                            @php
+                                $positions = $member['positions'] ?? [['role' => $member['role'] ?? 'Anggota', 'organ' => $member['organ'] ?? 'Senat Akademik']];
+                            @endphp
+                            @if (count($positions) > 1)
+                                <ul class="space-y-1.5">
+                                    @foreach ($positions as $pos)
+                                        <li class="leading-snug">
+                                            <span class="block text-senat-ink">{{ $pos['role'] }}</span>
+                                            <span class="block text-[10px] font-normal text-slate-500">{{ $pos['organ'] }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                {{ $member['organ'] }}
+                            @endif
+                        </dd>
                     </div>
-                    <div>
-                        <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Afiliasi</dt>
-                        <dd class="mt-1.5 text-[11px] font-bold leading-snug text-senat-ink">Politeknik Negeri Semarang</dd>
+                    <div class="rounded-xl bg-[#f8fafc] p-3.5 border border-[#eef2f6]">
+                        <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Jurusan &amp; Afiliasi</dt>
+                        <dd class="mt-1 text-[11px] font-bold leading-snug text-senat-ink">
+                            @if (! empty($member['jurusan']))
+                                {{ $member['jurusan'] }}<br><span class="font-normal text-slate-500">Politeknik Negeri Semarang</span>
+                            @else
+                                Politeknik Negeri Semarang
+                            @endif
+                        </dd>
                     </div>
-                    <div>
-                        <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Status Keanggotaan</dt>
-                        <dd class="mt-1.5 text-[11px] font-bold leading-snug text-senat-ink">Aktif</dd>
+                    <div class="rounded-xl bg-[#f8fafc] p-3.5 border border-[#eef2f6]">
+                        <dt class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-muted">Masa Bakti</dt>
+                        <dd class="mt-1 text-[11px] font-bold leading-snug text-emerald-700">{{ $period }}</dd>
                     </div>
                 </dl>
             </div>
@@ -113,66 +160,60 @@
 
     {{-- Back to structure + ringkasan jabatan --}}
     <div class="senat-shell mt-8">
-        <div class="grid gap-6 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-start">
+        <div class="grid items-center gap-5 lg:grid-cols-[286px_minmax(0,1fr)]">
+            <div class="hidden lg:block" aria-hidden="true"></div>
+            <div class="flex items-center gap-3">
+                <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
+                <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-body">Data Jabatan</span>
+                <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
+            </div>
+        </div>
 
-            <a href="{{ route('public.profile.structure') }}"
-               class="block rounded-[12px] border border-[#3d78b0] bg-[#0a4073] p-5 transition-colors duration-150 hover:bg-[#083458]">
-                <span class="block text-[9px] font-bold uppercase tracking-[0.08em] text-[#a8cfff]">Bagan Organisasi</span>
-                <span class="mt-2 block text-[12px] font-bold text-white">‹&nbsp; Kembali ke Struktur</span>
-            </a>
+        <div class="mt-4 grid gap-5 lg:grid-cols-[286px_minmax(0,1fr)] lg:items-stretch">
+            <div class="flex flex-col gap-3">
+                <a href="{{ route('public.profile.structure') }}"
+                   class="flex flex-1 flex-col justify-center rounded-[14px] border border-senat-hero bg-senat-hero p-5 text-white shadow-sm transition-all duration-150 hover:bg-senat-primary hover:shadow-md">
+                    <span class="block text-[9px] font-bold uppercase tracking-[0.08em] text-[#add4ff]">Bagan Organisasi</span>
+                    <span class="mt-1.5 block text-[13px] font-bold text-white">‹&nbsp; Kembali ke Struktur</span>
+                </a>
+                <a href="{{ route('public.directory') }}"
+                   class="flex items-center justify-center rounded-[14px] border border-[#d9e3f0] bg-white px-4 py-3.5 text-center text-xs font-semibold text-senat-body shadow-sm transition-colors hover:border-senat-link hover:text-senat-link">
+                    Direktori Komisi &amp; Anggota ›
+                </a>
+            </div>
 
-            <div>
-                <div class="flex items-center gap-3">
-                    <span class="h-[4px] w-[80px] rounded-[2px] bg-senat-orange" aria-hidden="true"></span>
-                    <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
-                    <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-senat-body">Data Jabatan</span>
-                    <span class="h-px flex-1 bg-[#d1deed]" aria-hidden="true"></span>
-                </div>
-
-                <p class="mt-6 text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Informasi Jabatan</p>
-                <h2 class="mt-2 text-[24px] font-bold leading-tight text-senat-ink">Profil Ringkas Anggota</h2>
-                <p class="mt-2 text-[11px] text-senat-body">Informasi jabatan yang relevan pada struktur Senat Akademik.</p>
-
-                <div class="mt-6 grid gap-4 sm:grid-cols-3">
-                    <x-senat.stat label="Masa Jabatan" :value="$period" hint="Periode keanggotaan Senat" />
-                    <x-senat.stat label="Jabatan" :value="$member['role']" hint="Jabatan pada struktur Senat" />
-                    <x-senat.stat label="Afiliasi" value="Politeknik Negeri Semarang" hint="Institusi asal" />
-                </div>
-
-                <div class="mt-5 rounded-[14px] border border-[#d9e3f0] bg-white p-6 sm:p-8">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">Ringkasan Peran</p>
-                    <h3 class="mt-3 text-[20px] font-bold leading-snug text-senat-ink">{{ $member['role'] }}</h3>
-                    <p class="mt-3 max-w-[826px] text-[12px] leading-relaxed text-senat-body">{{ $member['focus'] }}</p>
-                    <p class="mt-5 text-[10px] font-medium text-senat-link">Status keanggotaan: Aktif</p>
-                </div>
+            <div class="flex flex-col justify-center rounded-[16px] border border-[#d9e3f0] bg-white p-6 sm:p-8 shadow-sm">
+                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-link">Ringkasan Peran</p>
+                <h3 class="mt-2 text-[20px] font-bold leading-snug text-senat-ink">{{ $member['role'] }}</h3>
+                <p class="mt-3 max-w-[826px] text-[13px] leading-relaxed text-senat-body">{{ $member['focus'] }}</p>
             </div>
         </div>
     </div>
 
     {{-- Mandat & tanggung jawab --}}
-    <section class="senat-shell mt-14">
-        <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-senat-primary">Mandat &amp; Tanggung Jawab</p>
+    <section class="senat-shell mt-12">
+        <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-senat-link">Mandat &amp; Tanggung Jawab</p>
         <h2 class="mt-2 text-[20px] font-bold text-senat-ink">Tugas Pokok &amp; Fungsi (TUPOKSI)</h2>
-        <p class="mt-3 max-w-[1264px] text-[13.5px] leading-relaxed text-senat-muted">
+        <p class="mt-2 max-w-[1264px] text-[13px] leading-relaxed text-senat-muted">
             @if ($isCommitteeMember)
                 Rincian tugas pokok, fungsi, dan wewenang {{ $committeeLabel }} — {{ $committee['name'] }}.
             @else
-                Rincian kedudukan, jabatan, dan data kepegawaian pada struktur Senat Akademik berdasarkan Statuta Polines.
+                Rincian kedudukan, jabatan, dan tata kerja normatif pada struktur Senat Akademik Politeknik Negeri Semarang.
             @endif
         </p>
 
         <div class="mt-6 grid gap-5 lg:grid-cols-3">
             @if ($isCommitteeMember)
-                <div class="rounded-[8px] border border-[#e2e8f0] bg-white p-6">
-                    <span class="inline-flex items-center rounded-[4px] bg-senat-badgeBg px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.04em] text-senat-hero">Fokus Komisi</span>
-                    <p class="mt-4 text-[16px] font-bold text-[#0f172a]">Fokus Kerja {{ $committeeLabel }}</p>
-                    <p class="mt-3 text-[12.5px] leading-relaxed text-[#475569]">{{ $committee['focus'] }}</p>
+                <div class="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                    <span class="inline-flex items-center rounded-[6px] bg-senat-badgeBg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.04em] text-senat-link">Fokus Komisi</span>
+                    <p class="mt-4 text-[15px] font-bold text-[#0f172a]">Fokus Kerja {{ $committeeLabel }}</p>
+                    <p class="mt-2 text-[12px] leading-relaxed text-slate-600">{{ $committee['focus'] }}</p>
                 </div>
 
-                <div class="rounded-[8px] border border-[#e2e8f0] bg-white p-6">
-                    <span class="inline-flex items-center rounded-[4px] bg-senat-badgeBg px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.04em] text-senat-hero">Pimpinan Komisi</span>
-                    <p class="mt-4 text-[16px] font-bold text-[#0f172a]">Ketua &amp; Sekretaris</p>
-                    <dl class="mt-3 space-y-3 text-[12.5px] leading-relaxed text-[#475569]">
+                <div class="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                    <span class="inline-flex items-center rounded-[6px] bg-senat-badgeBg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.04em] text-senat-link">Pimpinan Komisi</span>
+                    <p class="mt-4 text-[15px] font-bold text-[#0f172a]">Ketua &amp; Sekretaris</p>
+                    <dl class="mt-2 space-y-2.5 text-[12px] leading-relaxed text-slate-600">
                         @foreach ($komisiPimpinan as $slot)
                             <div>
                                 <dt class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">{{ $slot['label'] }}</dt>
@@ -188,18 +229,18 @@
                     </dl>
                 </div>
 
-                <div class="rounded-[8px] border border-[#e2e8f0] bg-white p-6 lg:col-span-3">
-                    <span class="inline-flex items-center rounded-[4px] bg-senat-badgeBg px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.04em] text-senat-hero">Tupoksi Komisi</span>
-                    <p class="mt-4 text-[16px] font-bold text-[#0f172a]">Tugas Pokok &amp; Fungsi {{ $committeeLabel }}</p>
-                    <p class="mt-3 max-w-[1180px] text-[12.5px] leading-relaxed text-[#475569]">
+                <div class="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-sm lg:col-span-3">
+                    <span class="inline-flex items-center rounded-[6px] bg-senat-badgeBg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.04em] text-senat-link">Tupoksi Komisi</span>
+                    <p class="mt-4 text-[15px] font-bold text-[#0f172a]">Tugas Pokok &amp; Fungsi {{ $committeeLabel }}</p>
+                    <p class="mt-2 max-w-[1180px] text-[12.5px] leading-relaxed text-slate-600">
                         {{ $committee['tupoksi'] ?? 'Rincian tupoksi komisi ini belum tersedia pada dokumen Sekretariat Senat.' }}
                     </p>
                 </div>
             @else
-                <div class="rounded-[8px] border border-[#e2e8f0] bg-white p-6">
-                    <span class="inline-flex items-center rounded-[4px] bg-senat-badgeBg px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.04em] text-senat-hero">Kedudukan</span>
-                    <p class="mt-4 text-[16px] font-bold text-[#0f172a]">Organ &amp; Afiliasi</p>
-                    <dl class="mt-3 space-y-3 text-[12.5px] leading-relaxed text-[#475569]">
+                <div class="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                    <span class="inline-flex items-center rounded-[6px] bg-senat-badgeBg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.04em] text-senat-link">Kedudukan</span>
+                    <p class="mt-4 text-[15px] font-bold text-[#0f172a]">Organ &amp; Afiliasi</p>
+                    <dl class="mt-2 space-y-2 text-[12px] leading-relaxed text-slate-600">
                         <div>
                             <dt class="text-[10px] font-bold uppercase tracking-[0.06em] text-senat-muted">Organ</dt>
                             <dd class="mt-0.5 font-semibold text-senat-ink">{{ $member['organ'] }}</dd>
@@ -215,22 +256,22 @@
                     </dl>
                 </div>
 
-                <div class="rounded-[8px] border border-[#e2e8f0] bg-white p-6">
-                    <span class="inline-flex items-center rounded-[4px] bg-senat-badgeBg px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.04em] text-senat-hero">Jabatan</span>
-                    <p class="mt-4 text-[16px] font-bold text-[#0f172a]">{{ $member['role'] }}</p>
-                    <p class="mt-3 text-[12.5px] leading-relaxed text-[#475569]">
+                <div class="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                    <span class="inline-flex items-center rounded-[6px] bg-senat-badgeBg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.04em] text-senat-link">Jabatan</span>
+                    <p class="mt-4 text-[15px] font-bold text-[#0f172a]">{{ $member['role'] }}</p>
+                    <p class="mt-2 text-[12px] leading-relaxed text-slate-600">
                         Tercatat pada struktur {{ $member['organ'] }} Senat Akademik Politeknik Negeri Semarang.
                     </p>
                 </div>
 
-                <div class="rounded-[8px] border border-[#e2e8f0] bg-white p-6">
-                    <span class="inline-flex items-center rounded-[4px] bg-senat-badgeBg px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.04em] text-senat-hero">Data Kepegawaian</span>
-                    <p class="mt-4 text-[16px] font-bold text-[#0f172a]">NIP &amp; Status</p>
-                    <p class="mt-3 text-[12.5px] leading-relaxed text-[#475569]">
+                <div class="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-sm">
+                    <span class="inline-flex items-center rounded-[6px] bg-senat-badgeBg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.04em] text-senat-link">Data Kepegawaian</span>
+                    <p class="mt-4 text-[15px] font-bold text-[#0f172a]">NIP &amp; Status</p>
+                    <p class="mt-2 text-[12px] leading-relaxed text-slate-600">
                         @if (! empty($member['nip']))
-                            NIP {{ $member['nip'] }} &middot; Status keanggotaan: Aktif
+                            NIP {{ $member['nip'] }} &middot; Status: Aktif
                         @else
-                            NIP belum tersedia pada dokumen Sekretariat. Status keanggotaan: Aktif
+                            NIP tercatat pada pangkalan data Sekretariat Senat &middot; Status: Aktif
                         @endif
                     </p>
                 </div>
@@ -238,19 +279,19 @@
         </div>
     </section>
 
-    {{-- Rekan sekomisi --}}
+    {{-- Rekan sekomisi / Rekan Pimpinan --}}
     @if (count($peers))
-        <section class="senat-shell mt-14">
+        <section class="senat-shell mt-12">
             <div class="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-orange">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-senat-link">
                         @if ($isCommitteeMember)
-                            Rekan Sekomisi
+                            {{ $isBpMember ? 'Rekan Pengurus BP (Badan Pekerja)' : 'Rekan Sekomisi' }}
                         @else
-                            Rekan Pimpinan &amp; BPH
+                            Rekan Pimpinan &amp; BP
                         @endif
                     </p>
-                    <h2 class="mt-2 text-[21px] font-bold text-senat-ink">
+                    <h2 class="mt-2 text-[20px] font-bold text-senat-ink">
                         {{ $isCommitteeMember ? $committee['name'] : $member['organ'] }}
                     </h2>
                 </div>
@@ -259,14 +300,34 @@
 
             <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($peers as $peer)
+                    @php
+                        $peerPhoto = $peer['photo'] ?? null;
+                        if (empty($peerPhoto) && ! empty($peer['nip'])) {
+                            $peerCand = 'images/members/' . $peer['nip'] . '.jpg';
+                            if (file_exists(public_path($peerCand)) || file_exists(base_path('../Backend-Senat-Polines/public/' . $peerCand))) {
+                                $peerPhoto = $peerCand;
+                            }
+                        }
+                        $hasPeerPhoto = ! empty($peerPhoto) && (
+                            file_exists(public_path($peerPhoto)) || 
+                            file_exists(base_path('../Backend-Senat-Polines/public/' . $peerPhoto))
+                        );
+                    @endphp
                     <a href="{{ route('public.directory.member', $peer['slug']) }}"
-                       class="group flex items-start gap-4 rounded-[13px] border border-[#d6e0ed] bg-white p-5 transition-colors duration-150 hover:border-senat-link">
-                        <span class="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[14px] font-bold text-senat-link">
-                            {{ $initialsOf($peer['name']) }}
-                        </span>
+                       class="group flex items-start gap-4 rounded-[14px] border border-[#d6e0ed] bg-white p-5 shadow-sm transition-all duration-150 hover:border-senat-link hover:shadow-md">
+                        @if ($hasPeerPhoto)
+                            <img src="{{ asset($peerPhoto) }}" alt="{{ $peer['name'] }}" class="h-[52px] w-[52px] shrink-0 rounded-full border border-[#bdd4eb] object-cover object-top shadow-xs">
+                        @else
+                            <span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-[#bdd4eb] bg-senat-badgeBg text-[14px] font-bold text-senat-link transition-colors group-hover:bg-senat-hero group-hover:text-white">
+                                {{ $initialsOf($peer['name']) }}
+                            </span>
+                        @endif
                         <span class="min-w-0">
                             <span class="block text-[9px] font-bold uppercase tracking-[0.06em] text-senat-link">{{ strtoupper($peer['role']) }}</span>
-                            <span class="mt-1 block text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-link">{{ $peer['name'] }}</span>
+                            <span class="mt-1 block text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-link transition-colors">{{ $peer['name'] }}</span>
+                            @if (! empty($peer['nip']))
+                                <span class="mt-0.5 block font-mono text-[10.5px] text-slate-500">NIP {{ $peer['nip'] }}</span>
+                            @endif
                             <span class="mt-1 block text-[10px] text-senat-body">{{ $peer['organ'] }}</span>
                         </span>
                     </a>
@@ -276,11 +337,11 @@
     @endif
 
     {{-- Bottom bar --}}
-    <div class="senat-shell mt-14">
+    <div class="senat-shell mt-12 pb-10">
         <div class="flex flex-col gap-3 border-t border-senat-line pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-[11px] text-senat-body">Direktori anggota menampilkan informasi jabatan yang dikelola Sekretariat Senat.</p>
+            <p class="text-[11px] text-senat-body">Direktori anggota menampilkan informasi jabatan resmi yang dikelola Sekretariat Senat Akademik Polines.</p>
             <a href="{{ route('public.directory') }}" class="text-[11px] font-bold text-senat-link hover:underline">Kembali ke Direktori Komisi &nbsp;›</a>
         </div>
     </div>
-    <div class="pb-4"></div>
+
 @endsection

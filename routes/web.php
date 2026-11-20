@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\RapatWorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,6 +21,26 @@ Route::get('/profil/struktur-organisasi', [PublicController::class, 'structure']
 Route::get('/direktori-komisi', [PublicController::class, 'directory'])->name('public.directory');
 Route::get('/direktori-komisi/{slug}', [PublicController::class, 'member'])->name('public.directory.member');
 
+// Fallback penyaji aset foto anggota (mendukung penyimpanan di folder frontend maupun backend)
+Route::get('/images/members/{filename}', function (string $filename) {
+    $path = public_path('images/members/' . $filename);
+    if (file_exists($path)) {
+        return response()->file($path);
+    }
+    $backendPath = base_path('../Backend-Senat-Polines/public/images/members/' . $filename);
+    if (file_exists($backendPath)) {
+        return response()->file($backendPath);
+    }
+    abort(404);
+})->where('filename', '.*');
+
+// Manajemen anggota komisi — dialihkan/dikhususkan ke Admin Sekretariat (/admin?tab=Direktori+Komisi+%26+Anggota)
+Route::middleware(['portal.auth', 'portal.role:admin'])->group(function (): void {
+    Route::post('/direktori-komisi/anggota', [PublicController::class, 'storeMember'])->name('public.directory.store');
+    Route::put('/direktori-komisi/anggota/{id}', [PublicController::class, 'updateMember'])->name('public.directory.update');
+    Route::delete('/direktori-komisi/anggota/{id}', [PublicController::class, 'destroyMember'])->name('public.directory.destroy');
+});
+
 // 05A / 05B / 05C — Produk Hukum
 Route::get('/regulasi', [PublicController::class, 'regulations'])->name('public.regulations');
 Route::get('/regulasi/keputusan-senat', [PublicController::class, 'decrees'])->name('public.regulations.decrees');
@@ -27,6 +48,9 @@ Route::get('/regulasi/standar-pedoman', [PublicController::class, 'standards'])-
 
 // 06 / 09 — Kanal Aspirasi & Pelacak
 Route::get('/aspirasi', [PublicController::class, 'aspirations'])->name('public.aspirations');
+Route::post('/aspirasi/send-otp', [PublicController::class, 'sendOtp'])->name('public.aspirations.send-otp');
+Route::post('/aspirasi/verify-otp', [PublicController::class, 'verifyOtp'])->name('public.aspirations.verify-otp');
+Route::post('/aspirasi/kirim', [PublicController::class, 'submitAspiration'])->name('public.aspirations.submit');
 Route::get('/aspirasi/track', [PublicController::class, 'trackAspiration'])->name('public.aspirations.track');
 Route::get('/aspirasi/track/{ticket}', [PublicController::class, 'trackAspiration'])->name('public.aspirations.show');
 
@@ -40,46 +64,78 @@ Route::get('/berita/{slug}', [PublicController::class, 'newsShow'])->name('publi
 
 /*
 |--------------------------------------------------------------------------
-| Portal Internal — Figma section 2090:2 (anggota 12x, sekretariat 13x)
+| Portal Internal — Autentikasi & Rute Terproteksi
 |--------------------------------------------------------------------------
 */
+Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('logout');
+
 Route::prefix('portal')->group(function (): void {
-    // 11 — Login Portal
-    Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
+    // Rute Tamu (Hanya dapat diakses jika belum login)
+    Route::middleware('portal.guest')->group(function (): void {
+        Route::get('/login', [PortalController::class, 'login'])->name('portal.login');
+        Route::post('/login', [PortalController::class, 'authenticate'])
+            ->middleware('throttle:30,1')
+            ->name('portal.login.submit');
+        Route::get('/login/google', [PortalController::class, 'redirectToGoogle'])
+            ->name('portal.login.google');
+        Route::get('/login/google/callback', [PortalController::class, 'handleGoogleCallback'])
+            ->name('portal.login.google.callback');
+    });
 
-    // 12 — Anggota Senat
-    Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
-    Route::get('/agenda', [PortalController::class, 'agenda'])->name('portal.agenda');
-    Route::get('/notulensi', [PortalController::class, 'minutes'])->name('portal.minutes');
-    Route::get('/e-voting', [PortalController::class, 'voting'])->name('portal.voting');
-    Route::post('/e-voting/vote', [PortalController::class, 'submitVote'])->name('portal.voting.submit');
-    Route::get('/aspirasi', [PortalController::class, 'aspirations'])->name('portal.aspirations');
-    Route::get('/dokumen', [PortalController::class, 'documents'])->name('portal.documents');
-    Route::get('/profil', [PortalController::class, 'profile'])->name('portal.profile');
-    Route::post('/presensi/submit', [PortalController::class, 'submitPresensi'])
-        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
-        ->name('portal.presensi.submit');
+    Route::match(['get', 'post'], '/logout', [PortalController::class, 'logout'])->name('portal.logout');
 
-    // Layar operasional lama (dipertahankan)
-    Route::get('/attendance', [PortalController::class, 'memberAttendance'])->name('portal.attendance');
-    Route::get('/session', [PortalController::class, 'adminMeetingSession'])->name('portal.session');
+    // Rute Terproteksi — Wajib Login (Anggota & Admin)
+    Route::middleware('portal.auth')->group(function (): void {
+        // 12 — Anggota Senat
+        Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
+        Route::post('/berita/tulis', [PortalController::class, 'storePost'])->name('portal.news.store');
+        Route::get('/agenda', [PortalController::class, 'agenda'])->name('portal.agenda');
+        Route::get('/notulensi', [PortalController::class, 'minutes'])->name('portal.minutes');
+        Route::get('/e-voting', [PortalController::class, 'voting'])->name('portal.voting');
+        Route::post('/e-voting/vote', [PortalController::class, 'submitVote'])->name('portal.voting.submit');
+        Route::get('/aspirasi', [PortalController::class, 'aspirations'])->name('portal.aspirations');
+        Route::get('/dokumen', [PortalController::class, 'documents'])->name('portal.documents');
+        Route::get('/profil', [PortalController::class, 'profile'])->name('portal.profile');
+        Route::post('/presensi/submit', [PortalController::class, 'submitPresensi'])->name('portal.presensi.submit');
 
-    // 13 — Sekretariat (dialihkan ke /admin sesuai arsitektur panel terpadu)
-    Route::prefix('sekretariat')->group(function (): void {
-        Route::get('/dashboard', fn () => redirect()->route('admin.preview', ['tab' => 'Dashboard Rapat']))->name('portal.secretariat.dashboard');
-        Route::get('/sidang', fn () => redirect()->route('admin.preview', ['tab' => 'Jadwal & Agenda Sidang']))->name('portal.secretariat.sessions');
-        Route::get('/presensi', fn () => redirect()->route('admin.preview', ['tab' => 'Presensi & Verifikasi QR']))->name('portal.secretariat.attendance');
-        Route::get('/notulensi', fn () => redirect()->route('admin.preview', ['tab' => 'Risalah & Notulensi Sidang']))->name('portal.secretariat.minutes');
-        Route::get('/e-voting', fn () => redirect()->route('admin.preview', ['tab' => 'E-Voting & Pengambilan Keputusan']))->name('portal.secretariat.voting');
-        Route::get('/aspirasi', fn () => redirect()->route('admin.preview', ['tab' => 'Pusat Aspirasi & Tindak Lanjut']))->name('portal.secretariat.aspirations');
-        Route::get('/publikasi', fn () => redirect()->route('admin.preview', ['tab' => 'Manajemen Berita & Siaran Pers']))->name('portal.secretariat.publications');
+        // Layar operasional lama
+        Route::get('/attendance', [PortalController::class, 'memberAttendance'])->name('portal.attendance');
+
+        // Workspace rapat anggota: catatan, lampiran notulensi, berbagi dokumen/tautan
+        Route::get('/attendance/{rapat}/workspace', [RapatWorkspaceController::class, 'show'])
+            ->name('portal.attendance.workspace');
+        Route::post('/attendance/{rapat}/catatan', [RapatWorkspaceController::class, 'simpanCatatan'])
+            ->name('portal.attendance.catatan');
+        Route::post('/attendance/{rapat}/lampiran', [RapatWorkspaceController::class, 'unggahLampiran'])
+            ->name('portal.attendance.lampiran.store');
+        Route::delete('/attendance/{rapat}/lampiran/{lampiran}', [RapatWorkspaceController::class, 'hapusLampiran'])
+            ->name('portal.attendance.lampiran.destroy');
+        Route::post('/attendance/{rapat}/berbagi', [RapatWorkspaceController::class, 'bagikan'])
+            ->name('portal.attendance.berbagi.store');
+        Route::delete('/attendance/{rapat}/berbagi/{berbagi}', [RapatWorkspaceController::class, 'hapusBerbagi'])
+            ->name('portal.attendance.berbagi.destroy');
+
+        Route::get('/session', [PortalController::class, 'adminMeetingSession'])->name('portal.session');
+
+        // 13 — Sekretariat (dialihkan ke /admin) — Khusus role: admin
+        Route::prefix('sekretariat')->middleware('portal.role:admin')->group(function (): void {
+            Route::get('/dashboard', fn () => redirect()->route('admin.preview', ['tab' => 'Dashboard Rapat']))->name('portal.secretariat.dashboard');
+            Route::get('/sidang', fn () => redirect()->route('admin.preview', ['tab' => 'Jadwal & Agenda Sidang']))->name('portal.secretariat.sessions');
+            Route::get('/presensi', fn () => redirect()->route('admin.preview', ['tab' => 'Presensi & Verifikasi QR']))->name('portal.secretariat.attendance');
+            Route::get('/notulensi', fn () => redirect()->route('admin.preview', ['tab' => 'Risalah & Notulensi Sidang']))->name('portal.secretariat.minutes');
+            Route::get('/e-voting', fn () => redirect()->route('admin.preview', ['tab' => 'E-Voting & Pengambilan Keputusan']))->name('portal.secretariat.voting');
+            Route::get('/aspirasi', fn () => redirect()->route('admin.preview', ['tab' => 'Pusat Aspirasi & Tindak Lanjut']))->name('portal.secretariat.aspirations');
+            Route::get('/publikasi', fn () => redirect()->route('admin.preview', ['tab' => 'Manajemen Berita & Siaran Pers']))->name('portal.secretariat.publications');
+        });
     });
 });
 
-// Admin Sekretariat — preview UI (lihat docs/PRD-admin-panel.md)
-Route::get('/admin', \App\Livewire\AdminPreview::class)->name('admin.preview');
+// Admin Sekretariat — Khusus role: admin
+Route::get('/admin', \App\Livewire\AdminPreview::class)
+    ->middleware(['portal.auth', 'portal.role:admin'])
+    ->name('admin.preview');
 
 // API Proxy Frontend -> Backend untuk Chatbot Aspirasi
 Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'send'])
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->middleware('throttle:20,1')
     ->name('api.chatbot.send');

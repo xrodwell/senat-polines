@@ -30,7 +30,9 @@
 
 @if ($href && ! $disabled && ! $loading)
     <a href="{{ $href }}" {{ $attributes->class($classes) }}>
-        @if ($icon)<span aria-hidden="true">{{ $icon }}</span>@endif
+        @if ($icon)
+            <x-senat.icon :name="$icon" class="h-4 w-4 shrink-0" />
+        @endif
         {{ $slot }}
         @if ($trailing)<span aria-hidden="true">{{ $trailing }}</span>@endif
     </a>
@@ -42,7 +44,7 @@
                 <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
         @elseif ($icon)
-            <span aria-hidden="true">{{ $icon }}</span>
+            <x-senat.icon :name="$icon" class="h-4 w-4 shrink-0" />
         @endif
         {{ $slot }}
         @if ($trailing)<span aria-hidden="true">{{ $trailing }}</span>@endif
