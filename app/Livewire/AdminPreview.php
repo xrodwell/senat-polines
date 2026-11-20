@@ -139,6 +139,8 @@ class AdminPreview extends Component
             $this->loadStructureFromApi();
         } elseif ($this->active === 'Pusat Aspirasi & Tindak Lanjut') {
             $this->loadAspirationsFromApi();
+        } elseif ($this->active === 'Direktori Komisi & Anggota') {
+            $this->loadPeriodeList();
         }
     }
 
@@ -172,6 +174,11 @@ class AdminPreview extends Component
         if ($this->active === 'E-Voting & Pengambilan Keputusan') {
             $this->loadVotingData();
         }
+
+        if ($this->active === 'Direktori Komisi & Anggota') {
+            $this->selectedPeriodeId = null;
+            $this->loadPeriodeList();
+        }
     }
 
     public function getBackendUrl(): string
@@ -202,7 +209,9 @@ class AdminPreview extends Component
         $archives = $archivesRepo->all();
         $regulations = $regulationsRepo->all();
         $allPosts = $postsRepo->all();
-        $committees = $committeesRepo->all();
+        $committees = ($this->selectedPeriodeId && $committeesRepo instanceof \App\Repositories\Api\ApiCommitteeRepository)
+            ? $committeesRepo->all($this->selectedPeriodeId)
+            : $committeesRepo->all();
         $mediaList = $this->getMediaList();
 
         // Filter berita berdasarkan pencarian & kategori jika diisi
@@ -341,6 +350,8 @@ class AdminPreview extends Component
             'posts' => $posts,
             'mediaList' => $mediaList,
             'committees' => $committees,
+            'periodeList' => $this->periodeList,
+            'selectedPeriode' => collect($this->periodeList)->firstWhere('id_periode_senat', $this->selectedPeriodeId),
             'stats' => $stats,
             'filteredAnggota' => $filteredAnggota,
         ])->layout('layouts.admin-preview');
