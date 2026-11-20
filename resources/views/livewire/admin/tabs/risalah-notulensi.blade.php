@@ -18,16 +18,13 @@
                             </div>
                             <div class="flex shrink-0 flex-wrap items-center gap-2.5">
                                 <button type="button" wire:click="loadNotulensiData"
-                                        class="inline-flex items-center gap-1.5 rounded-[10px] border border-senat-border bg-white px-3.5 py-2 text-[12.5px] font-medium text-senat-body transition hover:bg-senat-badgeBg hover:text-senat-ink">
-                                    <x-senat.icon name="check" class="h-3.5 w-3.5" />
-                                    <span>Segarkan Data</span>
+                                        class="inline-flex h-9 items-center justify-center rounded-lg border border-senat-border bg-white px-4 text-[12.5px] font-semibold text-senat-body transition hover:bg-senat-badgeBg hover:text-senat-ink">
+                                    Segarkan Data
                                 </button>
-                                <x-senat.button variant="primary" type="button" wire:click="openNotulensiForm">
-                                    <span class="flex items-center gap-1.5">
-                                        <x-senat.icon name="file-text" class="h-4 w-4" />
-                                        <span>+ Catat Notulensi Baru</span>
-                                    </span>
-                                </x-senat.button>
+                                <button type="button" wire:click="openNotulensiForm"
+                                        class="inline-flex h-9 items-center justify-center rounded-lg bg-senat-primary px-4 text-[12.5px] font-semibold text-white transition hover:bg-senat-link">
+                                    + Catat Notulensi Baru
+                                </button>
                             </div>
                         </div>
 
@@ -61,19 +58,14 @@
                     {{-- Notulensi Otomatis: rekaman audio/video → transkrip → draf notulensi --}}
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                         <div class="flex flex-wrap items-start justify-between gap-3">
-                            <div class="flex items-start gap-3">
-                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-senat-link text-white">
-                                    <x-senat.icon name="upload" class="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <h3 class="text-[16px] font-bold text-senat-ink">Notulensi Otomatis dari Rekaman</h3>
-                                    <p class="mt-0.5 max-w-[620px] text-[12px] leading-relaxed text-senat-muted">
-                                        Unggah rekaman rapat (audio atau video). Sistem mentranskripsi lalu menyusun draf notulensi
-                                        secara otomatis. Maksimal <strong>1 GB</strong> dan <strong>4 jam</strong> per rekaman —
-                                        untuk rapat panjang unggah audio saja (M4A/MP3), bukan video.
-                                        Rekaman asli disimpan 90 hari, transkrip &amp; notulensi permanen.
-                                    </p>
-                                </div>
+                            <div>
+                                <h3 class="text-[16px] font-bold text-senat-ink">Notulensi Otomatis dari Rekaman</h3>
+                                <p class="mt-0.5 max-w-[680px] text-[12px] leading-relaxed text-senat-muted">
+                                    Unggah rekaman rapat (audio atau video). Sistem mentranskripsi lalu menyusun draf notulensi
+                                    secara otomatis. Maksimal <strong>1 GB</strong> dan <strong>4 jam</strong> per rekaman —
+                                    untuk rapat panjang unggah audio saja (M4A/MP3), bukan video.
+                                    Rekaman asli disimpan 90 hari, transkrip &amp; notulensi permanen.
+                                </p>
                             </div>
                             <x-senat.badge state="info">Whisper + Gemini</x-senat.badge>
                         </div>
@@ -89,7 +81,7 @@
                                     <label class="block">
                                         <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Rapat</span>
                                         <select wire:model.live="rekamanRapatId"
-                                                class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-2 text-[13px] text-senat-ink">
+                                                class="mt-1 h-[38px] w-full rounded-lg border border-senat-border bg-white px-3 text-[13px] text-senat-ink">
                                             @foreach ($rapatList as $r)
                                                 <option value="{{ $r['id_rapat'] ?? '' }}">{{ $r['nama_agenda'] ?? ('Rapat #' . ($r['id_rapat'] ?? '')) }}</option>
                                             @endforeach
@@ -100,14 +92,13 @@
                                         <span class="text-[11px] font-semibold uppercase tracking-wide text-senat-muted">Berkas Rekaman</span>
                                         <input type="file" wire:model="rekamanFile"
                                                accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.mp4,.mov,.mkv,.webm,.3gp"
-                                               class="mt-1 w-full rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12.5px] text-senat-body file:mr-3 file:rounded-md file:border-0 file:bg-senat-badgeBg file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-senat-ink">
+                                               class="mt-1 h-[38px] w-full rounded-lg border border-senat-border bg-white px-3 py-1 text-[12.5px] text-senat-body file:mr-3 file:rounded-md file:border-0 file:bg-senat-badgeBg file:px-3 file:py-1 file:text-[12px] file:font-semibold file:text-senat-ink">
                                     </label>
                                 </div>
 
                                 <div class="flex items-center gap-2">
                                     <button type="button" wire:click="mulaiRekaman" wire:loading.attr="disabled" wire:target="rekamanFile,mulaiRekaman" :disabled="isUploading"
-                                            class="inline-flex items-center gap-1.5 rounded-[10px] bg-senat-link px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
-                                        <x-senat.icon name="upload" class="h-4 w-4" />
+                                            class="inline-flex h-[38px] items-center justify-center rounded-lg bg-senat-link px-4 text-[12.5px] font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
                                         <span x-show="!isUploading" wire:loading.remove wire:target="mulaiRekaman">Proses Jadi Notulensi</span>
                                         <span x-show="isUploading" x-cloak>Mengunggah Berkas&hellip;</span>
                                         <span wire:loading wire:target="mulaiRekaman">Memproses&hellip;</span>
@@ -184,8 +175,8 @@
                         @if ($rekamanNotulen !== '')
                             <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <p class="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-emerald-800">
-                                        <x-senat.icon name="check" class="h-4 w-4" /> Draf notulensi siap diperiksa
+                                    <p class="text-[12.5px] font-bold text-emerald-800">
+                                        Draf notulensi siap diperiksa
                                     </p>
                                     <span class="font-mono text-[11px] text-emerald-700">
                                         {{ $rekamanDurasi > 0 ? floor($rekamanDurasi / 60) . ' mnt ' . ($rekamanDurasi % 60) . ' dtk audio' : '' }}
@@ -198,21 +189,21 @@
 
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     <button type="button" wire:click="suntingHasilRekaman"
-                                            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-[12px] font-semibold text-white hover:opacity-90">
-                                        <x-senat.icon name="edit" class="h-3.5 w-3.5" /> Sunting &amp; Simpan ke Notulensi
+                                            class="inline-flex h-9 items-center justify-center rounded-lg bg-emerald-600 px-3.5 text-[12px] font-semibold text-white hover:opacity-90">
+                                        Sunting &amp; Simpan ke Notulensi
                                     </button>
 
                                     @if ($rekamanNotulensiId)
                                         <a href="{{ $this->pdfUrl($rekamanNotulensiId) }}" target="_blank" rel="noopener"
-                                           class="inline-flex items-center gap-1.5 rounded-lg bg-senat-link px-3.5 py-2 text-[12px] font-semibold text-white hover:opacity-90">
-                                            <x-senat.icon name="file-text" class="h-3.5 w-3.5" /> Unduh Notulen PDF
+                                           class="inline-flex h-9 items-center justify-center rounded-lg bg-senat-link px-3.5 text-[12px] font-semibold text-white hover:opacity-90">
+                                            Unduh Notulen PDF
                                         </a>
                                     @endif
 
                                     @if ($rekamanAktifId)
                                         <button type="button" wire:click="hapusRekaman({{ $rekamanAktifId }})"
-                                                class="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-[12px] font-semibold text-rose-700 hover:bg-rose-50">
-                                            <x-senat.icon name="trash" class="h-3.5 w-3.5" /> Hapus Rekaman
+                                                class="inline-flex h-9 items-center justify-center rounded-lg border border-rose-300 bg-white px-3.5 text-[12px] font-semibold text-rose-700 hover:bg-rose-50">
+                                            Hapus Rekaman
                                         </button>
                                     @endif
                                 </div>
@@ -256,16 +247,11 @@
                     @if ($isFormOpen)
                         <section class="rounded-[14px] border-2 border-senat-link/30 bg-white p-6 shadow-[0_4px_20px_0_rgba(13,26,41,0.08)]">
                             <div class="flex items-center justify-between border-b border-senat-sidebarLine pb-4">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-senat-link text-white">
-                                        <x-senat.icon name="file-text" class="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                        <h3 class="text-[16px] font-bold text-senat-ink">
-                                            {{ $selectedNotulensiId ? 'Edit Risalah / Notulensi Sidang (ID #' . $selectedNotulensiId . ')' : 'Pencatatan Notulensi Sidang Baru' }}
-                                        </h3>
-                                        <p class="text-[12px] text-senat-muted">Tersambung langsung ke database REST API Backend Senat Polines</p>
-                                    </div>
+                                <div>
+                                    <h3 class="text-[16px] font-bold text-senat-ink">
+                                        {{ $selectedNotulensiId ? 'Edit Risalah / Notulensi Sidang (ID #' . $selectedNotulensiId . ')' : 'Pencatatan Notulensi Sidang Baru' }}
+                                    </h3>
+                                    <p class="text-[12px] text-senat-muted">Tersambung langsung ke database REST API Backend Senat Polines</p>
                                 </div>
                                 <button type="button" wire:click="closeNotulensiForm" class="rounded-lg p-1.5 text-senat-muted hover:bg-senat-badgeBg hover:text-senat-ink">
                                     ✕
@@ -322,15 +308,14 @@
                                 </div>
 
                                 <div class="flex items-center justify-end gap-3 pt-2">
-                                    <x-senat.button variant="secondary" type="button" wire:click="closeNotulensiForm">
+                                    <button type="button" wire:click="closeNotulensiForm"
+                                            class="inline-flex h-9 items-center justify-center rounded-lg border border-senat-border bg-white px-4 text-[12.5px] font-semibold text-senat-body hover:bg-slate-50">
                                         Batal
-                                    </x-senat.button>
-                                    <x-senat.button variant="primary" type="submit">
-                                        <span class="flex items-center gap-1.5">
-                                            <x-senat.icon name="check" class="h-4 w-4" />
-                                            <span>{{ $selectedNotulensiId ? 'Perbarui Risalah' : 'Simpan Risalah ke Backend' }}</span>
-                                        </span>
-                                    </x-senat.button>
+                                    </button>
+                                    <button type="submit"
+                                            class="inline-flex h-9 items-center justify-center rounded-lg bg-senat-primary px-4 text-[12.5px] font-semibold text-white hover:bg-senat-link">
+                                        {{ $selectedNotulensiId ? 'Perbarui Risalah' : 'Simpan Risalah ke Backend' }}
+                                    </button>
                                 </div>
                             </form>
                         </section>
@@ -402,36 +387,33 @@
                                             {{ $item['rapat']['nama_agenda'] ?? 'Agenda Sidang Senat' }}
                                         </h3>
 
-                                        <div class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-senat-muted">
+                                        <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-senat-muted">
                                             @if (!empty($item['rapat']['tempat']))
-                                                <span class="flex items-center gap-1">
-                                                    <span>📍</span> {{ $item['rapat']['tempat'] }}
-                                                </span>
+                                                <span>{{ $item['rapat']['tempat'] }}</span>
+                                                <span aria-hidden="true">&middot;</span>
                                             @endif
-                                            <span class="flex items-center gap-1">
-                                                <span>👤</span> Notulis: <strong class="font-semibold text-senat-ink">{{ $item['user']['nama'] ?? 'Sekretariat' }}</strong>
-                                            </span>
+                                            <span>Notulis: <strong class="font-semibold text-senat-ink">{{ $item['user']['nama'] ?? 'Sekretariat' }}</strong></span>
                                         </div>
                                     </div>
 
                                     {{-- Actions Menu --}}
                                     <div class="flex items-center gap-2">
                                         <button type="button" wire:click="viewNotulensi({{ $item['id_notulensi'] }})"
-                                                class="rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12px] font-medium text-senat-ink hover:bg-senat-badgeBg">
+                                                class="inline-flex h-8 items-center justify-center rounded-lg border border-senat-border bg-white px-3 text-[12px] font-medium text-senat-ink hover:bg-senat-badgeBg">
                                             Lihat Penuh
                                         </button>
                                         <button type="button" wire:click="editNotulensi({{ $item['id_notulensi'] }})"
-                                                class="rounded-lg bg-senat-badgeBg px-3 py-1.5 text-[12px] font-medium text-senat-link hover:bg-senat-link hover:text-white">
+                                                class="inline-flex h-8 items-center justify-center rounded-lg bg-senat-badgeBg px-3 text-[12px] font-medium text-senat-link hover:bg-senat-link hover:text-white">
                                             Edit
                                         </button>
                                         <a href="{{ $this->pdfUrl($item['id_notulensi']) }}" target="_blank" rel="noopener"
-                                           class="rounded-lg border border-senat-border bg-white px-3 py-1.5 text-[12px] font-medium text-senat-ink hover:bg-senat-badgeBg">
+                                           class="inline-flex h-8 items-center justify-center rounded-lg border border-senat-border bg-white px-3 text-[12px] font-medium text-senat-ink hover:bg-senat-badgeBg">
                                             PDF
                                         </a>
                                         <button type="button"
                                                 wire:click="deleteNotulensi({{ $item['id_notulensi'] }})"
                                                 wire:confirm="Yakin ingin menghapus risalah ini dari database?"
-                                                class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-[12px] font-medium text-rose-600 hover:bg-rose-100">
+                                                class="inline-flex h-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-[12px] font-medium text-rose-600 hover:bg-rose-100">
                                             Hapus
                                         </button>
                                     </div>
@@ -446,9 +428,8 @@
                                 <div class="mt-3.5 flex flex-wrap items-center justify-between gap-3 border-t border-senat-sidebarLine/60 pt-3">
                                     <div class="flex items-center gap-2">
                                         @if (!empty($item['file_risalah']))
-                                            <span class="inline-flex items-center gap-1.5 rounded-md bg-senat-link/10 px-2.5 py-1 text-[11.5px] font-medium text-senat-link">
-                                                <x-senat.icon name="folder" class="h-3.5 w-3.5" />
-                                                <span>{{ $item['file_risalah'] }}</span>
+                                            <span class="inline-flex items-center rounded-md bg-senat-link/10 px-2.5 py-1 text-[11.5px] font-medium text-senat-link">
+                                                {{ $item['file_risalah'] }}
                                             </span>
                                         @else
                                             <span class="text-[11.5px] text-senat-muted italic">Tidak ada berkas lampiran</span>
@@ -534,12 +515,9 @@
 
                                         @if (!empty($viewItem['file_risalah']))
                                             <div class="flex items-center justify-between rounded-xl border border-senat-link/20 bg-senat-link/5 p-3.5">
-                                                <div class="flex items-center gap-2.5">
-                                                    <x-senat.icon name="folder" class="h-5 w-5 text-senat-link" />
-                                                    <div>
-                                                        <span class="text-[12.5px] font-bold text-senat-ink block">{{ $viewItem['file_risalah'] }}</span>
-                                                        <span class="text-[11px] text-senat-muted">Dokumen Risalah Pengesahan Pleno</span>
-                                                    </div>
+                                                <div>
+                                                    <span class="text-[12.5px] font-bold text-senat-ink block">{{ $viewItem['file_risalah'] }}</span>
+                                                    <span class="text-[11px] text-senat-muted">Dokumen Risalah Pengesahan Pleno</span>
                                                 </div>
                                                 <span class="rounded bg-senat-link px-3 py-1 text-[11px] font-semibold text-white">
                                                     Tersimpan di Cloud
@@ -550,15 +528,15 @@
 
                                     <div class="mt-6 flex justify-end gap-2 border-t border-senat-sidebarLine pt-4">
                                         <button type="button" wire:click="viewNotulensi(null)"
-                                                class="rounded-lg border border-senat-border bg-white px-4 py-2 text-[12.5px] font-medium text-senat-ink hover:bg-slate-50">
+                                                class="inline-flex h-9 items-center justify-center rounded-lg border border-senat-border bg-white px-4 text-[12.5px] font-medium text-senat-ink hover:bg-slate-50">
                                             Tutup
                                         </button>
                                         <a href="{{ $this->pdfUrl($viewItem['id_notulensi']) }}" target="_blank" rel="noopener"
-                                           class="rounded-lg border border-senat-link bg-white px-4 py-2 text-[12.5px] font-medium text-senat-link hover:bg-senat-link/5">
+                                           class="inline-flex h-9 items-center justify-center rounded-lg border border-senat-link bg-white px-4 text-[12.5px] font-medium text-senat-link hover:bg-senat-link/5">
                                             Unduh PDF Notulen
                                         </a>
                                         <button type="button" wire:click="editNotulensi({{ $viewItem['id_notulensi'] }}); viewNotulensi(null);"
-                                                class="rounded-lg bg-senat-link px-4 py-2 text-[12.5px] font-medium text-white hover:bg-senat-link/90">
+                                                class="inline-flex h-9 items-center justify-center rounded-lg bg-senat-link px-4 text-[12.5px] font-medium text-white hover:bg-senat-link/90">
                                             Edit Notulensi
                                         </button>
                                     </div>
