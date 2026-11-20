@@ -23,7 +23,7 @@ class ApiCommitteeRepository implements CommitteeRepositoryInterface
         );
     }
 
-    public function all(): array
+    public function all(?int $periodeId = null): array
     {
         // 1. Coba endpoint /api/committees (format lengkap dengan relasi anggota)
         try {
@@ -31,7 +31,8 @@ class ApiCommitteeRepository implements CommitteeRepositoryInterface
                 ? "{$this->baseUrl}/committees"
                 : "{$this->baseUrl}/api/committees";
 
-            $response = Http::timeout(4)->get($url);
+            $query = $periodeId ? ['id_periode_senat' => $periodeId] : [];
+            $response = Http::timeout(4)->get($url, $query);
 
             if ($response->successful()) {
                 $data = $response->json('data') ?? $response->json();
