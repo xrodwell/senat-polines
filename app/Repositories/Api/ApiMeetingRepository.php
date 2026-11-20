@@ -58,15 +58,46 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
                 if (!empty($items)) {
                     $result = array_map(function ($r) {
                         $id = $r['id_rapat'] ?? 1;
-                        $jenis = $r['jenis_rapat']['nama_jenis'] ?? match ((int) ($r['id_jenis_rapat'] ?? 1)) {
-                            1 => 'Pleno',
-                            2 => 'Terbuka',
-                            3 => 'Pimpinan',
-                            4 => 'Komisi',
-                            5 => 'Badan Pekerja (BP)',
-                            6 => 'Rapat/Sidang Lainnya',
-                            default => 'Pleno',
-                        };
+                        $rawJenis = $r['jenis_rapat']['nama_jenis'] ?? null;
+                        if ($rawJenis) {
+                            $jenis = match ($rawJenis) {
+                                'Rapat Pleno' => 'Pleno',
+                                'Rapat Komisi' => 'Komisi',
+                                'Rapat Pimpinan' => 'Pimpinan',
+                                'Rapat BP (Badan Pekerja)' => 'Panitia kerja, badan pekerja',
+                                'Rapat Koordinasi' => 'Rapat atau sidang lain yang ditetapkan Senat sesuai kebutuhan',
+                                default => $rawJenis,
+                            };
+                        } else {
+                            $jenis = match ((int) ($r['id_jenis_rapat'] ?? 1)) {
+                                1 => 'Pleno',
+                                2 => 'Komisi',
+                                3 => 'Rapat atau sidang lain yang ditetapkan Senat sesuai kebutuhan',
+                                4 => 'Pimpinan',
+                                5 => 'Panitia kerja, badan pekerja',
+                                default => 'Pleno',
+                            };
+                        }
+
+                        $organizer = $r['organizer'] ?? ($r['penyelenggara'] ?? null);
+                        if (!$organizer) {
+                            $title = $r['nama_agenda'] ?? '';
+                            if (str_contains($title, 'Komisi 1') || str_contains($title, 'Komisi I')) {
+                                $organizer = 'Komisi 1 (Komisi Pendidikan dan Pengajaran)';
+                            } elseif (str_contains($title, 'Komisi 2') || str_contains($title, 'Komisi II')) {
+                                $organizer = 'Komisi 2 (Komisi Penelitian dan Pengabdian kepada Masyarakat)';
+                            } elseif (str_contains($title, 'Komisi 3') || str_contains($title, 'Komisi III')) {
+                                $organizer = 'Komisi 3 (Komisi Kelembagaan dan Sumber Daya Manusia)';
+                            } elseif (str_contains($title, 'Komisi 4') || str_contains($title, 'Komisi IV')) {
+                                $organizer = 'Komisi 4 (Komisi Pengembangan dan Kerja Sama)';
+                            } elseif (str_contains($title, 'Komisi 5') || str_contains($title, 'Komisi V')) {
+                                $organizer = 'Komisi 5 (Komisi Etik)';
+                            } elseif (str_contains($title, 'Badan Pekerja') || str_contains($title, 'BP')) {
+                                $organizer = 'Badan Pekerja';
+                            } else {
+                                $organizer = 'Senat';
+                            }
+                        }
 
                         $waktuRaw = $r['waktu'] ?? '09:00:00';
                         $waktuFmt = substr($waktuRaw, 0, 5) . ' WIB';
@@ -86,6 +117,7 @@ class ApiMeetingRepository implements MeetingRepositoryInterface
                         return [
                             'id' => $id,
                             'title' => $r['nama_agenda'] ?? 'Agenda Sidang Senat',
+                            'organizer' => $organizer,
                             'type' => $jenis,
                             'date' => isset($r['tanggal']) ? substr($r['tanggal'], 0, 10) : date('Y-m-d'),
                             'time' => $waktuFmt,

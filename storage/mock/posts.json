@@ -1,5 +1,23 @@
 [
     {
+        "id": 20,
+        "title": "wisuda",
+        "slug": "wisuda",
+        "category": "Warta Senat",
+        "date": "2026-11-19",
+        "status": "Terpublikasi",
+        "excerpt": "wisudawan",
+        "thumbnail": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80"
+        ],
+        "attachments": [],
+        "author": "Sekretariat Senat Polines",
+        "body": [
+            "wisudawan"
+        ]
+    },
+    {
         "id": 19,
         "title": "Berita Utama Terkini 6af400a770ba9",
         "slug": "berita-utama-terkini-6af400a770ba9",
