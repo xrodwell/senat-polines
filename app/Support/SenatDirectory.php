@@ -415,22 +415,28 @@ class SenatDirectory
             $isBp = ($committee['code'] ?? '') === 'BP';
             $label = self::committeeLabel($committee['code']);
             $organName = $isBp ? 'BP (Badan Pekerja)' : ($label . ' — ' . $committee['name']);
-            $push([
-                'name' => $committee['lead'],
-                'role' => 'Ketua ' . $label,
-                'organ' => $organName,
-                'committee_code' => $committee['code'],
-                'committee_name' => $committee['name'],
-                'focus' => $committee['focus'],
-            ]);
-            $push([
-                'name' => $committee['secretary'],
-                'role' => 'Sekretaris ' . $label,
-                'organ' => $organName,
-                'committee_code' => $committee['code'],
-                'committee_name' => $committee['name'],
-                'focus' => $committee['focus'],
-            ]);
+            // Jabatan yang belum diisi ("Belum ditentukan") tidak boleh tampil
+            // sebagai anggota direktori publik.
+            if (! empty($committee['lead']) && $committee['lead'] !== 'Belum ditentukan') {
+                $push([
+                    'name' => $committee['lead'],
+                    'role' => 'Ketua ' . $label,
+                    'organ' => $organName,
+                    'committee_code' => $committee['code'],
+                    'committee_name' => $committee['name'],
+                    'focus' => $committee['focus'],
+                ]);
+            }
+            if (! empty($committee['secretary']) && $committee['secretary'] !== 'Belum ditentukan') {
+                $push([
+                    'name' => $committee['secretary'],
+                    'role' => 'Sekretaris ' . $label,
+                    'organ' => $organName,
+                    'committee_code' => $committee['code'],
+                    'committee_name' => $committee['name'],
+                    'focus' => $committee['focus'],
+                ]);
+            }
             foreach ($committee['members'] ?? [] as $member) {
                 $push([
                     'name' => is_array($member) ? ($member['nama'] ?? $member['name'] ?? '—') : $member,

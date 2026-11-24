@@ -7,11 +7,26 @@
         "secretary": "Iwan Budiyono, S.E., M.Si., Ak.",
         "members_count": 7,
         "members": [
-            "Prof. Dr. Ir. Dwiana Hendrawati, S.T., M.T.",
-            "Yusmar Ardhi Hidayat, S.E., M.Si., Ph.D.",
-            "Resi Yudaningsih, S.E., M.Si., Akt.",
-            "Dr. Bagus Yunianto W., S.E., S.Kom., M.M.",
-            "Drs. Suroso, M.Sc."
+            {
+                "nama": "Prof. Dr. Ir. Dwiana Hendrawati, S.T., M.T.",
+                "nim_nip": "196908141998022001"
+            },
+            {
+                "nama": "Yusmar Ardhi Hidayat, S.E., M.Si., Ph.D.",
+                "nim_nip": "198101312006041003"
+            },
+            {
+                "nama": "Resi Yudaningsih, S.E., M.Si., Akt.",
+                "nim_nip": "197211021998022001"
+            },
+            {
+                "nama": "Dr. Bagus Yunianto W., S.E., S.Kom., M.M.",
+                "nim_nip": "199106262019031017"
+            },
+            {
+                "nama": "Drs. Suroso, M.Sc.",
+                "nim_nip": "196511051994031002"
+            }
         ],
         "focus": "Kebijakan & norma akademik, penjaminan mutu pembelajaran, kebebasan akademik, pembukaan/penutupan prodi, serta gelar & penghargaan akademik.",
         "tupoksi_items": [
@@ -20,7 +35,7 @@
             "Memberi pertimbangan dan rekomendasi penyelenggaraan pembelajaran, kebebasan akademik, mimbar akademik, dan otonomi keilmuan.",
             "Memberi pertimbangan kepada Direktur terkait pembukaan/penutupan jurusan dan program studi serta pemberian/pencabutan gelar dan penghargaan akademik."
         ],
-        "tupoksi": "Merumuskan dan memberi pertimbangan kebijakan serta norma akademik dalam penyelenggaraan pendidikan dan pembelajaran; Mengawasi penerapan kebijakan akademik dan pelaksanaan penjaminan mutu pendidikan; Memberi pertimbangan dan rekomendasi penyelenggaraan pembelajaran, kebebasan akademik, mimbar akademik, dan otonomi keilmuan; Memberi pertimbangan kepada Direktur terkait pembukaan/penutupan jurusan dan program studi serta pemberian/pencabutan gelar dan penghargaan akademik."
+        "tupoksi": "Merumuskan dan memberi pertimbangan kebijakan serta norma akademik dalam penyelenggaraan pendidikan dan pembelajaran; Mengawasi penerapan kebijakan akademik dan pelaksanaan penjaminan mutu pendidikan; Memberi pertimbangan dan rekomendasi penyelenggaraan pembelajaran, kebebasan akademik, mimbar akademik, dan otonomi keilmuan; Memberi pertimbangan kepada Direktur terkait pembukaan/penutupan jurusan dan program studi serta pemberian/pencabutan gelar dan penghargaan akademik"
     },
     {
         "id": 2,
@@ -30,10 +45,22 @@
         "secretary": "Septian Yudha Kusuma, S.E., M.Si., Ak.",
         "members_count": 6,
         "members": [
-            "Yusnan Badruzzaman, S.T., M.Eng.",
-            "Mohammad Hasanudin, S.E., M.Si.",
-            "Vinda Setya Kartika, S.T., M.T.",
-            "Ir. Teguh Mulyo Wicaksono, S.Pd., M.Eng."
+            {
+                "nama": "Yusnan Badruzzaman, S.T., M.Eng.",
+                "nim_nip": "197503132006041001"
+            },
+            {
+                "nama": "Mohammad Hasanudin, S.E., M.Si.",
+                "nim_nip": "197608012000121001"
+            },
+            {
+                "nama": "Ir. Teguh Mulyo Wicaksono, S.Pd., M.Eng.",
+                "nim_nip": "199012022019031014"
+            },
+            {
+                "nama": "Vinda Setya Kartika, S.T., M.T.",
+                "nim_nip": "199108112019032024"
+            }
         ],
         "focus": "Ketentuan tata cara penyelenggaraan penelitian, pelaksanaan pengabdian kepada masyarakat, dan pengawasannya.",
         "tupoksi_items": [
@@ -41,7 +68,7 @@
             "Memberi pertimbangan dalam penyusunan ketentuan tata cara pelaksanaan pengabdian kepada masyarakat.",
             "Melakukan pengawasan terhadap penyelenggaraan penelitian dan pengabdian kepada masyarakat."
         ],
-        "tupoksi": "Memberi pertimbangan dalam penyusunan ketentuan tata cara penyelenggaraan penelitian; Memberi pertimbangan dalam penyusunan ketentuan tata cara pelaksanaan pengabdian kepada masyarakat; Melakukan pengawasan terhadap penyelenggaraan penelitian dan pengabdian kepada masyarakat."
+        "tupoksi": "Memberi pertimbangan dalam penyusunan ketentuan tata cara penyelenggaraan penelitian; Memberi pertimbangan dalam penyusunan ketentuan tata cara pelaksanaan pengabdian kepada masyarakat; Melakukan pengawasan terhadap penyelenggaraan penelitian dan pengabdian kepada masyarakat"
     },
     {
         "id": 3,
@@ -51,10 +78,22 @@
         "secretary": "Anis Roihatin, S.T., M.T.",
         "members_count": 6,
         "members": [
-            "Sahid, S.T., M.T.",
-            "Dedi Budi Setyawan, S.T., M.T.",
-            "Nanang Adie Setyawan, S.E., M.M.",
-            "Dr. Muhammad Anif, S.T., M.Eng."
+            {
+                "nama": "Sahid, S.T., M.T.",
+                "nim_nip": "197005121996011001"
+            },
+            {
+                "nama": "Dedi Budi Setyawan, S.T., M.T.",
+                "nim_nip": "197712062001121001"
+            },
+            {
+                "nama": "Dr. Muhammad Anif, S.T., M.Eng.",
+                "nim_nip": "197710092005011001"
+            },
+            {
+                "nama": "Nanang Adie Setyawan, S.E., M.M.",
+                "nim_nip": "199107102019031017"
+            }
         ],
         "focus": "Pengembangan organisasi jurusan/prodi, karier & mutu dosen/tendik, pedoman kenaikan jabatan akademik, kode etik, dan rancangan OTK Senat.",
         "tupoksi_items": [
@@ -63,20 +102,32 @@
             "Menyusun pedoman pertimbangan kenaikan jabatan akademik (Asisten Ahli hingga Profesor) dan penilaian dosen berprestasi.",
             "Menyusun norma/kode etik sivitas akademika, pedoman benturan kepentingan anggota Senat, serta mengoordinasikan rancangan perubahan OTK Senat."
         ],
-        "tupoksi": "Memberi pertimbangan pengembangan organisasi jurusan/prodi serta pengembangan karier, penilaian prestasi, dan mutu dosen maupun tenaga kependidikan; Menyusun rekomendasi kualifikasi jabatan tugas tambahan, alih tugas tendik ke dosen, serta persyaratan dosen tidak tetap dan dosen praktisi/industri; Menyusun pedoman pertimbangan kenaikan jabatan akademik (Asisten Ahli hingga Profesor) dan penilaian dosen berprestasi; Menyusun norma/kode etik sivitas akademika, pedoman benturan kepentingan anggota Senat, serta mengoordinasikan rancangan perubahan OTK Senat."
+        "tupoksi": "Memberi pertimbangan pengembangan organisasi jurusan/prodi serta pengembangan karier, penilaian prestasi, dan mutu dosen maupun tenaga kependidikan; Menyusun rekomendasi kualifikasi jabatan tugas tambahan, alih tugas tendik ke dosen, serta persyaratan dosen tidak tetap dan dosen praktisi/industri; Menyusun pedoman pertimbangan kenaikan jabatan akademik (Asisten Ahli hingga Profesor) dan penilaian dosen berprestasi; Menyusun norma/kode etik sivitas akademika, pedoman benturan kepentingan anggota Senat, serta mengoordinasikan rancangan perubahan OTK Senat"
     },
     {
         "id": 4,
         "code": "KOM-IV",
         "name": "Komisi Pengembangan dan Kerja Sama",
         "lead": "Dr. Ir. FX Arif Wahyudianto, S.T., M.T., IPM.",
-        "secretary": "Alvianita Gunawan Putri, S.E., M.Acc., Ak., CA., CPA., Asean CPA.",
-        "members_count": 6,
+        "secretary": "Belum ditentukan",
+        "members_count": 5,
         "members": [
-            "Prof. Dr. Ir. Kurnianingsih, S.T., M.T.",
-            "Ir. Abdul Syukur Fauzi, S.T., M.T.",
-            "Leily Fatmawati, S.T., M.T.",
-            "Iman Mujiarto, S.T., M.T."
+            {
+                "nama": "Prof. Dr. Ir. Kurnianingsih, S.T., M.T.",
+                "nim_nip": "197904262003122002"
+            },
+            {
+                "nama": "Ir. Abdul Syukur Fauzi, S.T., M.T.",
+                "nim_nip": "197005051999031002"
+            },
+            {
+                "nama": "Leily Fatmawati, S.T., M.T.",
+                "nim_nip": "197406122005012001"
+            },
+            {
+                "nama": "Iman Mujiarto, S.T., M.T.",
+                "nim_nip": "197009172005011003"
+            }
         ],
         "focus": "Kerja sama akademik & nonakademik dalam/luar negeri (DUDI, PT lain, lembaga sertifikasi), evaluasi hasil, serta kepatuhan MoU/PKS.",
         "tupoksi_items": [
@@ -84,7 +135,7 @@
             "Memberi rekomendasi penataan, pemantauan, dan penilaian hasil kerja sama sesuai prinsip Statuta.",
             "Memastikan setiap kerja sama dituangkan dalam nota kesepahaman (MoU) dan/atau perjanjian kerja sama (PKS) sesuai ketentuan."
         ],
-        "tupoksi": "Memberi pertimbangan perencanaan, pengembangan, dan pelaksanaan kerja sama akademik maupun nonakademik dengan mitra dalam dan luar negeri (DUDI, perguruan tinggi lain, lembaga pelatihan/sertifikasi); Memberi rekomendasi penataan, pemantauan, dan penilaian hasil kerja sama sesuai prinsip Statuta; Memastikan setiap kerja sama dituangkan dalam nota kesepahaman (MoU) dan/atau perjanjian kerja sama (PKS) sesuai ketentuan."
+        "tupoksi": "Memberi pertimbangan perencanaan, pengembangan, dan pelaksanaan kerja sama akademik maupun nonakademik dengan mitra dalam dan luar negeri (DUDI, perguruan tinggi lain, lembaga pelatihan/sertifikasi); Memberi rekomendasi penataan, pemantauan, dan penilaian hasil kerja sama sesuai prinsip Statuta; Memastikan setiap kerja sama dituangkan dalam nota kesepahaman (MoU) dan/atau perjanjian kerja sama (PKS) sesuai ketentuan"
     },
     {
         "id": 5,
@@ -94,9 +145,18 @@
         "secretary": "Achmad Zaenuddin, S.E., M.Si.",
         "members_count": 5,
         "members": [
-            "Dr. Garup Lambang Goro, S.T., M.T.",
-            "Andi Setiawan, S.E., M.M.",
-            "Dr. Sukamto, S.Kom., M.T."
+            {
+                "nama": "Dr. Garup Lambang Goro, S.T., M.T.",
+                "nim_nip": "196708121990031003"
+            },
+            {
+                "nama": "Andi Setiawan, S.E., M.M.",
+                "nim_nip": "197607202008011011"
+            },
+            {
+                "nama": "Dr. Sukamto, S.Kom., M.T.",
+                "nim_nip": "197101172003121001"
+            }
         ],
         "focus": "Ketentuan kode etik dosen/mahasiswa/akademik, pengawasan norma akademik, dan rekomendasi sanksi kepada Direktur.",
         "tupoksi_items": [
@@ -104,7 +164,7 @@
             "Memberi pertimbangan dan rekomendasi dalam pengawasan penerapan norma akademik dan kode etik sivitas akademika.",
             "Memberi pertimbangan dan rekomendasi penjatuhan sanksi atas pelanggaran norma, etika, dan peraturan akademik kepada Direktur."
         ],
-        "tupoksi": "Memberi pertimbangan penyusunan ketentuan kode etik dosen, kode etik mahasiswa, etika akademik, beserta sanksinya; Memberi pertimbangan dan rekomendasi dalam pengawasan penerapan norma akademik dan kode etik sivitas akademika; Memberi pertimbangan dan rekomendasi penjatuhan sanksi atas pelanggaran norma, etika, dan peraturan akademik kepada Direktur."
+        "tupoksi": "Memberi pertimbangan penyusunan ketentuan kode etik dosen, kode etik mahasiswa, etika akademik, beserta sanksinya; Memberi pertimbangan dan rekomendasi dalam pengawasan penerapan norma akademik dan kode etik sivitas akademika; Memberi pertimbangan dan rekomendasi penjatuhan sanksi atas pelanggaran norma, etika, dan peraturan akademik kepada Direktur"
     },
     {
         "id": 6,
@@ -114,17 +174,51 @@
         "secretary": "Vinda Setya Kartika, S.T., M.T.",
         "members_count": 13,
         "members": [
-            "Tri Raharjo Yudantoro, S.Kom., M.Kom.",
-            "Iwan Budiyono, S.E., M.Si., Ak.",
-            "Dr. Jumi, S.Kom., M.Kom.",
-            "Septian Yudha Kusuma, S.E., M.Si., Ak.",
-            "Ir. Riles Melvy Wattimena, M.T., IPP.",
-            "Anis Roihatin, S.T., M.T.",
-            "Dr. Ir. FX Arif Wahyudianto, S.T., M.T., IPM.",
-            "Alvianita Gunawan Putri, S.E., M.Acc., Ak., CA., CPA., Asean CPA.",
-            "Fajar Surya Herlambang, S.T., M.T.",
-            "Achmad Zaenuddin, S.E., M.Si.",
-            "Dr. Sukamto, S.Kom., M.T."
+            {
+                "nama": "Tri Raharjo Yudantoro, S.Kom., M.Kom.",
+                "nim_nip": "196810252000121001",
+                "photo": "images/members/196810252000121001.png"
+            },
+            {
+                "nama": "Iwan Budiyono, S.E., M.Si., Ak.",
+                "nim_nip": "198410192010121003"
+            },
+            {
+                "nama": "Dr. Jumi, S.Kom., M.Kom.",
+                "nim_nip": "197006142005012001"
+            },
+            {
+                "nama": "Septian Yudha Kusuma, S.E., M.Si., Ak.",
+                "nim_nip": "199009032019031016"
+            },
+            {
+                "nama": "Ir. Riles Melvy Wattimena, M.T., IPP.",
+                "nim_nip": "196709031994031001"
+            },
+            {
+                "nama": "Anis Roihatin, S.T., M.T.",
+                "nim_nip": "198701252014042001"
+            },
+            {
+                "nama": "Dr. Ir. FX Arif Wahyudianto, S.T., M.T., IPM.",
+                "nim_nip": "197412111994031001"
+            },
+            {
+                "nama": "Alvianita Gunawan Putri, S.E., M.Acc., Ak., CA., CPA., Asean CPA.",
+                "nim_nip": "199201072019032024"
+            },
+            {
+                "nama": "Fajar Surya Herlambang, S.T., M.T.",
+                "nim_nip": "197206291999031001"
+            },
+            {
+                "nama": "Achmad Zaenuddin, S.E., M.Si.",
+                "nim_nip": "197305271999031002"
+            },
+            {
+                "nama": "Dr. Sukamto, S.Kom., M.T.",
+                "nim_nip": "197101172003121001"
+            }
         ],
         "focus": "Penetapan agenda & materi rapat pleno, pembahasan hasil rapat komisi/panja, serta penampungan aspirasi.",
         "tupoksi_items": [
@@ -132,6 +226,6 @@
             "Menerima dan membahas hasil kerja rapat komisi, rapat khusus, dan rapat panitia kerja.",
             "Menerima dan membahas aspirasi yang berkembang."
         ],
-        "tupoksi": "Menetapkan agenda rapat pleno dan menyiapkan materi pembahasan rapat pleno; Menerima dan membahas hasil kerja rapat komisi, rapat khusus, dan rapat panitia kerja; Menerima dan membahas aspirasi yang berkembang."
+        "tupoksi": "Menetapkan agenda rapat pleno dan menyiapkan materi pembahasan rapat pleno; Menerima dan membahas hasil kerja rapat komisi, rapat khusus, dan rapat panitia kerja; Menerima dan membahas aspirasi yang berkembang"
     }
 ]
