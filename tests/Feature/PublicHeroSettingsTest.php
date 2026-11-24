@@ -26,7 +26,7 @@ class PublicHeroSettingsTest extends TestCase
         ]);
         $this->get('/')->assertOk()->assertSee('&lt;b&gt;Normatif &amp; Akademik&lt;/b&gt;', false)
             ->assertDontSee('<b>Normatif & Akademik</b>', false)->assertSee('&lt;script&gt;A&lt;/script&gt;', false)
-            ->assertSee('<span class="text-senat-orange">B &amp; C</span>', false)
+            ->assertSee('<span class="text-[#ecdfc3]">B &amp; C</span>', false)
             ->assertSee('&lt;b&gt;Description&lt;/b&gt;', false)->assertSee('&lt;i&gt;Profil&lt;/i&gt;', false)
             ->assertSee('Hukum &amp; Arsip', false)->assertDontSee('<script>A</script>', false)
             ->assertSee('src="https://images.example.com/hero.jpg?width=1600&amp;fit=cover"', false)
