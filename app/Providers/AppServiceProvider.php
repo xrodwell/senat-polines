@@ -26,7 +26,6 @@ use App\Repositories\Mock\JsonCommitteeRepository;
 use App\Repositories\Mock\JsonFeatureRepository;
 use App\Repositories\Mock\JsonMeetingRepository;
 use App\Repositories\Mock\JsonPostRepository;
-use App\Repositories\Mock\JsonRegulationRepository;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 

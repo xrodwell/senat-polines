@@ -1,19 +1,141 @@
 <div wire:key="screen-direktori-komisi" class="space-y-6">
-    {{-- Header & Manajemen Anggota Senat --}}
-    <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
-        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            <div>
-                <h2 class="text-[16px] font-bold text-slate-900">Direktori Komisi &amp; Anggota Senat</h2>
-                <p class="text-[12px] text-slate-500">Kelola susunan komisi kerja dan penugasan anggota Senat Akademik periode 2026–2029</p>
+    @php
+        // Resolusi URL foto profil: cek path tersimpan, lalu konvensi
+        // images/members/{nip}.{ext} atau {slug}.{ext} (frontend maupun backend).
+        $photoUrl = function (?string $path, ?string $nip = null, ?string $name = null): ?string {
+            $candidates = [];
+            if (! empty($path)) {
+                $candidates[] = preg_replace('/\.(jpg|jpeg|png|webp)$/i', '', $path);
+            }
+            if (! empty($nip)) {
+                $candidates[] = 'images/members/' . $nip;
+            }
+            if (! empty($name)) {
+                $candidates[] = 'images/members/' . \Illuminate\Support\Str::slug($name);
+            }
+
+            foreach ($candidates as $base) {
+                foreach (['jpg', 'jpeg', 'png', 'webp'] as $extension) {
+                    $candidate = $base . '.' . $extension;
+                    if (file_exists(public_path($candidate)) || file_exists(base_path('../Backend-Senat-Polines/public/' . $candidate))) {
+                        return asset($candidate);
+                    }
+                }
+            }
+
+            return null;
+        };
+        $initialOf = fn (?string $name): string => strtoupper(mb_substr(trim($name ?: 'A'), 0, 1));
+    @endphp
+    @if (! $selectedPeriodeId)
+        {{-- ================= MENU AWALAN: PILIH TAHUN JABATAN ================= --}}
+        <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div>
+                    <h2 class="text-[16px] font-bold text-slate-900">Tahun Jabatan Senat Akademik</h2>
+                    <p class="mt-0.5 text-[12px] text-slate-500">Pilih tahun jabatan untuk melihat atau mengelola susunan komisi dan anggota, serta tentukan periode yang aktif.</p>
+                </div>
+                <button type="button" wire:click="openCreatePeriodeModal"
+                        class="inline-flex h-9 items-center justify-center rounded-lg bg-senat-primary px-4 text-[12.5px] font-semibold text-white shadow-xs transition hover:bg-senat-primaryHover cursor-pointer">
+                    + Tambah Tahun Jabatan
+                </button>
             </div>
-            <button type="button" wire:click="openCreateMemberModal"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-senat-primary px-3.5 py-2 text-[12px] font-semibold text-white shadow-xs transition hover:bg-senat-primaryHover cursor-pointer">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>+ Tambah Anggota</span>
-            </button>
+
+            <div class="mt-5 divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white overflow-hidden">
+                @forelse ($periodeList as $p)
+                    @php
+                        $pId = (int) ($p['id_periode_senat'] ?? 0);
+                        $pActive = (bool) ($p['is_active'] ?? false);
+                        $tglMulai = !empty($p['tanggal_mulai']) ? \Illuminate\Support\Carbon::parse($p['tanggal_mulai'])->isoFormat('D MMM YYYY') : '—';
+                        $tglSelesai = !empty($p['tanggal_selesai']) ? \Illuminate\Support\Carbon::parse($p['tanggal_selesai'])->isoFormat('D MMM YYYY') : '—';
+                    @endphp
+                    <div wire:key="periode-row-{{ $pId }}"
+                         class="flex flex-wrap items-center justify-between gap-4 px-5 py-4 transition hover:bg-slate-50/70 {{ $pActive ? 'bg-emerald-50/30' : '' }}">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" wire:click="selectPeriode({{ $pId }})"
+                                        class="text-[15px] font-bold text-slate-900 hover:text-senat-primary hover:underline cursor-pointer text-left">
+                                    Periode {{ $p['nama_periode'] ?? '—' }}
+                                </button>
+                                @if ($pActive)
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-800 border border-emerald-200">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                                        Tahun Jabatan Aktif
+                                    </span>
+                                @else
+                                    <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-semibold text-slate-600 border border-slate-200">
+                                        Arsip / Tidak Aktif
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="mt-1 text-[12px] text-slate-500">
+                                Masa Bakti: {{ $tglMulai }} – {{ $tglSelesai }}
+                                <span class="mx-1.5 text-slate-300">|</span>
+                                <span class="font-semibold text-slate-700">{{ $p['enrollments_count'] ?? 0 }} Penugasan Anggota</span>
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" wire:click="selectPeriode({{ $pId }})"
+                                    class="inline-flex h-8 items-center justify-center rounded-lg bg-senat-primary px-3 text-[12px] font-semibold text-white transition hover:bg-senat-primaryHover cursor-pointer">
+                                Lihat Profil Anggota
+                            </button>
+                            @if (! $pActive)
+                                <button type="button" wire:click="activatePeriode({{ $pId }})"
+                                        class="inline-flex h-8 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-100 cursor-pointer">
+                                    Jadikan Aktif
+                                </button>
+                            @endif
+                            <button type="button" wire:click="openEditPeriodeModal({{ json_encode($p) }})"
+                                    class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-[12px] font-medium text-slate-700 transition hover:bg-slate-100 cursor-pointer">
+                                Edit
+                            </button>
+                            @if (count($periodeList) > 1)
+                                <button type="button" wire:click="confirmDeletePeriode({{ json_encode($p) }})"
+                                        class="inline-flex h-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-[12px] font-medium text-rose-600 transition hover:bg-rose-100 cursor-pointer">
+                                    Hapus
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-8 text-center text-[13px] text-slate-500">
+                        Belum ada data tahun jabatan. Klik <strong>+ Tambah Tahun Jabatan</strong> untuk membuat periode baru.
+                    </div>
+                @endforelse
+            </div>
         </div>
+    @else
+        {{-- ================= HEADER & MANAJEMEN ANGGOTA SENAT ================= --}}
+        <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                        <button type="button" wire:click="backToPeriodeList"
+                                class="inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 text-[11.5px] font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
+                            ← Daftar Tahun Jabatan
+                        </button>
+                        @if (!empty($selectedPeriode['is_active']))
+                            <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-800 border border-emerald-200">
+                                Periode Aktif
+                            </span>
+                        @else
+                            <button type="button" wire:click="activatePeriode({{ $selectedPeriodeId }})"
+                                    class="inline-flex h-7 items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 cursor-pointer">
+                                Jadikan Periode Aktif
+                            </button>
+                        @endif
+                    </div>
+                    <h2 class="text-[16px] font-bold text-slate-900">
+                        Direktori Komisi &amp; Anggota Senat — Periode {{ $selectedPeriode['nama_periode'] ?? '2026–2030' }}
+                    </h2>
+                    <p class="text-[12px] text-slate-500">Kelola susunan komisi kerja dan penugasan anggota pada tahun jabatan terpilih</p>
+                </div>
+                <button type="button" wire:click="openCreateMemberModal"
+                        class="inline-flex h-9 items-center justify-center rounded-lg bg-senat-primary px-4 text-[12.5px] font-semibold text-white shadow-xs transition hover:bg-senat-primaryHover cursor-pointer">
+                    + Tambah Anggota
+                </button>
+            </div>
 
         {{-- Kartu Ringkasan Komisi --}}
         <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -51,6 +173,23 @@
                 @php
                     $leadName = $c['lead'] ?? '';
                     $secName = $c['secretary'] ?? '';
+                    $leadPhoto = null;
+                    $secPhoto = null;
+                    $leadNip = null;
+                    $secNip = null;
+                    foreach (($c['members'] ?? []) as $memberRow) {
+                        if (! is_array($memberRow)) {
+                            continue;
+                        }
+                        if (($memberRow['nama'] ?? '') === $leadName) {
+                            $leadPhoto = $memberRow['foto_profil'] ?? null;
+                            $leadNip = $memberRow['nim_nip'] ?? null;
+                        }
+                        if (($memberRow['nama'] ?? '') === $secName) {
+                            $secPhoto = $memberRow['foto_profil'] ?? null;
+                            $secNip = $memberRow['nim_nip'] ?? null;
+                        }
+                    }
                     $membersList = array_values(array_filter($c['members'] ?? [], function ($m) use ($leadName, $secName) {
                         if (!is_array($m)) {
                             return $m !== $leadName && $m !== $secName;
@@ -79,13 +218,20 @@
                         {{-- Ketua Komisi --}}
                         <div class="flex items-center justify-between px-4 py-2.5 bg-blue-50/30 hover:bg-blue-50/50 transition">
                             <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-blue-200 bg-white text-[11px] font-bold text-blue-800">
+                                    @if ($photoUrl($leadPhoto, $leadNip, $leadName))
+                                        <img src="{{ $photoUrl($leadPhoto, $leadNip, $leadName) }}" alt="{{ $leadName }}" class="h-full w-full object-cover object-top">
+                                    @else
+                                        {{ $initialOf($leadName) }}
+                                    @endif
+                                </span>
                                 <span class="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 shrink-0">KETUA</span>
                                 <span class="font-semibold text-slate-900 truncate">{{ $leadName ?: 'Belum ditentukan' }}</span>
                             </div>
                             @if (!empty($leadName) && $leadName !== 'Belum ditentukan')
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['name' => $leadName, 'role' => 'Ketua', 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $leadName, 'role' => 'Ketua', 'committee_code' => $c['code'], 'photo' => $leadPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -96,13 +242,20 @@
                         {{-- Sekretaris Komisi --}}
                         <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50/40 hover:bg-slate-50/80 transition">
                             <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-sky-200 bg-white text-[11px] font-bold text-sky-800">
+                                    @if ($photoUrl($secPhoto, $secNip, $secName))
+                                        <img src="{{ $photoUrl($secPhoto, $secNip, $secName) }}" alt="{{ $secName }}" class="h-full w-full object-cover object-top">
+                                    @else
+                                        {{ $initialOf($secName) }}
+                                    @endif
+                                </span>
                                 <span class="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800 shrink-0">SEKRETARIS</span>
                                 <span class="font-semibold text-slate-900 truncate">{{ $secName ?: 'Belum ditentukan' }}</span>
                             </div>
                             @if (!empty($secName) && $secName !== 'Belum ditentukan')
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['name' => $secName, 'role' => 'Sekretaris', 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $secName, 'role' => 'Sekretaris', 'committee_code' => $c['code'], 'photo' => $secPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -116,9 +269,17 @@
                                 $mName = is_array($m) ? ($m['nama'] ?? $m['name'] ?? '—') : $m;
                                 $mNip = is_array($m) ? ($m['nim_nip'] ?? '') : '';
                                 $mJab = is_array($m) ? ($m['jabatan'] ?? 'Anggota') : 'Anggota';
+                                $mPhoto = is_array($m) ? ($m['foto_profil'] ?? null) : null;
                             @endphp
                             <div class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 transition">
                                 <div class="flex items-center gap-3 min-w-0">
+                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white text-[10px] font-bold text-slate-600">
+                                        @if ($photoUrl($mPhoto, $mNip, $mName))
+                                            <img src="{{ $photoUrl($mPhoto, $mNip, $mName) }}" alt="{{ $mName }}" class="h-full w-full object-cover object-top">
+                                        @else
+                                            {{ $initialOf($mName) }}
+                                        @endif
+                                    </span>
                                     <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase text-slate-600 shrink-0">{{ $mJab }}</span>
                                     <div class="min-w-0">
                                         <p class="font-medium text-slate-800 truncate">{{ $mName }}</p>
@@ -129,7 +290,7 @@
                                 </div>
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['name' => $mName, 'nip' => $mNip, 'role' => 'Anggota', 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $mName, 'nip' => $mNip, 'role' => 'Anggota', 'committee_code' => $c['code'], 'photo' => $mPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -151,12 +312,12 @@
         </div>
     </div>
 
-    {{-- Tabel Anggota Senat & Akses Cepat Impersonasi --}}
+    {{-- Tabel Akun Anggota Senat --}}
     <div class="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-                <h3 class="text-[15px] font-bold text-slate-900">Daftar Akun Anggota Senat &amp; Akses Cepat Portal</h3>
-                <p class="text-[12px] text-slate-500">Administrator dapat beralih akun (&ldquo;Login As&rdquo;) ke anggota Senat untuk verifikasi tampilan portal atau mendampingi anggota.</p>
+                <h3 class="text-[15px] font-bold text-slate-900">Daftar Akun Anggota Senat</h3>
+                <p class="text-[12px] text-slate-500">Daftar akun anggota Senat Akademik yang terdaftar pada sistem.</p>
             </div>
             <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
                 {{ count($allLecturers ?? []) }} Anggota Terdaftar
@@ -171,14 +332,10 @@
                         <th class="px-4 py-3">NIP / Identitas</th>
                         <th class="px-4 py-3">Komisi / Penugasan</th>
                         <th class="px-4 py-3">Peran Akun</th>
-                        <th class="px-4 py-3 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
                     @forelse ($allLecturers ?? [] as $u)
-                        @php
-                            $isCurrentAdmin = ((int) ($u['id_user'] ?? 0) === (int) session('auth_user_id'));
-                        @endphp
                         <tr class="hover:bg-slate-50/80 transition">
                             <td class="px-4 py-3 font-semibold text-slate-900">
                                 {{ $u['nama'] ?? 'Anggota Senat' }}
@@ -196,29 +353,10 @@
                                     {{ $u['role'] ?? 'anggota' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-right">
-                                @if ($isCurrentAdmin)
-                                    <span class="inline-flex items-center rounded bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">
-                                        Akun Anda Saat Ini
-                                    </span>
-                                @else
-                                    <form method="POST" action="{{ route('admin.impersonate', $u['id_user']) }}" class="inline m-0">
-                                        @csrf
-                                        <button type="submit"
-                                                class="inline-flex items-center gap-1.5 rounded-lg bg-senat-primary px-3 py-1 text-xs font-semibold text-white transition hover:bg-senat-primaryHover shadow-xs cursor-pointer"
-                                                title="Login sebagai {{ $u['nama'] }}">
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                            </svg>
-                                            <span>Login Sebagai</span>
-                                        </button>
-                                    </form>
-                                @endif
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-slate-500">
+                            <td colspan="4" class="px-4 py-6 text-center text-slate-500">
                                 Belum ada data anggota senat.
                             </td>
                         </tr>
@@ -227,6 +365,99 @@
             </table>
         </div>
     </div>
+    @endif
+
+    {{-- ========================================================================= --}}
+    {{-- MODAL TAMBAH & EDIT TAHUN JABATAN / PERIODE SENAT                         --}}
+    {{-- ========================================================================= --}}
+    @if ($showPeriodeModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true" role="dialog">
+            <div wire:click="closePeriodeModal" class="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-xs transition-opacity"></div>
+
+            <div class="relative w-full max-w-[460px] transform overflow-hidden rounded-[16px] border border-[#d6e0ed] bg-white text-left shadow-2xl transition-all z-10">
+                <div class="flex items-center justify-between border-b border-[#e2e8f0] bg-[#f8fafc] px-6 py-4">
+                    <div>
+                        <h3 class="text-[16px] font-bold text-[#0f172a]">
+                            {{ $isEditingPeriode ? 'Edit Tahun Jabatan' : 'Tambah Tahun Jabatan Baru' }}
+                        </h3>
+                        <p class="mt-0.5 text-[11.5px] text-[#64748b]">
+                            Tentukan nama periode masa bakti dan rentang tanggal jabatan.
+                        </p>
+                    </div>
+                    <button type="button" wire:click="closePeriodeModal" class="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 cursor-pointer">
+                        ✕
+                    </button>
+                </div>
+
+                <form wire:submit.prevent="savePeriode" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-[12px] font-semibold text-slate-800">Nama Periode / Tahun Jabatan <span class="text-rose-500">*</span></label>
+                        <input type="text" wire:model="periodeNama" placeholder="Contoh: 2026–2030" required
+                               class="mt-1 h-[38px] w-full rounded-lg border border-slate-300 bg-white px-3 text-[12.5px] text-slate-900 focus:border-senat-primary focus:outline-none focus:ring-1 focus:ring-senat-primary">
+                        @error('periodeNama') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-[12px] font-semibold text-slate-800">Tanggal Mulai <span class="text-rose-500">*</span></label>
+                            <input type="date" wire:model="periodeTanggalMulai" required
+                                   class="mt-1 h-[38px] w-full rounded-lg border border-slate-300 bg-white px-3 text-[12.5px] text-slate-900 focus:border-senat-primary focus:outline-none focus:ring-1 focus:ring-senat-primary">
+                            @error('periodeTanggalMulai') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-semibold text-slate-800">Tanggal Selesai <span class="text-rose-500">*</span></label>
+                            <input type="date" wire:model="periodeTanggalSelesai" required
+                                   class="mt-1 h-[38px] w-full rounded-lg border border-slate-300 bg-white px-3 text-[12.5px] text-slate-900 focus:border-senat-primary focus:outline-none focus:ring-1 focus:ring-senat-primary">
+                            @error('periodeTanggalSelesai') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <label class="inline-flex items-center gap-2 cursor-pointer pt-1 text-[12px] text-slate-700">
+                        <input type="checkbox" wire:model="periodeIsActive" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600">
+                        <span>Jadikan sebagai Tahun Jabatan Aktif sekarang</span>
+                    </label>
+
+                    <div class="flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
+                        <button type="button" wire:click="closePeriodeModal"
+                                class="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-[12.5px] font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="submit"
+                                class="inline-flex h-9 items-center justify-center rounded-lg bg-senat-primary px-4 text-[12.5px] font-semibold text-white hover:bg-senat-primaryHover cursor-pointer">
+                            {{ $isEditingPeriode ? 'Simpan Perubahan' : 'Simpan Tahun Jabatan' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ========================================================================= --}}
+    {{-- MODAL KONFIRMASI HAPUS TAHUN JABATAN                                      --}}
+    {{-- ========================================================================= --}}
+    @if ($showDeletePeriodeModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true" role="dialog">
+            <div wire:click="closeDeletePeriodeModal" class="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-xs transition-opacity"></div>
+
+            <div class="relative w-full max-w-[440px] transform overflow-hidden rounded-[16px] border border-[#d6e0ed] bg-white text-left shadow-2xl transition-all z-10 p-6">
+                <h3 class="text-[16px] font-bold text-[#0f172a]">Hapus Tahun Jabatan?</h3>
+                <p class="mt-2 text-[12.5px] leading-relaxed text-[#64748b]">
+                    Apakah Anda yakin ingin menghapus tahun jabatan <strong class="text-slate-900">{{ $deletePeriodeName }}</strong>? Penugasan komisi yang terkait dengan periode ini juga dapat terhapus.
+                </p>
+
+                <div class="mt-6 flex items-center justify-end gap-3">
+                    <button type="button" wire:click="closeDeletePeriodeModal"
+                            class="inline-flex h-9 items-center justify-center rounded-lg border border-[#cbd5e1] bg-white px-4 text-[12.5px] font-semibold text-[#475569] hover:bg-[#f1f5f9] transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button" wire:click="deletePeriode"
+                            class="inline-flex h-9 items-center justify-center rounded-lg bg-red-600 px-4 text-[12.5px] font-bold text-white shadow-xs transition hover:bg-red-700 cursor-pointer">
+                        Ya, Hapus Periode
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- ========================================================================= --}}
     {{-- MODAL TAMBAH & EDIT ANGGOTA KOMISI (LIVEWIRE)                             --}}
@@ -258,6 +489,55 @@
                 </div>
 
                 <form wire:submit.prevent="saveMember" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-[11.5px] font-bold uppercase tracking-wider text-[#334155]">
+                            Foto Profil Anggota
+                        </label>
+                        <div class="mt-1 flex items-center gap-4">
+                            <span class="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#9ebfe0] bg-[#e5f5ff] text-[18px] font-bold text-senat-link">
+                                @if ($memberPhoto)
+                                    @php
+                                        try {
+                                            $previewUrl = $memberPhoto->temporaryUrl();
+                                        } catch (\Throwable $e) {
+                                            $previewUrl = null;
+                                        }
+                                    @endphp
+                                    @if ($previewUrl)
+                                        <img src="{{ $previewUrl }}" alt="Pratinjau foto" class="h-full w-full object-cover object-top">
+                                    @else
+                                        {{ $initialOf($memberNama) }}
+                                    @endif
+                                @elseif ($photoUrl($memberExistingPhoto, $memberNimNip, $memberNama))
+                                    <img src="{{ $photoUrl($memberExistingPhoto, $memberNimNip, $memberNama) }}" alt="Foto saat ini" class="h-full w-full object-cover object-top">
+                                @else
+                                    {{ $initialOf($memberNama) }}
+                                @endif
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <input type="file" wire:model="memberPhoto" accept="image/jpeg,image/png,image/webp"
+                                       class="block w-full text-[11.5px] text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-senat-primary file:px-3.5 file:py-2 file:text-[11.5px] file:font-semibold file:text-white hover:file:bg-senat-primaryHover cursor-pointer">
+                                <p class="mt-1.5 text-[10.5px] text-slate-500">
+                                    JPG, PNG, atau WebP — maksimal 2 MB. Resolusi otomatis disesuaikan
+                                    ke ±200×300 px tanpa mengubah proporsi (tidak gepeng).
+                                    @if ($memberExistingPhoto)
+                                        Pilih file baru untuk mengganti foto saat ini.
+                                    @endif
+                                </p>
+                                <div wire:loading wire:target="memberPhoto" class="mt-1 text-[10.5px] font-semibold text-senat-link">
+                                    Mengunggah gambar...
+                                </div>
+                                @error('memberPhoto') <span class="mt-1 block text-xs text-red-500">{{ $message }}</span> @enderror
+                                @if ($memberPhoto)
+                                    <button type="button" wire:click="$set('memberPhoto', null)"
+                                            class="mt-1.5 text-[10.5px] font-semibold text-red-600 hover:underline cursor-pointer">
+                                        Batalkan pilihan gambar
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-[11.5px] font-bold uppercase tracking-wider text-[#334155]">
                             Nama Lengkap &amp; Gelar Akademik <span class="text-red-500">*</span>

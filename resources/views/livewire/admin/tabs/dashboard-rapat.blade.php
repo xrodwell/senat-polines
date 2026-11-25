@@ -1,17 +1,9 @@
 <div wire:key="screen-dashboard-rapat" class="space-y-6">
-                {{-- Info Banner Khas Portal --}}
-                <div class="flex items-start gap-3 rounded-[14px] bg-senat-badgeBg px-4 py-3.5 text-senat-link shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
-                    <span class="text-[18px] font-bold leading-none" aria-hidden="true">i</span>
-                    <p class="text-[13px] font-medium leading-snug">
-                        Panel administrasi terpadu: kelola jadwal sidang, kuorum presensi, risalah, serta pembaharuan konten situs resmi.
-                    </p>
-                </div>
-
                 {{-- Stat / KPI Khas Portal --}}
                 <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
                     <x-senat.stat label="Sidang terjadwal" :value="str_pad((string) $stats['meetings_count'], 2, '0', STR_PAD_LEFT)"
                                   :hint="count($meetings).' agenda terdaftar'" icon="calendar" />
-                    <x-senat.stat label="Notulensi draft" :value="str_pad((string) ($notulenItem ? 1 : 0), 2, '0', STR_PAD_LEFT)"
+                    <x-senat.stat label="Notulensi dipertimbangkan" :value="str_pad((string) ($notulenItem ? 1 : 0), 2, '0', STR_PAD_LEFT)"
                                   hint="Perlu verifikasi sekretariat" icon="minutes" />
                     <x-senat.stat label="Voting dibuka" :value="str_pad((string) ($activeMeeting ? 1 : 0), 2, '0', STR_PAD_LEFT)"
                                   :hint="$activeMeeting ? 'Sesi sedang berlangsung' : 'Belum ada voting aktif'" icon="check" />

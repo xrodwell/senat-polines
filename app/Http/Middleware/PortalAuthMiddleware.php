@@ -30,7 +30,6 @@ class PortalAuthMiddleware
         'auth_user_foto',
         'auth_verified_at',
         'auth_token_checked_at',
-        'impersonator',
     ];
 
     /**

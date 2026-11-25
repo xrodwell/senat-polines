@@ -18,7 +18,7 @@ trait HasNotulensiManagement
     public ?int $notulensiUserId = 1;
     public string $notulensiIsi = '';
     public string $notulensiFile = '';
-    public string $notulensiStatus = 'draf';
+    public string $notulensiStatus = 'dipertimbangkan';
     public string $notulensiSearch = '';
     public string $notulensiFilterStatus = 'all';
     public ?int $viewingNotulensiId = null;
@@ -111,7 +111,7 @@ trait HasNotulensiManagement
         $this->notulensiUserId = $this->userList[0]['id_user'] ?? 1;
         $this->notulensiIsi = '';
         $this->notulensiFile = '';
-        $this->notulensiStatus = 'draf';
+        $this->notulensiStatus = 'dipertimbangkan';
     }
 
     public function editNotulensi(int $id): void
@@ -123,7 +123,7 @@ trait HasNotulensiManagement
             $this->notulensiUserId = $item['id_user'] ?? 1;
             $this->notulensiIsi = $item['isi_notulensi'] ?? '';
             $this->notulensiFile = $item['file_risalah'] ?? '';
-            $this->notulensiStatus = strtolower($item['status'] ?? 'draf');
+            $this->notulensiStatus = strtolower($item['status'] ?? 'dipertimbangkan');
             $this->isFormOpen = true;
         }
     }
@@ -146,7 +146,7 @@ trait HasNotulensiManagement
             'id_user' => (int) ($this->notulensiUserId ?: 1),
             'isi_notulensi' => $this->notulensiIsi,
             'file_risalah' => $this->notulensiFile ?: null,
-            'status' => $this->notulensiStatus ?: 'draf',
+            'status' => $this->notulensiStatus ?: 'dipertimbangkan',
         ];
 
         try {
@@ -227,7 +227,11 @@ trait HasNotulensiManagement
         }
 
         try {
-            $res = Http::timeout(6)->get($this->getBackendUrl() . "/rapat/{$id}/rekaman");
+            $req = Http::timeout(6);
+            if ($token = session('auth_token')) {
+                $req = $req->withToken($token);
+            }
+            $res = $req->get($this->getBackendUrl() . "/rapat/{$id}/rekaman");
 
             if (! $res->successful()) {
                 $this->rekamanList = [];
@@ -256,7 +260,10 @@ trait HasNotulensiManagement
             'rekamanFile' => 'required|file|max:1024000',
             'rekamanRapatId' => 'required|integer|min:1',
         ], [
+            'rekamanFile.required' => 'Berkas rekaman belum dipilih atau belum selesai diunggah. Silakan pilih berkas dan tunggu proses unggah selesai.',
+            'rekamanFile.file' => 'Berkas rekaman harus berupa dokumen audio atau video yang valid.',
             'rekamanFile.max' => 'Berkas terlalu besar. Maksimal 1 GB — untuk rapat panjang unggah audio (M4A/MP3) saja, bukan video.',
+            'rekamanRapatId.required' => 'Pilih agenda rapat terlebih dahulu.',
         ], ['rekamanFile' => 'berkas rekaman', 'rekamanRapatId' => 'rapat']);
 
         $this->reset(['rekamanTranskrip', 'rekamanNotulen', 'rekamanError', 'rekamanStatus', 'rekamanProgres', 'rekamanAktifId', 'rekamanNotulensiId']);
@@ -264,14 +271,21 @@ trait HasNotulensiManagement
         $this->rekamanNama = $this->rekamanFile->getClientOriginalName();
 
         try {
-            $res = Http::timeout(900)
+            $req = Http::timeout(900);
+            if ($token = session('auth_token')) {
+                $req = $req->withToken($token);
+            }
+
+            $res = $req
                 ->attach(
                     'berkas',
                     file_get_contents($this->rekamanFile->getRealPath()),
                     $this->rekamanNama,
                     ['Content-Type' => $this->rekamanFile->getMimeType() ?: 'application/octet-stream']
                 )
-                ->post($this->getBackendUrl() . "/rapat/{$this->rekamanRapatId}/rekaman", ['id_user' => 1]);
+                ->post($this->getBackendUrl() . "/rapat/{$this->rekamanRapatId}/rekaman", [
+                    'id_user' => (int) session('auth_user_id', 1),
+                ]);
 
             if (! $res->successful()) {
                 $this->rekamanError = $res->json('message') ?? ('HTTP ' . $res->status());
@@ -304,7 +318,11 @@ trait HasNotulensiManagement
         $idRapat = $this->rekamanRapatId ?: $this->notulensiRapatId;
 
         try {
-            $res = Http::timeout(15)->get($this->getBackendUrl() . "/rapat/{$idRapat}/rekaman/{$this->rekamanAktifId}");
+            $req = Http::timeout(15);
+            if ($token = session('auth_token')) {
+                $req = $req->withToken($token);
+            }
+            $res = $req->get($this->getBackendUrl() . "/rapat/{$idRapat}/rekaman/{$this->rekamanAktifId}");
 
             if (! $res->successful()) {
                 return;
@@ -355,7 +373,7 @@ trait HasNotulensiManagement
 
         $this->notulensiIsi = $this->rekamanNotulen;
         $this->notulensiRapatId = $this->rekamanRapatId ?: $this->notulensiRapatId;
-        $this->notulensiStatus = 'draf';
+        $this->notulensiStatus = 'dipertimbangkan';
         $this->notulensiFile = '';
         $this->selectedNotulensiId = null;
         $this->isFormOpen = true;
@@ -368,7 +386,11 @@ trait HasNotulensiManagement
         $idRapat = $this->rekamanRapatId ?: $this->notulensiRapatId;
 
         try {
-            $res = Http::timeout(10)->delete($this->getBackendUrl() . "/rapat/{$idRapat}/rekaman/{$id}");
+            $req = Http::timeout(10);
+            if ($token = session('auth_token')) {
+                $req = $req->withToken($token);
+            }
+            $res = $req->delete($this->getBackendUrl() . "/rapat/{$idRapat}/rekaman/{$id}");
 
             if ($res->successful() || $res->status() === 204) {
                 $this->flashMessage = 'Rekaman #' . $id . ' dihapus.';
@@ -403,7 +425,7 @@ trait HasNotulensiManagement
         return collect($this->notulensiList)
             ->filter(function ($item) {
                 if ($this->notulensiFilterStatus !== 'all') {
-                    if (strtolower($item['status'] ?? 'draf') !== strtolower($this->notulensiFilterStatus)) {
+                    if (strtolower($item['status'] ?? 'dipertimbangkan') !== strtolower($this->notulensiFilterStatus)) {
                         return false;
                     }
                 }

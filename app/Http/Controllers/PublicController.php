@@ -37,7 +37,6 @@ class PublicController extends Controller
         return view('public.home', [
             'hero' => \App\Support\HeroApi::publicRead(),
             'posts' => $this->publishedPosts(),
-            'activeSession' => $this->meetings->getActiveSession(),
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'committees' => $this->committees->all(),
             'features' => $this->features->all(),

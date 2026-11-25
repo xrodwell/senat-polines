@@ -15,7 +15,6 @@
     $memberCount   = $direktori['members'] ?? null;
     $committeeCount = $direktori['committees'] ?? count($committees);
     $releaseCount  = count($posts);
-    $hasActive     = (bool) $activeSession;
 
     $bulan = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
 @endphp
@@ -32,19 +31,9 @@
 
     <div class="senat-shell relative z-10 pb-4 pt-[72px]">
 
-        {{-- Info Sidang (2013:17 / 2013:18) --}}
-        @if ($hasActive)
-            <div class="inline-flex h-[38px] max-w-full items-center gap-2 rounded-[12px] border border-senat-orange/40 bg-senat-primary/80 backdrop-blur-sm px-4">
-                <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-senat-orange animate-pulse" aria-hidden="true"></span>
-                <p class="truncate text-[11px] font-bold leading-none text-senat-orange">
-                    INFO SIDANG: Sedang berlangsung {{ $activeSession['title'] }}
-                </p>
-            </div>
-        @endif
-
         <div class="max-w-[700px]">
             {{-- Eyebrow (2013:19) --}}
-            <p class="text-[11px] font-bold uppercase leading-[1.1] tracking-[0.02em] text-senat-sky {{ $hasActive ? 'mt-[38px]' : '' }}">
+            <p class="text-[11px] font-bold uppercase leading-[1.1] tracking-[0.02em] text-senat-sky">
                 {{ $hero['eyebrow'] }}
             </p>
 
@@ -54,7 +43,7 @@
                     $heroLines = explode("\n", $hero['title'], 2);
                 @endphp
                 {{ $heroLines[0] }}@if (isset($heroLines[1]))<br>
-                <span class="text-senat-orange">{{ $heroLines[1] }}</span>@endif
+                <span class="text-[#ecdfc3]">{{ $heroLines[1] }}</span>@endif
             </h1>
 
             {{-- Deskripsi (2013:22) --}}
@@ -65,19 +54,19 @@
             {{-- CTA (2013:23 / 2013:25) --}}
             <div class="mt-10 flex flex-wrap items-center gap-[18px]">
                 <a href="{{ route('public.profile') }}"
-                   class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-senat-orange px-5 text-[12px] font-bold text-senat-primary transition-colors duration-150 hover:bg-senat-orangeHover shadow-sm">
+                   class="inline-flex h-11 items-center gap-1.5 rounded-lg bg-white px-5 text-[12px] font-bold text-senat-primary shadow-[0_6px_18px_rgba(4,12,39,0.18)] transition-[transform,background-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#f4f1ea] hover:shadow-[0_10px_24px_rgba(4,12,39,0.22)]">
                     {{ $hero['primary_label'] }}
                     <span aria-hidden="true">›</span>
                 </a>
                 <a href="{{ route('public.regulations') }}"
-                   class="inline-flex h-10 items-center rounded-lg border border-white/20 bg-white/10 px-6 text-[12px] font-bold text-white backdrop-blur-sm transition-colors duration-150 hover:bg-white/20">
+                   class="inline-flex h-11 items-center rounded-lg border border-white/25 bg-white/[0.06] px-6 text-[12px] font-bold text-white backdrop-blur-sm transition-[transform,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/[0.12]">
                     {{ $hero['secondary_label'] }}
                 </a>
             </div>
         </div>
 
         {{-- Statistik (2013:27) --}}
-        <dl class="mt-[46px] grid grid-cols-2 rounded-[14px] border border-white/10 bg-senat-primary/80 backdrop-blur-sm lg:grid-cols-4">
+        <dl class="mt-[122px] grid grid-cols-2 rounded-[14px] border border-white/12 bg-senat-primary/85 backdrop-blur-sm lg:grid-cols-4">
             @php
                 $stats = [
                     ['label' => 'ANGGOTA SENAT',   'value' => $memberCount,     'hint' => 'Guru Besar & Pendidik'],
@@ -87,12 +76,13 @@
                 ];
             @endphp
             @foreach ($stats as $i => $stat)
-                <div class="px-[22px] py-[21px] border-white/10
+                <div class="border-white/12 px-[22px] py-[21px]
                             {{ $i % 2 === 1 ? 'border-l' : '' }}
-                            lg:border-l lg:first:border-l-0">
-                    <dt class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-sky">{{ $stat['label'] }}</dt>
+                            {{ $i >= 2 ? 'border-t' : '' }}
+                            lg:border-t-0 lg:border-l lg:first:border-l-0">
+                    <dt class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-white/90">{{ $stat['label'] }}</dt>
                     <dd class="mt-[6px] text-[19px] font-bold leading-none text-white tabular-nums sm:text-[22px] lg:text-[27px]">{{ $stat['value'] }}</dd>
-                    <dd class="mt-[7px] text-[10px] leading-[1.1] text-senat-skySoft/80">{{ $stat['hint'] }}</dd>
+                    <dd class="mt-[7px] text-[10px] leading-[1.1] text-white/75">{{ $stat['hint'] }}</dd>
                 </div>
             @endforeach
         </dl>
@@ -115,12 +105,12 @@
             </a>
         </div>
 
-        <div class="mt-[31px] space-y-5">
+        <div class="mt-[31px] space-y-4">
             @forelse ($upcomingMeetings as $meeting)
                 @php
                     $d = \Carbon\Carbon::parse($meeting['date']);
                 @endphp
-                <article class="flex items-center gap-[18px] rounded-[14px] border border-[#d9e3f0] bg-white p-[18px]">
+                <article class="flex items-center gap-[18px] rounded-[14px] border border-[#e1e7ef] bg-white p-5">
                     {{-- Blok tanggal (2013:44) --}}
                     <div class="flex h-[58px] w-[58px] shrink-0 flex-col items-center justify-center rounded-[10px] bg-senat-hero text-white">
                         <span class="text-[19px] font-bold leading-none tabular-nums">{{ $d->format('d') }}</span>
@@ -163,15 +153,15 @@
             </a>
         </div>
 
-        <div class="mt-[30px] grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            @forelse ($posts as $post)
+        <div class="mt-[30px] grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            @forelse (array_slice($posts, 0, 6) as $post)
                 <a href="{{ route('public.news.show', $post['slug']) }}"
-                   class="group flex flex-col overflow-hidden rounded-[14px] border border-[#d9e3f0] bg-white transition-colors duration-150 hover:border-senat-primary/50">
+                   class="group flex flex-col overflow-hidden rounded-[14px] border border-[#e1e7ef] bg-white transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-senat-primary/35 hover:shadow-[0_10px_28px_rgba(24,26,88,0.08)]">
                     {{-- Thumbnail / placeholder (2013:92) --}}
-                    <div class="h-[125px] w-full overflow-hidden bg-[#d4dee5]">
+                    <div class="h-[160px] w-full overflow-hidden bg-[#d4dee5]">
                         @if (! empty($post['thumbnail']))
                             <img src="{{ $post['thumbnail'] }}" alt="{{ $post['title'] }}" loading="lazy"
-                                 class="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105">
+                                 class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]">
                         @endif
                     </div>
 
@@ -179,7 +169,7 @@
                         <p class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-link">
                             {{ $post['category'] }}
                         </p>
-                        <h3 class="mt-[6px] text-[13px] font-bold leading-snug text-senat-ink line-clamp-3 group-hover:text-senat-primary">
+                        <h3 class="mt-[6px] text-[13px] font-bold leading-snug text-senat-ink line-clamp-3 transition-colors duration-200 group-hover:text-senat-primary">
                             {{ $post['title'] }}
                         </h3>
                         <p class="mt-2 text-[11px] leading-[1.3] text-senat-body line-clamp-2">
@@ -215,8 +205,8 @@
                     $headingText = $isBp ? 'BP (Badan Pekerja)' : \Illuminate\Support\Str::after($committee['name'], 'Komisi ');
                 @endphp
                 <a href="{{ route('public.profile.structure') }}"
-                   class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#d9e3f0] bg-white p-[18px] transition-colors duration-150 hover:border-senat-primary/50">
-                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] {{ $isBp ? 'bg-senat-orange' : 'bg-senat-hero' }} text-[12px] font-bold text-white">
+                   class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#e1e7ef] bg-white p-[18px] transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-senat-primary/35 hover:shadow-[0_10px_28px_rgba(24,26,88,0.08)]">
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] {{ $isBp ? 'border border-[#d6c7a6] bg-[#ecdfc3] text-[#302d45]' : 'bg-senat-hero text-white' }} text-[12px] font-bold">
                         {{ $badgeText }}
                     </span>
                     <p class="mt-3 text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-body">

@@ -109,11 +109,95 @@
                                         <input type="date" wire:model="regulasiTanggal" required
                                                class="mt-1.5 w-full rounded-[10px] border border-senat-border bg-white px-3.5 py-2 text-[13px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link" />
                                     </div>
-                                    <div>
-                                        <label class="block text-[12.5px] font-semibold text-senat-ink">Berkas Dokumen</label>
-                                        <input type="text" wire:model="regulasiFile" placeholder="peraturan-senat-01-2026.pdf"
-                                               class="mt-1.5 w-full rounded-[10px] border border-senat-border bg-white px-3.5 py-2 text-[13px] text-senat-ink placeholder:text-senat-muted focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link" />
+                                </div>
+
+                                {{-- Drag & Drop / Pilih Berkas Dokumen --}}
+                                <div
+                                    x-data="{
+                                        isDragging: false,
+                                        handleDrop(e) {
+                                            this.isDragging = false;
+                                            const files = e.dataTransfer?.files;
+                                            if (!files || !files.length) return;
+                                            const input = this.$refs.regulasiFileInput;
+                                            input.files = files;
+                                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                                        }
+                                    }">
+                                    <label class="block text-[12.5px] font-semibold text-senat-ink">
+                                        Unggah Berkas Dokumen <span class="font-normal text-senat-muted">(Maks. 10 MB)</span>
+                                    </label>
+
+                                    <div
+                                        @dragover.prevent="isDragging = true"
+                                        @dragleave.prevent="isDragging = false"
+                                        @drop.prevent="handleDrop($event)"
+                                        @click="$refs.regulasiFileInput.click()"
+                                        :class="isDragging ? 'border-senat-link bg-senat-link/5 ring-2 ring-senat-link/20' : 'border-senat-border bg-slate-50/70 hover:border-senat-link/60 hover:bg-senat-badgeBg/40'"
+                                        class="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-[12px] border-2 border-dashed px-4 py-5 text-center transition-all">
+                                        <input
+                                            x-ref="regulasiFileInput"
+                                            type="file"
+                                            wire:model="regulasiUpload"
+                                            accept=".pdf,.doc,.docx,.odt,.rtf,.xls,.xlsx,.ppt,.pptx"
+                                            class="hidden" />
+
+                                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-senat-link shadow-xs border border-senat-sidebarLine">
+                                            <x-senat.icon name="file-text" class="h-5 w-5" />
+                                        </div>
+
+                                        <p class="mt-2.5 text-[13px] font-semibold text-senat-ink">
+                                            Seret &amp; lepas berkas ke sini, atau <span class="text-senat-link underline">pilih berkas</span>
+                                        </p>
+                                        <p class="mt-0.5 text-[11.5px] text-senat-muted">
+                                            Ukuran maksimal 10 MB
+                                        </p>
+
+                                        <div wire:loading wire:target="regulasiUpload" class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[11.5px] font-semibold text-senat-link">
+                                            <span>Mengunggah berkas...</span>
+                                        </div>
                                     </div>
+
+                                    @error('regulasiUpload')
+                                        <p class="mt-1.5 text-[12px] font-medium text-rose-600">{{ $message }}</p>
+                                    @enderror
+
+                                    @if ($regulasiUpload)
+                                        <div class="mt-2.5 flex items-center justify-between gap-3 rounded-[10px] border border-emerald-200 bg-emerald-50/70 px-3.5 py-2.5">
+                                            <div class="flex min-w-0 items-center gap-2.5">
+                                                <x-senat.icon name="check" class="h-4 w-4 shrink-0 text-emerald-600" />
+                                                <div class="min-w-0">
+                                                    <p class="truncate text-[12.5px] font-semibold text-emerald-900">{{ $regulasiUpload->getClientOriginalName() }}</p>
+                                                    <p class="text-[11px] text-emerald-700">
+                                                        Siap diunggah ({{ number_format(($regulasiUpload->getSize() ?? 0) / 1024, 1) }} KB)
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button type="button" wire:click="removeRegulasiUpload"
+                                                    class="shrink-0 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-[11.5px] font-semibold text-rose-600 hover:bg-rose-50">
+                                                Hapus
+                                            </button>
+                                        </div>
+                                    @elseif (!empty($regulasiFile))
+                                        <div class="mt-2.5 flex items-center justify-between gap-3 rounded-[10px] border border-senat-sidebarLine bg-senat-badgeBg/50 px-3.5 py-2">
+                                            <div class="min-w-0">
+                                                <p class="truncate text-[12px] font-medium text-senat-ink">
+                                                    Berkas saat ini: <span class="font-semibold">{{ basename($regulasiFile) }}</span>
+                                                </p>
+                                            </div>
+                                            @if ($regulasiId)
+                                                @php
+                                                    $currentDownloadUrl = \Illuminate\Support\Str::startsWith($regulasiFile, ['http://', 'https://'])
+                                                        ? $regulasiFile
+                                                        : rtrim($this->getBackendUrl(), '/') . "/peraturan/{$regulasiId}/download";
+                                                @endphp
+                                                <a href="{{ $currentDownloadUrl }}" target="_blank" rel="noopener"
+                                                   class="shrink-0 text-[11.5px] font-semibold text-senat-link hover:underline">
+                                                    Unduh
+                                                </a>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <div>
@@ -291,15 +375,23 @@
                                     </dl>
 
                                     @if (!empty($regView['file_dokumen']))
+                                        @php
+                                            $detailDownloadUrl = \Illuminate\Support\Str::startsWith($regView['file_dokumen'], ['http://', 'https://'])
+                                                ? $regView['file_dokumen']
+                                                : rtrim($this->getBackendUrl(), '/') . "/peraturan/{$regView['id_peraturan']}/download";
+                                        @endphp
                                         <div class="mt-4 flex items-center justify-between rounded-xl border border-senat-link/20 bg-senat-link/5 p-3.5">
-                                            <div class="flex items-center gap-2.5">
-                                                <x-senat.icon name="folder" class="h-5 w-5 text-senat-link" />
-                                                <div>
-                                                    <span class="block text-[12.5px] font-bold text-senat-ink">{{ $regView['file_dokumen'] }}</span>
+                                            <div class="flex min-w-0 items-center gap-2.5">
+                                                <x-senat.icon name="folder" class="h-5 w-5 shrink-0 text-senat-link" />
+                                                <div class="min-w-0">
+                                                    <span class="block truncate text-[12.5px] font-bold text-senat-ink">{{ basename($regView['file_dokumen']) }}</span>
                                                     <span class="text-[11px] text-senat-muted">Dokumen resmi produk hukum Senat</span>
                                                 </div>
                                             </div>
-                                            <span class="rounded bg-senat-link px-3 py-1 text-[11px] font-semibold text-white">Tersimpan</span>
+                                            <a href="{{ $detailDownloadUrl }}" target="_blank" rel="noopener"
+                                               class="shrink-0 rounded bg-senat-link px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-senat-primary">
+                                                Unduh Berkas
+                                            </a>
                                         </div>
                                     @endif
 

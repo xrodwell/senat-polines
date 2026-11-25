@@ -5,9 +5,6 @@
                     {{-- Meeting Selector Bar --}}
                     <div class="rounded-[14px] border border-senat-sidebarLine bg-white p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0 flex-1">
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-senat-primary/10 text-senat-primary font-bold">
-                                📅
-                            </div>
                             <div class="min-w-0 flex-1">
                                 <label for="select-meeting-presensi" class="text-[10.5px] font-bold uppercase tracking-wider text-senat-muted block">Pilih Agenda Sidang (Aktif / Terjadwal / Riwayat):</label>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">

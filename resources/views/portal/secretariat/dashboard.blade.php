@@ -61,7 +61,7 @@
         <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
             <x-senat.stat label="Sidang terjadwal" :value="str_pad((string) $stats['total'], 2, '0', STR_PAD_LEFT)"
                           :hint="$upcomingCount.' agenda mendatang'" icon="calendar" />
-            <x-senat.stat label="Notulensi draft" :value="str_pad((string) ($notulenItem ? 1 : 0), 2, '0', STR_PAD_LEFT)"
+            <x-senat.stat label="Notulensi dipertimbangkan" :value="str_pad((string) ($notulenItem ? 1 : 0), 2, '0', STR_PAD_LEFT)"
                           hint="Perlu verifikasi sekretariat" icon="minutes" />
             <x-senat.stat label="Voting dibuka" :value="str_pad((string) ($activeMeeting ? 1 : 0), 2, '0', STR_PAD_LEFT)"
                           :hint="$activeMeeting ? 'Sesi sedang berlangsung' : 'Belum ada voting aktif'" icon="check" />

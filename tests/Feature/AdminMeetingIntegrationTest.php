@@ -46,4 +46,33 @@ class AdminMeetingIntegrationTest extends TestCase
         $this->assertStringContainsString('Berhasil', $component->get('flashMessage'));
         $this->assertNull($component->get('editingMeetingId'));
     }
+
+    public function test_can_schedule_meeting_with_custom_organizer_type_and_time_format(): void
+    {
+        Http::fake([
+            '*/rapat' => Http::response(['data' => ['id_rapat' => 77]], 201),
+            '*/rapat/*' => Http::response(['data' => ['id_rapat' => 77]], 200),
+            '*' => Http::response([], 200),
+        ]);
+
+        $component = Livewire::test(AdminPreview::class)
+            ->call('select', 'Jadwal & Agenda Sidang')
+            ->assertSee('Penyelenggara Sidang')
+            ->assertSee('Komisi 1 (Komisi Pendidikan dan Pengajaran)')
+            ->assertSee('Komisi 5 (Komisi Etik)')
+            ->assertSee('Badan Pekerja')
+            ->assertSee('Panitia kerja, badan pekerja')
+            ->set('newMeetingTitle', 'Rapat Koordinasi Kurikulum MBKM')
+            ->set('newMeetingOrganizer', 'Komisi 1 (Komisi Pendidikan dan Pengajaran)')
+            ->set('newMeetingType', 'Komisi')
+            ->set('newMeetingDate', '2026-12-01')
+            ->set('newMeetingStartTime', '08:30')
+            ->set('newMeetingEndTime', '11:45')
+            ->set('newMeetingUntilFinished', false)
+            ->call('createNewMeeting');
+
+        $this->assertStringContainsString('berhasil dijadwalkan', $component->get('flashMessage'));
+        $this->assertSame('08:30 - 11:45 WIB', $component->instance()->formatMeetingTime('08:30', '11:45', false));
+        $this->assertSame('08:30 WIB - Selesai', $component->instance()->formatMeetingTime('08:30', '11:45', true));
+    }
 }

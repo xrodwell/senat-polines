@@ -12,8 +12,6 @@
                             </div>
                             @if ($editingMeetingId)
                                 <span class="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-900 border border-amber-200">Mode Edit Aktif</span>
-                            @else
-                                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-senat-primary border border-blue-200">Sidang Senat</span>
                             @endif
                         </div>
 
@@ -28,20 +26,54 @@
 
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <div>
-                                        <label class="text-[12px] font-semibold text-senat-ink">Jenis Sidang Senat <span class="text-rose-500">*</span></label>
-                                        <select wire:model="meetingJenisRapatId"
+                                        <label class="text-[12px] font-semibold text-senat-ink">Penyelenggara Sidang <span class="text-rose-500">*</span></label>
+                                        <select wire:model="meetingOrganizer"
                                                 class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                                            <option value="1">Rapat Pleno</option>
-                                            <option value="2">Rapat Komisi</option>
-                                            <option value="3">Rapat Koordinasi</option>
-                                            <option value="5">Rapat BP (Badan Pekerja)</option>
+                                            @foreach ($this->organizerOptions() as $val => $optLabel)
+                                                <option value="{{ $val }}">{{ $optLabel }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="text-[12px] font-semibold text-senat-ink">Tanggal dan Waktu <span class="text-rose-500">*</span></label>
-                                        <input type="datetime-local" wire:model="meetingDateTime" required
+                                        <label class="text-[12px] font-semibold text-senat-ink">Jenis Rapat / Sidang Senat <span class="text-rose-500">*</span></label>
+                                        <select wire:model="meetingType"
+                                                class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                            @foreach ($this->meetingTypeOptions() as $val => $optLabel)
+                                                <option value="{{ $val }}">{{ $optLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Tanggal Sidang <span class="text-rose-500">*</span></label>
+                                        <input type="date" wire:model="meetingDate" required
                                                class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                                        @error('meetingDateTime') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                                        @error('meetingDate') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[12px] font-semibold text-senat-ink">Waktu Pelaksanaan <span class="text-rose-500">*</span></label>
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-1">
+                                                <input type="time" wire:model.live="meetingStartTime" required
+                                                       class="h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-2.5 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                            </div>
+                                            <span class="text-slate-400 font-bold text-xs">s/d</span>
+                                            <div class="flex-1">
+                                                <input type="time" wire:model.live="meetingEndTime" @disabled($meetingUntilFinished)
+                                                       class="h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-2.5 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link disabled:bg-slate-100 disabled:text-slate-400">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-0.5">
+                                            <label class="inline-flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-600">
+                                                <input type="checkbox" wire:model.live="meetingUntilFinished" class="rounded border-slate-300 text-senat-primary focus:ring-senat-primary h-3.5 w-3.5">
+                                                <span>Sampai Selesai</span>
+                                            </label>
+                                            <span class="text-[10.5px] font-semibold text-senat-primary">
+                                                {{ $this->formatMeetingTime($meetingStartTime, $meetingEndTime, $meetingUntilFinished) }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -79,41 +111,67 @@
 
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <div>
-                                        <label class="text-[12px] font-semibold text-senat-ink">Jenis Sidang Senat</label>
-                                        <select wire:model="newMeetingType"
+                                        <label class="text-[12px] font-semibold text-senat-ink">Penyelenggara Sidang <span class="text-rose-500">*</span></label>
+                                        <select wire:model.live="newMeetingOrganizer"
                                                 class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                                            <option value="Sidang Pleno">Sidang Pleno Lengkap</option>
-                                            <option value="Sidang Komisi I">Sidang Komisi I (Pendidikan &amp; Pengajaran)</option>
-                                            <option value="Sidang Komisi II">Sidang Komisi II (Penelitian &amp; PkM)</option>
-                                            <option value="Sidang Komisi III">Sidang Komisi III (Kelembagaan &amp; SDM)</option>
-                                            <option value="Sidang Komisi IV">Sidang Komisi IV (Kerjasama &amp; Alumni)</option>
-                                            <option value="Sidang Komisi V">Sidang Komisi V (Kode Etik &amp; Advokasi)</option>
-                                            <option value="Rapat BP (Badan Pekerja)">Rapat BP (Badan Pekerja)</option>
+                                            @foreach ($this->organizerOptions() as $val => $optLabel)
+                                                <option value="{{ $val }}">{{ $optLabel }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
+                                    <div>
+                                        <label class="text-[12px] font-semibold text-senat-ink">Jenis Rapat / Sidang Senat <span class="text-rose-500">*</span></label>
+                                        <select wire:model="newMeetingType"
+                                                class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                            @foreach ($this->meetingTypeOptions() as $val => $optLabel)
+                                                <option value="{{ $val }}">{{ $optLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="grid gap-3 sm:grid-cols-2">
                                     <div>
                                         <label class="text-[12px] font-semibold text-senat-ink">Tanggal Sidang <span class="text-rose-500">*</span></label>
                                         <input type="date"
                                                wire:model="newMeetingDate"
                                                class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
                                     </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[12px] font-semibold text-senat-ink">Waktu Pelaksanaan <span class="text-rose-500">*</span></label>
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-1">
+                                                <input type="time"
+                                                       wire:model.live="newMeetingStartTime"
+                                                       required
+                                                       class="h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-2.5 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
+                                            </div>
+                                            <span class="text-slate-400 font-bold text-xs">s/d</span>
+                                            <div class="flex-1">
+                                                <input type="time"
+                                                       wire:model.live="newMeetingEndTime"
+                                                       @disabled($newMeetingUntilFinished)
+                                                       class="h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-2.5 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link disabled:bg-slate-100 disabled:text-slate-400">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between pt-0.5">
+                                            <label class="inline-flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-600">
+                                                <input type="checkbox" wire:model.live="newMeetingUntilFinished" class="rounded border-slate-300 text-senat-primary focus:ring-senat-primary h-3.5 w-3.5">
+                                                <span>Sampai Selesai</span>
+                                            </label>
+                                            <span class="text-[10.5px] font-semibold text-senat-primary">
+                                                {{ $this->formatMeetingTime($newMeetingStartTime, $newMeetingEndTime, $newMeetingUntilFinished) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="grid gap-3 sm:grid-cols-2">
-                                    <div>
-                                        <label class="text-[12px] font-semibold text-senat-ink">Waktu Pelaksanaan</label>
-                                        <input type="text"
-                                               wire:model="newMeetingTime"
-                                               placeholder="Contoh: 09:00 - 12:30 WIB"
-                                               class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                                    </div>
-                                    <div>
-                                        <label class="text-[12px] font-semibold text-senat-ink">Ruangan / Tempat</label>
-                                        <input type="text"
-                                               wire:model="newMeetingRoom"
-                                               placeholder="Contoh: Ruang Sidang Utama Lantai 2"
-                                               class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
-                                    </div>
+                                <div>
+                                    <label class="text-[12px] font-semibold text-senat-ink">Ruangan / Tempat <span class="text-rose-500">*</span></label>
+                                    <input type="text"
+                                           wire:model="newMeetingRoom"
+                                           placeholder="Contoh: Ruang Sidang Utama Lantai 2 Gd. Direktorat"
+                                           class="mt-1 h-[38px] w-full rounded-[8px] border border-senat-border bg-white px-3 text-[12px] text-senat-ink focus:border-senat-link focus:outline-none focus:ring-1 focus:ring-senat-link">
                                 </div>
 
                                 {{-- Komponen Seleksi Dosen yang Diundang --}}
@@ -177,8 +235,16 @@
 
                                 <div class="flex flex-wrap items-center gap-3 pt-2">
                                     <button type="submit"
-                                            class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-5 text-[12px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm">
-                                        <span>Jadwalkan Sidang &amp; Terbitkan Undangan</span>
+                                            wire:loading.attr="disabled"
+                                            wire:target="createNewMeeting"
+                                            class="senat-tap inline-flex h-9 items-center justify-center gap-2 rounded-md bg-[#116a3c] px-5 text-[12px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm disabled:opacity-50">
+                                        <span wire:loading.remove wire:target="createNewMeeting">
+                                            Jadwalkan Sidang &amp; Terbitkan Undangan Broadcast ({{ count($selectedLecturerIds) }} Dosen)
+                                        </span>
+                                        <span wire:loading wire:target="createNewMeeting" class="flex items-center gap-1.5">
+                                            <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <span>Menjadwalkan &amp; Mengirim Broadcast Email...</span>
+                                        </span>
                                     </button>
                                     <button type="button"
                                             wire:click="saveAction('Draf Sidang Disimpan')"
@@ -195,7 +261,7 @@
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-senat-line pb-3">
                             <div>
                                 <h2 class="text-[18px] font-bold text-senat-ink">Agenda &amp; Riwayat Sidang</h2>
-                                <p class="text-[12px] text-senat-muted">Daftar Sidang Terjadwal, aktif, dan riwayat lalu (Data dinamis dari Backend API port 8001).</p>
+                                <p class="mt-0.5 text-[12px] text-senat-muted">Daftar Sidang Terjadwal, aktif, dan riwayat lalu (Data dinamis dari Backend API port 8001).</p>
                             </div>
                             <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
                                 {{ count($filteredMeetings) }} Agenda
@@ -214,20 +280,28 @@
                             @endforeach
                         </div>
 
-                        <ul class="mt-3 divide-y divide-senat-sidebarLine max-h-[620px] overflow-y-auto pr-1">
+                        <ul x-data="{ scrolling: false, _scrollTimer: null }"
+                            @scroll.passive="scrolling = true; clearTimeout(_scrollTimer); _scrollTimer = setTimeout(() => scrolling = false, 1500)"
+                            :class="{ 'is-scrolling': scrolling }"
+                            class="auto-hide-scroll mt-3 divide-y divide-senat-sidebarLine max-h-[680px] overflow-y-auto pr-1">
                             @forelse ($filteredMeetings as $meeting)
                                 <li wire:key="item-meeting-{{ $meeting['id'] ?? ($meeting['id_rapat'] ?? $loop->index) }}" class="py-3.5 first:pt-1">
                                     <div class="flex items-start justify-between gap-2">
                                         <div class="min-w-0 flex-1">
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex flex-wrap items-center gap-1.5">
                                                 <span class="font-mono text-[10.5px] font-bold text-senat-muted uppercase">{{ $meeting['session_code'] ?? 'PLN' }}</span>
                                                 <x-senat.badge :state="$this->chipState($meeting['type'] ?? '')">{{ $meeting['type'] ?? 'Sidang' }}</x-senat.badge>
+                                                @if (!empty($meeting['organizer']))
+                                                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 border border-slate-200" title="Penyelenggara Sidang">
+                                                        {{ $meeting['organizer'] }}
+                                                    </span>
+                                                @endif
                                                 @if (in_array(strtolower($meeting['status'] ?? ''), ['sedang berlangsung', 'aktif']))
-                                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Berlangsung
+                                                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                                                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span> Berlangsung
                                                     </span>
                                                 @elseif (in_array(strtolower($meeting['status'] ?? ''), ['terjadwal', 'dijadwalkan']))
-                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
                                                         Terjadwal
                                                     </span>
                                                 @elseif (in_array(strtolower($meeting['status'] ?? ''), ['draft', 'draf']))
@@ -235,7 +309,7 @@
                                                         Draft
                                                     </span>
                                                 @else
-                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <span class="rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                         {{ $meeting['status'] ?? 'Selesai' }}
                                                     </span>
                                                 @endif
@@ -244,20 +318,27 @@
                                             <p class="mt-1 text-[11.5px] text-senat-body">
                                                 {{ \Illuminate\Support\Carbon::parse($meeting['date'] ?? now())->format('d M Y') }} · {{ $meeting['time'] ?? '09:00 WIB' }}
                                             </p>
-                                            <p class="text-[11px] text-senat-muted truncate">📍 {{ $meeting['room'] ?? 'Ruang Sidang Senat' }}</p>
+                                            <p class="mt-0.5 text-[11px] text-senat-muted truncate">{{ $meeting['room'] ?? 'Ruang Sidang Senat' }}</p>
                                         </div>
                                     </div>
 
                                     <div class="mt-2.5 flex flex-wrap items-center justify-between border-t border-slate-100 pt-2.5 gap-2 text-[11px]">
                                         <span class="font-semibold text-slate-600">
-                                            👥 {{ $meeting['total_invited'] ?? 34 }} Dosen Diundang
+                                            {{ $meeting['total_invited'] ?? 34 }} Dosen Diundang
                                         </span>
                                         <div class="flex items-center gap-1.5">
                                             <button type="button"
+                                                    wire:click="previewBroadcast({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
+                                                    wire:loading.attr="disabled"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-blue-200 bg-blue-50 px-2 text-[11px] font-semibold text-senat-primary hover:bg-blue-100 transition shadow-2xs disabled:opacity-50"
+                                                    title="Pratinjau & Broadcast Email Undangan">
+                                                <span>Broadcast</span>
+                                            </button>
+                                            <button type="button"
                                                     wire:click="manageMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
-                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md bg-[#116a3c] px-2.5 text-[11px] font-semibold text-white transition hover:bg-[#0d542f] shadow-xs"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
                                                     title="Buka Presensi Sidang Ini">
-                                                <span>Kelola Presensi</span>
+                                                <span>Presensi</span>
                                             </button>
                                             <button type="button"
                                                     wire:click="manageMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }}, 'Kuorum & Kehadiran Anggota')"
@@ -267,14 +348,14 @@
                                             </button>
                                             <button type="button"
                                                     wire:click="editMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
-                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-blue-200 bg-blue-50/70 px-2 text-[11px] font-semibold text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition shadow-2xs"
                                                     title="Sunting Sidang">
                                                 <span>Edit</span>
                                             </button>
                                             <button type="button"
                                                     wire:click="deleteMeeting({{ $meeting['id'] ?? ($meeting['id_rapat'] ?? 1) }})"
                                                     onclick="return confirm('Hapus agenda sidang ini dari backend?') || event.stopImmediatePropagation()"
-                                                    class="rounded px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+                                                    class="senat-tap inline-flex h-7 items-center justify-center rounded-md border border-rose-200 bg-rose-50/70 px-2 text-[11px] font-semibold text-rose-600 hover:bg-rose-100 hover:border-rose-300 transition shadow-2xs"
                                                     title="Hapus Sidang">
                                                 <span>Hapus</span>
                                             </button>
@@ -288,4 +369,53 @@
                             @endforelse
                         </ul>
                     </section>
+
+                    @if ($broadcastModalMeetingId)
+                        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+                            <div class="w-full max-w-lg rounded-xl border border-senat-border bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                                <div class="flex items-center justify-between border-b border-senat-line bg-slate-50 px-5 py-3.5">
+                                    <div>
+                                        <h3 class="text-sm font-bold text-senat-ink">Pratinjau Broadcast Email Undangan</h3>
+                                        <p class="text-[11px] text-senat-muted">Format pesan yang dikirimkan ke email dosen / anggota senat</p>
+                                    </div>
+                                    <button type="button" wire:click="closeBroadcastModal" class="rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                                <div class="p-5 space-y-3">
+                                    <div class="rounded-lg border border-blue-100 bg-blue-50/60 p-3 text-[11.5px] text-slate-700">
+                                        <p class="m-0 leading-relaxed">
+                                            Undangan email resmi berdesain kartu terstruktur (agenda, waktu, ruangan, tautan portal) akan dikirimkan secara otomatis kepada seluruh dosen dan anggota senat yang terdaftar sebagai peserta sidang ini.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-senat-muted uppercase tracking-wider mb-1.5">Pratinjau Isi Format Surat / Teks Undangan</label>
+                                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3.5 font-mono text-[11.5px] leading-relaxed text-slate-800 whitespace-pre-wrap select-all max-h-72 overflow-y-auto">
+{{ $broadcastPreviewText }}
+                                        </div>
+                                        <p class="mt-1.5 text-[11px] text-slate-500 italic">
+                                            * Catatan: Nama penerima ("Yth. ...") akan diganti secara personal dan otomatis untuk setiap dosen/anggota yang diundang.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-end gap-2 border-t border-senat-line bg-slate-50 px-5 py-3">
+                                    <button type="button" wire:click="closeBroadcastModal" class="h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                                        Tutup
+                                    </button>
+                                    <button type="button"
+                                            wire:click="sendBroadcastEmail({{ $broadcastModalMeetingId }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="sendBroadcastEmail"
+                                            class="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#116a3c] px-4 text-xs font-semibold text-white hover:bg-[#0d542f] shadow-xs disabled:opacity-50">
+                                        <span wire:loading.remove wire:target="sendBroadcastEmail">Kirim Broadcast Sekarang</span>
+                                        <span wire:loading wire:target="sendBroadcastEmail" class="flex items-center gap-1.5">
+                                            <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            <span>Mengirim Broadcast Email...</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>

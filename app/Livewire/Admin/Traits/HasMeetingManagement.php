@@ -13,23 +13,124 @@ trait HasMeetingManagement
 {
     public string $meetingTitle = '';
     public int $meetingJenisRapatId = 1;
+    public string $meetingOrganizer = 'Senat';
+    public string $meetingType = 'Pleno';
+    public string $meetingDate = '';
+    public string $meetingStartTime = '09:00';
+    public string $meetingEndTime = '12:00';
+    public bool $meetingUntilFinished = false;
     public string $meetingDateTime = '';
     public string $meetingRoom = '';
     public string $meetingPeserta = '';
     public ?int $editingMeetingId = null;
+
+    // Broadcast Email State
+    public ?int $broadcastModalMeetingId = null;
+    public ?string $broadcastPreviewText = null;
+    public string $broadcastTestEmail = 'thomasandromeda999@gmail.com';
 
     // Multi-Meeting & History State
     public ?int $selectedMeetingId = null;
     public string $meetingFilterTab = 'semua'; // semua, berlangsung, terjadwal, selesai
     // Form Buat Sidang Baru & Pemilihan Dosen
     public string $newMeetingTitle = '';
-    public string $newMeetingType = 'Sidang Pleno';
+    public string $newMeetingOrganizer = 'Senat';
+    public string $newMeetingType = 'Pleno';
     public string $newMeetingDate = '';
-    public string $newMeetingTime = '09:00 - 12:30 WIB';
+    public string $newMeetingStartTime = '09:00';
+    public string $newMeetingEndTime = '12:00';
+    public bool $newMeetingUntilFinished = false;
+    public string $newMeetingTime = '09:00 - 12:00 WIB';
     public string $newMeetingRoom = 'Ruang Sidang Utama Lantai 2 Gd. Direktorat';
     public array $allLecturers = [];
     public array $selectedLecturerIds = [];
     public string $lecturerSearch = '';
+
+    public function organizerOptions(): array
+    {
+        return [
+            'Senat' => 'Senat',
+            'Komisi 1 (Komisi Pendidikan dan Pengajaran)' => 'Komisi 1 (Komisi Pendidikan dan Pengajaran)',
+            'Komisi 2 (Komisi Penelitian dan Pengabdian kepada Masyarakat)' => 'Komisi 2 (Komisi Penelitian dan Pengabdian kepada Masyarakat)',
+            'Komisi 3 (Komisi Kelembagaan dan Sumber Daya Manusia)' => 'Komisi 3 (Komisi Kelembagaan dan Sumber Daya Manusia)',
+            'Komisi 4 (Komisi Pengembangan dan Kerja Sama)' => 'Komisi 4 (Komisi Pengembangan dan Kerja Sama)',
+            'Komisi 5 (Komisi Etik)' => 'Komisi 5 (Komisi Etik)',
+            'Badan Pekerja' => 'Badan Pekerja',
+        ];
+    }
+
+    public function meetingTypeOptions(): array
+    {
+        return [
+            'Pleno' => 'Pleno',
+            'Terbuka' => 'Terbuka',
+            'Pimpinan' => 'Pimpinan',
+            'Komisi' => 'Komisi',
+            'Panitia kerja, badan pekerja' => 'Panitia kerja, badan pekerja',
+            'Rapat atau sidang lain yang ditetapkan Senat sesuai kebutuhan' => 'Rapat atau sidang lain yang ditetapkan Senat sesuai kebutuhan',
+        ];
+    }
+
+    public function updatedNewMeetingOrganizer(string $value): void
+    {
+        if (str_contains($value, 'Komisi 1')) {
+            $this->selectCommitteeLecturers('Komisi I');
+        } elseif (str_contains($value, 'Komisi 2')) {
+            $this->selectCommitteeLecturers('Komisi II');
+        } elseif (str_contains($value, 'Komisi 3')) {
+            $this->selectCommitteeLecturers('Komisi III');
+        } elseif (str_contains($value, 'Komisi 4')) {
+            $this->selectCommitteeLecturers('Komisi IV');
+        } elseif (str_contains($value, 'Komisi 5')) {
+            $this->selectCommitteeLecturers('Komisi V');
+        } elseif (str_contains($value, 'Badan Pekerja')) {
+            $this->selectCommitteeLecturers('BP');
+            if (empty($this->selectedLecturerIds)) {
+                $this->selectCommitteeLecturers('Badan Pekerja');
+            }
+        } elseif ($value === 'Senat') {
+            $this->selectAllLecturers();
+        }
+
+        if (empty($this->selectedLecturerIds)) {
+            $this->selectAllLecturers();
+        }
+    }
+
+    public function formatMeetingTime(string $start, string $end, bool $untilFinished): string
+    {
+        $start = !empty($start) ? substr($start, 0, 5) : '09:00';
+        if ($untilFinished) {
+            return "{$start} WIB - Selesai";
+        }
+        $end = !empty($end) ? substr($end, 0, 5) : '12:00';
+        return "{$start} - {$end} WIB";
+    }
+
+    public function mapMeetingTypeToId(string $type): int
+    {
+        return match ($type) {
+            'Pleno' => 1,
+            'Komisi' => 2,
+            'Rapat atau sidang lain yang ditetapkan Senat sesuai kebutuhan' => 3,
+            'Pimpinan' => 4,
+            'Panitia kerja, badan pekerja' => 5,
+            'Terbuka' => 1,
+            default => 1,
+        };
+    }
+
+    public function mapIdToMeetingType(int $id): string
+    {
+        return match ($id) {
+            1 => 'Pleno',
+            2 => 'Komisi',
+            3 => 'Rapat atau sidang lain yang ditetapkan Senat sesuai kebutuhan',
+            4 => 'Pimpinan',
+            5 => 'Panitia kerja, badan pekerja',
+            default => 'Pleno',
+        };
+    }
 
 
     public function selectMeeting(int|string $meetingId): void
@@ -94,7 +195,7 @@ trait HasMeetingManagement
     {
         $base = $this->getBackendUrl();
         try {
-            $res = Http::timeout(2)->get("{$base}/user");
+            $res = Http::timeout(5)->get("{$base}/user", ['per_page' => 100]);
             if ($res->successful()) {
                 $payload = $res->json('data') ?? $res->json();
                 $items = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
@@ -149,15 +250,20 @@ trait HasMeetingManagement
         $base = $this->getBackendUrl();
         $newId = rand(100, 999);
 
+        $jenisId = $this->mapMeetingTypeToId($this->newMeetingType);
+        $timeString = $this->formatMeetingTime($this->newMeetingStartTime, $this->newMeetingEndTime, $this->newMeetingUntilFinished);
+        $timeForBackend = !empty($this->newMeetingStartTime) ? substr($this->newMeetingStartTime, 0, 5) : '09:00';
+
         try {
             $payload = [
                 'id_user' => 1,
-                'id_jenis_rapat' => str_contains($this->newMeetingType, 'Komisi') ? 2 : 1,
+                'id_jenis_rapat' => $jenisId,
                 'nama_agenda' => $this->newMeetingTitle,
                 'tanggal' => $this->newMeetingDate ?: date('Y-m-d', strtotime('+3 days')),
-                'waktu' => substr($this->newMeetingTime, 0, 5),
+                'waktu' => $timeForBackend,
                 'tempat' => $this->newMeetingRoom,
                 'status' => 'Terjadwal',
+                'organizer' => $this->newMeetingOrganizer,
                 'invited_user_ids' => $this->selectedLecturerIds,
             ];
 
@@ -171,9 +277,10 @@ trait HasMeetingManagement
         $newMeetingItem = [
             'id' => $newId,
             'title' => $this->newMeetingTitle,
+            'organizer' => $this->newMeetingOrganizer,
             'type' => $this->newMeetingType,
             'date' => $this->newMeetingDate ?: date('Y-m-d', strtotime('+3 days')),
-            'time' => $this->newMeetingTime,
+            'time' => $timeString,
             'room' => $this->newMeetingRoom,
             'status' => 'Terjadwal',
             'session_code' => 'PLN-' . rand(100, 999),
@@ -186,15 +293,35 @@ trait HasMeetingManagement
 
         array_unshift($this->availableMeetings, $newMeetingItem);
 
+        @set_time_limit(180);
+
+        if (empty($this->allLecturers)) {
+            $this->loadLecturersMaster();
+        }
+
+        // Kirim Broadcast Email Undangan Otomatis kepada dosen yang dipilih
+        $invitedList = array_values(array_filter($this->allLecturers, fn($u) => in_array($u['id_user'], $this->selectedLecturerIds)));
+        if (empty($invitedList)) {
+            $invitedList = $this->allLecturers;
+        }
+
+        $broadcastService = app(\App\Services\MeetingBroadcastService::class);
+        $broadcastRes = $broadcastService->broadcast($newMeetingItem, $invitedList, false);
+
         $count = count($this->selectedLecturerIds);
         $createdTitle = $this->newMeetingTitle;
 
         $this->newMeetingTitle = '';
+        $this->newMeetingOrganizer = 'Senat';
+        $this->newMeetingType = 'Pleno';
+        $this->newMeetingStartTime = '09:00';
+        $this->newMeetingEndTime = '12:00';
+        $this->newMeetingUntilFinished = false;
         $this->newMeetingDate = date('Y-m-d', strtotime('+3 days'));
         $this->selectAllLecturers();
 
         $this->selectMeeting($newId);
-        $this->flashMessage = "Agenda Sidang '{$createdTitle}' berhasil dijadwalkan dengan {$count} dosen diundang.";
+        $this->flashMessage = "✓ Agenda Sidang '{$createdTitle}' berhasil dijadwalkan dan broadcast email undangan telah dikirim ke {$broadcastRes['sent']} anggota senat.";
     }
 
     public function loadLiveAttendanceData(MeetingRepositoryInterface $meetingsRepo, bool $force = false): void
@@ -362,34 +489,71 @@ trait HasMeetingManagement
     {
         $this->validate([
             'meetingTitle' => 'required|string|max:255',
-            'meetingDateTime' => 'required',
             'meetingRoom' => 'required|string|max:255',
         ], [
             'meetingTitle.required' => 'Judul / agenda sidang wajib diisi.',
-            'meetingDateTime.required' => 'Tanggal dan waktu sidang wajib diisi.',
             'meetingRoom.required' => 'Lokasi atau tautan hybrid wajib diisi.',
         ]);
 
         try {
             $base = $this->getBackendUrl();
-            $carbon = \Illuminate\Support\Carbon::parse($this->meetingDateTime);
-            $tanggal = $carbon->format('Y-m-d');
-            $waktu = $carbon->format('H:i');
+
+            // Backward compatibility if meetingDateTime was set directly (e.g. in tests)
+            if (!empty($this->meetingDateTime) && empty($this->meetingDate)) {
+                $carbon = \Illuminate\Support\Carbon::parse($this->meetingDateTime);
+                $tanggal = $carbon->format('Y-m-d');
+                $waktu = $carbon->format('H:i');
+            } else {
+                $tanggal = $this->meetingDate ?: date('Y-m-d');
+                $waktu = !empty($this->meetingStartTime) ? substr($this->meetingStartTime, 0, 5) : '09:00';
+            }
+
+            $jenisId = $this->mapMeetingTypeToId($this->meetingType);
+            $timeString = $this->formatMeetingTime($this->meetingStartTime, $this->meetingEndTime, $this->meetingUntilFinished);
 
             $payload = [
                 'id_user' => $this->ketuaUserId ?? 1,
-                'id_jenis_rapat' => (int) $this->meetingJenisRapatId,
+                'id_jenis_rapat' => $jenisId,
                 'nama_agenda' => $this->meetingTitle,
                 'tanggal' => $tanggal,
                 'waktu' => $waktu,
                 'tempat' => $this->meetingRoom,
                 'status' => $status,
+                'organizer' => $this->meetingOrganizer,
             ];
 
             if ($this->editingMeetingId) {
                 $response = Http::timeout(5)->put("{$base}/rapat/{$this->editingMeetingId}", $payload);
                 if ($response->successful()) {
-                    $this->flashMessage = "Berhasil memperbarui sidang: {$this->meetingTitle} (Status: {$status}) ke Backend!";
+                    foreach ($this->availableMeetings as &$m) {
+                        if (($m['id'] ?? 0) === $this->editingMeetingId) {
+                            $m['title'] = $this->meetingTitle;
+                            $m['organizer'] = $this->meetingOrganizer;
+                            $m['type'] = $this->meetingType;
+                            $m['date'] = $tanggal;
+                            $m['time'] = $timeString;
+                            $m['room'] = $this->meetingRoom;
+                            $m['status'] = $status;
+                            break;
+                        }
+                    }
+
+                    // Kirim Broadcast Email Perubahan Jadwal
+                    $updatedItem = [
+                        'id' => $this->editingMeetingId,
+                        'title' => $this->meetingTitle,
+                        'organizer' => $this->meetingOrganizer,
+                        'type' => $this->meetingType,
+                        'date' => $tanggal,
+                        'time' => $timeString,
+                        'room' => $this->meetingRoom,
+                        'status' => $status,
+                    ];
+                    $invitedList = $this->getInvitedLecturersForMeeting($this->editingMeetingId);
+                    $broadcastService = app(\App\Services\MeetingBroadcastService::class);
+                    $broadcastRes = $broadcastService->broadcast($updatedItem, $invitedList, true);
+
+                    $this->flashMessage = "Berhasil memperbarui sidang: {$this->meetingTitle} dan broadcast email perubahan jadwal telah dikirim ke {$broadcastRes['sent']} anggota!";
                     $this->resetMeetingForm();
                 } else {
                     $this->flashMessage = 'Gagal memperbarui ke Backend: ' . ($response->json('message') ?? $response->body());
@@ -397,7 +561,20 @@ trait HasMeetingManagement
             } else {
                 $response = Http::timeout(5)->post("{$base}/rapat", $payload);
                 if ($response->successful()) {
-                    $this->flashMessage = "Berhasil membuat jadwal sidang: {$this->meetingTitle} (Status: {$status}) di Backend!";
+                    $newItem = [
+                        'id' => rand(100, 999),
+                        'title' => $this->meetingTitle,
+                        'organizer' => $this->meetingOrganizer,
+                        'type' => $this->meetingType,
+                        'date' => $tanggal,
+                        'time' => $timeString,
+                        'room' => $this->meetingRoom,
+                        'status' => $status,
+                    ];
+                    $broadcastService = app(\App\Services\MeetingBroadcastService::class);
+                    $broadcastRes = $broadcastService->broadcast($newItem, $this->allLecturers, false);
+
+                    $this->flashMessage = "Berhasil membuat jadwal sidang: {$this->meetingTitle} dan broadcast email undangan terkirim ke {$broadcastRes['sent']} anggota!";
                     $this->resetMeetingForm();
                 } else {
                     $this->flashMessage = 'Gagal menyimpan ke Backend: ' . ($response->json('message') ?? $response->body());
@@ -424,7 +601,14 @@ trait HasMeetingManagement
 
                 $tgl = isset($item['tanggal']) ? substr($item['tanggal'], 0, 10) : date('Y-m-d');
                 $wkt = isset($item['waktu']) ? substr($item['waktu'], 0, 5) : '09:00';
+                $this->meetingDate = $tgl;
+                $this->meetingStartTime = $wkt;
+                $this->meetingEndTime = '12:00';
+                $this->meetingUntilFinished = false;
                 $this->meetingDateTime = "{$tgl}T{$wkt}";
+
+                $this->meetingOrganizer = $item['organizer'] ?? ($item['penyelenggara'] ?? 'Senat');
+                $this->meetingType = $this->mapIdToMeetingType($this->meetingJenisRapatId);
 
                 $this->flashMessage = "Mode sunting aktif untuk sidang #{$id}. Silakan perbarui isian di formulir.";
             } else {
@@ -457,10 +641,152 @@ trait HasMeetingManagement
     {
         $this->editingMeetingId = null;
         $this->meetingTitle = '';
+        $this->meetingOrganizer = 'Senat';
+        $this->meetingType = 'Pleno';
         $this->meetingJenisRapatId = 1;
+        $this->meetingDate = date('Y-m-d');
+        $this->meetingStartTime = '09:00';
+        $this->meetingEndTime = '12:00';
+        $this->meetingUntilFinished = false;
         $this->meetingDateTime = date('Y-m-d\T09:00');
         $this->meetingRoom = '';
         $this->meetingPeserta = '';
+    }
+
+    public function previewBroadcast(int|string $meetingId): void
+    {
+        $id = (int) $meetingId;
+        $meeting = collect($this->availableMeetings)->first(fn($m) => (int)($m['id'] ?? ($m['id_rapat'] ?? 0)) === $id);
+        if (!$meeting) {
+            $repo = app(\App\Contracts\MeetingRepositoryInterface::class);
+            $meeting = collect($repo->all())->first(fn($m) => (int)($m['id'] ?? ($m['id_rapat'] ?? 0)) === $id);
+        }
+        if (!$meeting) {
+            $this->flashMessage = "Gagal memuat agenda sidang #{$id} untuk broadcast.";
+            return;
+        }
+
+        if (empty($this->allLecturers)) {
+            $this->loadLecturersMaster();
+        }
+
+        $service = app(\App\Services\MeetingBroadcastService::class);
+        $sampleLecturer = $this->allLecturers[0] ?? ['nama' => 'Dr. Sukamto, S.Kom., M.T.'];
+        $this->broadcastModalMeetingId = $id;
+        $this->broadcastPreviewText = $service->generateMessageText($meeting, $sampleLecturer, false);
+    }
+
+    public function sendTestBroadcastEmail(int|string $meetingId): void
+    {
+        $id = (int) $meetingId;
+        $meeting = collect($this->availableMeetings)->first(fn($m) => (int)($m['id'] ?? ($m['id_rapat'] ?? 0)) === $id);
+        if (!$meeting) {
+            $repo = app(\App\Contracts\MeetingRepositoryInterface::class);
+            $meeting = collect($repo->all())->first(fn($m) => (int)($m['id'] ?? ($m['id_rapat'] ?? 0)) === $id);
+        }
+        if (!$meeting) {
+            $this->flashMessage = "Gagal: Data agenda sidang tidak ditemukan.";
+            return;
+        }
+
+        $targetEmail = trim($this->broadcastTestEmail ?: 'thomasandromeda999@gmail.com');
+        if (!filter_var($targetEmail, FILTER_VALIDATE_EMAIL)) {
+            $this->flashMessage = "Alamat email uji coba tidak valid: {$targetEmail}";
+            return;
+        }
+
+        @set_time_limit(60);
+
+        $service = app(\App\Services\MeetingBroadcastService::class);
+        $recipient = [
+            'nama' => 'Thomas Andromeda (Uji Coba)',
+            'nim_nip' => '000000000000',
+            'email' => $targetEmail,
+        ];
+
+        $res = $service->broadcast($meeting, [$recipient], false);
+
+        if ($res['sent'] > 0) {
+            $this->flashMessage = "✓ Berhasil! Email broadcast uji coba untuk agenda '{$meeting['title']}' telah terkirim ke {$targetEmail}. Silakan cek inbox/spam.";
+        } else {
+            $err = $res['logs'][0]['status'] ?? 'Gagal';
+            $this->flashMessage = "Gagal mengirim email uji coba ke {$targetEmail}: {$err}";
+        }
+    }
+
+    public function sendBroadcastEmail(int|string $meetingId): void
+    {
+        $id = (int) $meetingId;
+        $meeting = collect($this->availableMeetings)->first(fn($m) => (int)($m['id'] ?? ($m['id_rapat'] ?? 0)) === $id);
+        if (!$meeting) {
+            $repo = app(\App\Contracts\MeetingRepositoryInterface::class);
+            $meeting = collect($repo->all())->first(fn($m) => (int)($m['id'] ?? ($m['id_rapat'] ?? 0)) === $id);
+        }
+        if (!$meeting) {
+            $this->flashMessage = "Gagal: Data agenda sidang #{$id} tidak ditemukan.";
+            return;
+        }
+
+        @set_time_limit(180);
+
+        if (empty($this->allLecturers)) {
+            $this->loadLecturersMaster();
+        }
+
+        $service = app(\App\Services\MeetingBroadcastService::class);
+        $invitedList = $this->getInvitedLecturersForMeeting($id);
+        if (empty($invitedList)) {
+            $invitedList = $this->allLecturers;
+        }
+
+        $res = $service->broadcast($meeting, $invitedList, false);
+
+        $this->flashMessage = "Broadcast email pengingat agenda sidang '{$meeting['title']}' berhasil dikirim ke {$res['sent']} anggota senat.";
+        $this->broadcastModalMeetingId = null;
+        $this->broadcastPreviewText = null;
+    }
+
+    public function closeBroadcastModal(): void
+    {
+        $this->broadcastModalMeetingId = null;
+        $this->broadcastPreviewText = null;
+    }
+
+    public function getInvitedLecturersForMeeting(int $meetingId): array
+    {
+        foreach ($this->availableMeetings as $m) {
+            if ((int)($m['id'] ?? ($m['id_rapat'] ?? 0)) === $meetingId) {
+                if (!empty($m['invited_user_ids']) && is_array($m['invited_user_ids'])) {
+                    $ids = $m['invited_user_ids'];
+                    $filtered = array_values(array_filter($this->allLecturers, fn($u) => in_array($u['id_user'], $ids)));
+                    if (!empty($filtered)) {
+                        return $filtered;
+                    }
+                }
+                $type = $m['type'] ?? '';
+                $org = $m['organizer'] ?? '';
+                if (str_contains($org, 'Komisi 1') || str_contains($type, 'Komisi I')) {
+                    return array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi I') || str_contains($u['role'] ?? '', 'Ketua')));
+                }
+                if (str_contains($org, 'Komisi 2') || str_contains($type, 'Komisi II')) {
+                    return array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi II')));
+                }
+                if (str_contains($org, 'Komisi 3') || str_contains($type, 'Komisi III')) {
+                    return array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi III')));
+                }
+                if (str_contains($org, 'Komisi 4') || str_contains($type, 'Komisi IV')) {
+                    return array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi IV')));
+                }
+                if (str_contains($org, 'Komisi 5') || str_contains($type, 'Komisi V')) {
+                    return array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'Komisi V')));
+                }
+                if (str_contains($org, 'Badan Pekerja') || str_contains($type, 'BP')) {
+                    return array_values(array_filter($this->allLecturers, fn($u) => str_contains($u['komisi'] ?? '', 'BP') || str_contains($u['komisi'] ?? '', 'Badan Pekerja')));
+                }
+                break;
+            }
+        }
+        return $this->allLecturers;
     }
 
 

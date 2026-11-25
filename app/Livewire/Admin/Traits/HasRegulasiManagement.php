@@ -18,6 +18,7 @@ trait HasRegulasiManagement
     public string $regulasiTahap = 'Draf';
     public ?int $regulasiPeriodeId = null;
     public string $regulasiFile = '';
+    public $regulasiUpload = null;
     public string $regulasiTanggal = '';
     public string $regulasiSearch = '';
     public string $regulasiFilterKategori = 'all';
@@ -81,10 +82,16 @@ trait HasRegulasiManagement
         $this->regulasiKategori = 'Peraturan Senat';
         $this->regulasiTahap = 'Draf';
         $this->regulasiFile = '';
+        $this->regulasiUpload = null;
         $this->regulasiTanggal = '';
         if (empty($this->regulasiPeriodeId)) {
             $this->regulasiPeriodeId = $this->periodeList[0]['id_periode_senat'] ?? 1;
         }
+    }
+
+    public function removeRegulasiUpload(): void
+    {
+        $this->regulasiUpload = null;
     }
 
     public function editRegulasi(int $id): void
@@ -101,6 +108,7 @@ trait HasRegulasiManagement
         $this->regulasiTahap = $item['tahap_pembentukan'] ?? 'Draf';
         $this->regulasiPeriodeId = $item['id_periode_senat'] ?? 1;
         $this->regulasiFile = $item['file_dokumen'] ?? '';
+        $this->regulasiUpload = null;
         $this->regulasiTanggal = ! empty($item['tanggal_terbit'])
             ? substr((string) $item['tanggal_terbit'], 0, 10)
             : now()->format('Y-m-d');
@@ -119,6 +127,15 @@ trait HasRegulasiManagement
             return;
         }
 
+        if ($this->regulasiUpload) {
+            $this->validate([
+                'regulasiUpload' => 'file|mimes:pdf,doc,docx,odt,rtf,xls,xlsx,ppt,pptx|max:10240',
+            ], [
+                'regulasiUpload.mimes' => 'Format berkas tidak didukung.',
+                'regulasiUpload.max' => 'Ukuran berkas maksimal 10 MB.',
+            ]);
+        }
+
         $base = $this->getBackendUrl();
         $payload = [
             'id_periode_senat' => (int) $this->regulasiPeriodeId,
@@ -126,18 +143,40 @@ trait HasRegulasiManagement
             'judul' => $this->regulasiJudul,
             'kategori' => $this->regulasiKategori,
             'tahap_pembentukan' => $this->regulasiTahap,
-            'file_dokumen' => $this->regulasiFile ?: null,
             'tanggal_terbit' => $this->regulasiTanggal ?: now()->format('Y-m-d'),
         ];
 
+        if ($this->regulasiFile !== '') {
+            $payload['file_dokumen'] = $this->regulasiFile;
+        } elseif (! $this->regulasiUpload) {
+            $payload['file_dokumen'] = null;
+        }
+
         try {
-            if ($this->regulasiId) {
+            if ($this->regulasiUpload) {
+                $http = Http::timeout(15)->attach(
+                    'file',
+                    file_get_contents($this->regulasiUpload->getRealPath()),
+                    $this->regulasiUpload->getClientOriginalName(),
+                    ['Content-Type' => $this->regulasiUpload->getMimeType() ?: 'application/octet-stream']
+                );
+
+                if ($this->regulasiId) {
+                    $res = $http->post("{$base}/peraturan/{$this->regulasiId}", array_merge($payload, ['_method' => 'PUT']));
+                } else {
+                    $res = $http->post("{$base}/peraturan", $payload);
+                }
+            } elseif ($this->regulasiId) {
                 $res = Http::timeout(6)->put("{$base}/peraturan/{$this->regulasiId}", $payload);
+            } else {
+                $res = Http::timeout(6)->post("{$base}/peraturan", $payload);
+            }
+
+            if ($this->regulasiId) {
                 $this->flashMessage = $res->successful()
                     ? 'Berhasil! Produk hukum berhasil diperbarui di database Backend.'
                     : 'Gagal memperbarui: ' . ($res->json('message') ?? 'HTTP ' . $res->status());
             } else {
-                $res = Http::timeout(6)->post("{$base}/peraturan", $payload);
                 $this->flashMessage = $res->successful()
                     ? 'Berhasil! Produk hukum baru sukses ditambahkan ke database Backend.'
                     : 'Gagal menambahkan: ' . ($res->json('message') ?? 'HTTP ' . $res->status());

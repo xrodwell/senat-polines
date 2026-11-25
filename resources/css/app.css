@@ -5,3 +5,28 @@
 [x-cloak] {
     display: none !important;
 }
+
+.auto-hide-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.4s ease;
+}
+.auto-hide-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.auto-hide-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.auto-hide-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0);
+    border-radius: 9999px;
+    transition: background-color 0.4s ease;
+}
+.auto-hide-scroll.is-scrolling {
+    scrollbar-color: rgba(148, 163, 184, 0.7) transparent;
+}
+.auto-hide-scroll.is-scrolling::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.7);
+}
