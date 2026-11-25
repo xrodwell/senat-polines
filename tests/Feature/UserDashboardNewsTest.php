@@ -15,6 +15,9 @@ class UserDashboardNewsTest extends TestCase
             'auth_user'      => ['id_user' => 2, 'nama' => 'Anggota Senat', 'role' => 'anggota'],
             'auth_user_id'   => 2,
             'auth_user_role' => 'anggota',
+            // Simulasikan token baru saja diverifikasi ke backend agar
+            // middleware tidak memanggil /me saat test berjalan.
+            'auth_token_checked_at' => time(),
         ]);
     }
 

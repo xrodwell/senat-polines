@@ -16,6 +16,9 @@ class AdminPreviewTest extends TestCase
             'auth_user'      => ['id_user' => 1, 'nama' => 'Admin Senat', 'role' => 'admin'],
             'auth_user_id'   => 1,
             'auth_user_role' => 'admin',
+            // Simulasikan token baru saja diverifikasi ke backend agar
+            // middleware tidak memanggil /me saat test berjalan.
+            'auth_token_checked_at' => time(),
         ]);
     }
 
