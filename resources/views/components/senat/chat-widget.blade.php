@@ -120,27 +120,19 @@
 
         {{-- Quick Prompts Chips --}}
         <div class="border-t border-senat-line/60 bg-white px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <button
-                type="button"
-                @click="sendPrompt('Siapa Ketua Senat Polines?')"
-                class="shrink-0 rounded-full border border-senat-line bg-senat-surface px-2.5 py-1 text-[11px] font-medium text-senat-body transition hover:border-senat-primary hover:text-senat-primary"
-            >
-                👑 Ketua Senat
-            </button>
-            <button
-                type="button"
-                @click="sendPrompt('Apa tugas 5 Komisi dan BP (Badan Pekerja) Senat?')"
-                class="shrink-0 rounded-full border border-senat-line bg-senat-surface px-2.5 py-1 text-[11px] font-medium text-senat-body transition hover:border-senat-primary hover:text-senat-primary"
-            >
-                🏛️ 5 Komisi &amp; BP
-            </button>
-            <button
-                type="button"
-                @click="sendPrompt('Bagaimana cara mengirim aspirasi?')"
-                class="shrink-0 rounded-full border border-senat-line bg-senat-surface px-2.5 py-1 text-[11px] font-medium text-senat-body transition hover:border-senat-primary hover:text-senat-primary"
-            >
-                📢 Ajukan Aspirasi
-            </button>
+            @foreach ([
+                ['label' => 'Ketua Senat', 'prompt' => 'Siapa Ketua Senat Polines?'],
+                ['label' => '5 Komisi & BP', 'prompt' => 'Apa tugas 5 Komisi dan BP (Badan Pekerja) Senat?'],
+                ['label' => 'Ajukan Aspirasi', 'prompt' => 'Bagaimana cara mengirim aspirasi?'],
+            ] as $chip)
+                <button
+                    type="button"
+                    @click="sendPrompt('{{ $chip['prompt'] }}')"
+                    class="shrink-0 rounded-full border border-senat-line bg-senat-surface px-2.5 py-1 text-[11px] font-medium text-senat-body transition hover:border-senat-primary hover:text-senat-primary"
+                >
+                    {{ $chip['label'] }}
+                </button>
+            @endforeach
         </div>
 
         {{-- Input Composer Bar --}}
