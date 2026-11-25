@@ -44,18 +44,28 @@
             }
         }">
 
-        @if (count($posts) > 0)
+        @if (! ($newsAvailable ?? true))
+            <div class="rounded-xl border border-dashed border-senat-border bg-white px-6 py-12 text-center">
+                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600" aria-hidden="true">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    </svg>
+                </span>
+                <p class="mt-4 text-[14px] font-semibold text-senat-ink">Warta sementara tidak tersedia</p>
+                <p class="mt-1 max-w-md mx-auto text-[12px] leading-relaxed text-senat-muted">Layanan warta sedang mengalami kendala koneksi ke server. Silakan coba beberapa saat lagi.</p>
+            </div>
+        @elseif (count($posts) > 0)
 
             {{-- Filter bar (Figma 2219:222) --}}
             <div class="mb-8 rounded-lg border border-slate-200 bg-white p-3">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-                    <div class="relative w-full lg:w-[320px]">
+                    <form method="GET" action="{{ route('public.news') }}" class="relative w-full lg:w-[320px]">
                         <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <input x-model="query" type="search" placeholder="Cari warta atau topik sidang..."
+                        <input name="search" value="{{ request('search') ?? request('q') ?? '' }}" x-model="query" type="search" placeholder="Cari warta atau topik sidang..."
                                class="h-9 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-[12.5px] text-slate-800 placeholder-slate-400 transition-colors duration-150 focus:border-senat-primary focus:outline-none focus:ring-2 focus:ring-senat-primary/25">
-                    </div>
+                    </form>
 
                     <div class="flex flex-wrap gap-2">
                         <button type="button" data-cat="" @click="cat = ''"
@@ -145,23 +155,57 @@
                 </div>
             @endif
 
-            {{-- Paginasi visual (Figma 2220:272) --}}
+            {{-- Paginasi (Figma 2220:272) --}}
+            @php
+                $paginationData = $pagination ?? [
+                    'total' => count($posts),
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'from' => count($posts) > 0 ? 1 : 0,
+                    'to' => count($posts),
+                ];
+                $currentPage = (int) ($paginationData['current_page'] ?? 1);
+                $lastPage = (int) ($paginationData['last_page'] ?? 1);
+                $totalPosts = (int) ($paginationData['total'] ?? count($posts));
+                $fromItem = (int) ($paginationData['from'] ?? (count($posts) > 0 ? 1 : 0));
+                $toItem = (int) ($paginationData['to'] ?? count($posts));
+            @endphp
             <div class="mt-8 flex flex-col items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-5 py-3 sm:flex-row">
                 <p class="text-[12.5px] text-slate-500">
-                    Menampilkan 1 – {{ count($gridPosts) }} dari {{ count($posts) }} warta dan siaran pers
+                    Menampilkan {{ $fromItem }} – {{ $toItem }} dari {{ $totalPosts }} warta dan siaran pers
                 </p>
+                @if ($lastPage > 1)
                 <nav class="flex items-center gap-2" aria-label="Navigasi halaman">
-                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-400">«</span>
-                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-senat-primary text-[12px] font-bold text-white">1</span>
-                    @foreach ([2, 3, 4] as $page)
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-500">{{ $page }}</span>
-                    @endforeach
-                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-400">»</span>
+                    @if ($currentPage > 1)
+                        <a href="{{ request()->fullUrlWithQuery(['page' => $currentPage - 1]) }}"
+                           class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                           aria-label="Halaman sebelumnya">«</a>
+                    @else
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-300 cursor-not-allowed">«</span>
+                    @endif
+
+                    @for ($p = 1; $p <= $lastPage; $p++)
+                        @if ($p === $currentPage)
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-senat-primary text-[12px] font-bold text-white" aria-current="page">{{ $p }}</span>
+                        @else
+                            <a href="{{ request()->fullUrlWithQuery(['page' => $p]) }}"
+                               class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">{{ $p }}</a>
+                        @endif
+                    @endfor
+
+                    @if ($currentPage < $lastPage)
+                        <a href="{{ request()->fullUrlWithQuery(['page' => $currentPage + 1]) }}"
+                           class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                           aria-label="Halaman berikutnya">»</a>
+                    @else
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[12px] font-bold text-slate-300 cursor-not-allowed">»</span>
+                    @endif
                 </nav>
+                @endif
             </div>
 
         @else
-            <x-senat.empty title="Belum ada warta" message="Siaran pers dan berita kegiatan Senat Akademik akan tampil di sini." />
+            <x-senat.empty title="Belum ada warta" message="Belum ada warta yang diterbitkan." />
         @endif
     </section>
 

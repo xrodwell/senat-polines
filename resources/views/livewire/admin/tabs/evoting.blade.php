@@ -49,7 +49,7 @@
 
                     <section class="rounded-[14px] border border-senat-sidebarLine bg-white p-5 shadow-[0_3px_12px_0_rgba(13,26,41,0.07)]">
                         <h2 class="text-[18px] font-bold text-senat-ink">Rekap Suara Masuk</h2>
-                        <p class="mt-1.5 text-[12px] text-senat-body">Total suara: {{ $votingStats['kuorum'] ?? (($votingStats['total_suara'] ?? 28) . ' / 34 anggota') }}</p>
+                        <p class="mt-1.5 text-[12px] text-senat-body">Total suara: {{ $votingStats['kuorum'] ?? (($votingStats['total_suara'] ?? 0) . ' suara') }}</p>
 
                         <ul class="mt-5 space-y-3">
                             <li class="flex items-center gap-3 rounded-[10px] bg-senat-surface px-4 py-3.5">

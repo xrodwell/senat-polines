@@ -13,6 +13,10 @@ class ApiVotingRepository implements VotingRepositoryInterface
         private JsonVotingRepository $fallback = new JsonVotingRepository()
     ) {}
 
+    private bool $available = true;
+
+    private ?string $lastError = null;
+
     private function http()
     {
         $token = session('auth_token');
@@ -22,77 +26,218 @@ class ApiVotingRepository implements VotingRepositoryInterface
 
     private function getBaseUrl(): string
     {
-        return rtrim(env('SENAT_BACKEND_API_URL', 'http://127.0.0.1:8001/api'), '/');
+        $configured = config('services.voting.url');
+
+        if (is_string($configured) && trim($configured) !== '') {
+            return rtrim(trim($configured), '/');
+        }
+
+        $backend = config('services.backend_api.url') ?: config('services.backend.url');
+
+        if (is_string($backend) && trim($backend) !== '') {
+            return rtrim(trim($backend), '/') . '/api';
+        }
+
+        return 'http://127.0.0.1:8001/api';
+    }
+
+    public function myBallot(int $votingId): ?array
+    {
+        $token = session('auth_token');
+        if (! $token) {
+            return null;
+        }
+        try {
+            $response = $this->http()->withToken($token)->timeout(3)
+                ->get("{$this->getBaseUrl()}/voting/{$votingId}/my-ballot");
+            if ($response->successful()) {
+                $this->available = true;
+                return $response->json();
+            }
+            $this->markUnavailable('HTTP ' . $response->status());
+        } catch (\Throwable $e) {
+            $this->markUnavailable($e->getMessage());
+            Log::warning("Gagal memuat my-ballot {$votingId}: " . $e->getMessage());
+        }
+        return null;
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->available;
+    }
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
+
+    private function markAvailable(): void
+    {
+        $this->available = true;
+        $this->lastError = null;
+    }
+
+    private function markUnavailable(string $message): void
+    {
+        $this->available = false;
+        $this->lastError = $message;
+    }
+
+    /**
+     * Fetch the whole voting list from the backend in a single bounded request.
+     *
+     * Returns null when the payload cannot be trusted as a complete list
+     * (non-success status, malformed body, non-list data, null entries or
+     * detected pagination/truncation). Availability and lastError are updated.
+     *
+     * @return array<int, array>|null
+     */
+    private function fetchList(): ?array
+    {
+        $apiUrl = $this->getBaseUrl();
+
+        try {
+            $response = Http::timeout(3)->acceptJson()->get("{$apiUrl}/voting?all=1");
+        } catch (\Throwable $e) {
+            // Exception text may contain the URL, a bearer token or credentials.
+            Log::warning('API Voting list request failed.');
+            $this->markUnavailable('Backend voting tidak dapat dihubungi.');
+
+            return null;
+        }
+
+        if (! $response->successful()) {
+            Log::warning('API Voting list returned HTTP ' . $response->status() . '.');
+            $this->markUnavailable('Backend voting mengembalikan status ' . $response->status() . '.');
+
+            return null;
+        }
+
+        $payload = $response->json();
+
+        if (! is_array($payload)) {
+            $this->markUnavailable('Respons backend voting tidak valid.');
+
+            return null;
+        }
+
+        if ($this->looksPaginated($payload)) {
+            $this->markUnavailable('Daftar voting dari backend tidak lengkap (terindikasi terpotong).');
+
+            return null;
+        }
+
+        $items = $payload;
+
+        if (array_key_exists('data', $payload)) {
+            if (! is_array($payload['data']) || ! array_is_list($payload['data'])) {
+                $this->markUnavailable('Data daftar voting dari backend tidak valid.');
+
+                return null;
+            }
+
+            $items = $payload['data'];
+        } elseif (! array_is_list($payload)) {
+            $this->markUnavailable('Data daftar voting dari backend tidak valid.');
+
+            return null;
+        }
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                $this->markUnavailable('Daftar voting dari backend memuat entri tidak valid.');
+
+                return null;
+            }
+        }
+
+        $this->markAvailable();
+
+        return $items;
+    }
+
+    private function looksPaginated(array $payload): bool
+    {
+        $paginatedKeys = [
+            'next_page_url', 'prev_page_url', 'first_page_url', 'last_page_url',
+            'last_page', 'current_page', 'per_page', 'links', 'next_cursor', 'nextCursor',
+        ];
+
+        foreach ($paginatedKeys as $key) {
+            if (array_key_exists($key, $payload) && $payload[$key] !== null && $payload[$key] !== []) {
+                return true;
+            }
+        }
+
+        if (isset($payload['meta']) && is_array($payload['meta'])) {
+            $meta = $payload['meta'];
+
+            if (isset($meta['last_page']) && (int) $meta['last_page'] > 1) {
+                return true;
+            }
+
+            if (isset($meta['current_page']) && (int) $meta['current_page'] < (int) ($meta['last_page'] ?? $meta['current_page'])) {
+                return true;
+            }
+
+            foreach (['next_page_url', 'next_cursor', 'total', 'links'] as $key) {
+                if (array_key_exists($key, $meta) && $meta[$key] !== null && $meta[$key] !== []) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public function getActive(): ?array
     {
-        $apiUrl = $this->getBaseUrl();
+        $items = $this->fetchList();
 
-        try {
-            $response = Http::timeout(3)->acceptJson()->get("{$apiUrl}/voting?active=1");
-
-            if ($response->successful()) {
-                $data = $response->json('data') ?? $response->json();
-                $items = isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
-
-                if (is_array($items) && !empty($items)) {
-                    // Jika mengembalikan 1 object langsung
-                    if (isset($items['id_voting']) || isset($items['id'])) {
-                        if (in_array(strtolower($items['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
-                            return $this->formatVoting($items);
-                        }
-                        return null;
-                    }
-
-                    // Jika array of items
-                    foreach ($items as $item) {
-                        if (is_array($item) && in_array(strtolower($item['status'] ?? ''), ['dibuka', 'aktif', 'active', 'open'], true)) {
-                            return $this->formatVoting($item);
-                        }
-                    }
-                }
-                return null;
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Interoperabilitas API Voting getActive fallback: ' . $e->getMessage());
+        if ($items === null) {
+            return null;
         }
 
-        return $this->fallback->getActive();
+        $openStatuses = ['dibuka', 'aktif', 'active', 'open'];
+
+        foreach ($items as $item) {
+            if (in_array(strtolower((string) ($item['status'] ?? '')), $openStatuses, true)) {
+                return $this->formatVoting($item);
+            }
+        }
+
+        return null;
     }
 
     public function all(): array
     {
-        $apiUrl = $this->getBaseUrl();
+        $items = $this->fetchList();
 
-        try {
-            $response = Http::timeout(3)->acceptJson()->get("{$apiUrl}/voting");
-
-            if ($response->successful()) {
-                $data = $response->json('data') ?? $response->json();
-                $items = isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
-
-                if (is_array($items) && !empty($items)) {
-                    return array_map(fn ($item) => $this->formatVoting($item), $items);
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Interoperabilitas API Voting all fallback: ' . $e->getMessage());
+        if ($items === null) {
+            return [];
         }
 
-        return $this->fallback->all();
+        return array_map(fn ($item) => $this->formatVoting($item), $items);
     }
 
     public function castVote(int $votingId, int $optionId, ?int $userId = null): array
     {
         $apiUrl = $this->getBaseUrl();
-        $userId = $userId ?? auth()->id() ?? 2;
+
+        // Identity travels in the bearer token; without one we refuse rather
+        // than inventing a user. The body never carries an id_user.
+        if (! session('auth_token')) {
+            return [
+                'success' => false,
+                'message' => 'Sesi tidak valid. Silakan login ulang.',
+            ];
+        }
 
         try {
             $response = $this->http()->timeout(3)->post("{$apiUrl}/suara-voting", [
                 'id_voting' => $votingId,
                 'id_opsi' => $optionId,
-                'id_user' => $userId,
             ]);
 
             if ($response->successful()) {
@@ -103,16 +248,18 @@ class ApiVotingRepository implements VotingRepositoryInterface
                 ];
             }
 
-            $message = $response->json('message') ?? 'Gagal mencatat suara.';
             return [
                 'success' => false,
-                'message' => $message,
+                'message' => $response->json('message') ?? 'Gagal mencatat suara.',
             ];
         } catch (\Throwable $e) {
-            Log::warning('Interoperabilitas API Voting castVote fallback: ' . $e->getMessage());
-        }
+            Log::warning('API Voting castVote tidak dapat menjangkau backend.');
 
-        return $this->fallback->castVote($votingId, $optionId, $userId);
+            return [
+                'success' => false,
+                'message' => 'Backend tidak terjangkau',
+            ];
+        }
     }
 
     public function updateStatus(int $votingId, string $status): array
@@ -120,31 +267,37 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $apiUrl = $this->getBaseUrl();
         $statusNormalized = strtolower(trim($status));
 
-        try {
-            if ($statusNormalized === 'dibuka') {
-                $res = $this->http()->timeout(3)->post("{$apiUrl}/voting/{$votingId}/buka");
-                if ($res->successful()) {
-                    return ['success' => true, 'status' => 'dibuka', 'data' => $res->json()];
-                }
-            } elseif ($statusNormalized === 'ditutup') {
-                $res = $this->http()->timeout(3)->post("{$apiUrl}/voting/{$votingId}/tutup");
-                if ($res->successful()) {
-                    return ['success' => true, 'status' => 'ditutup', 'data' => $res->json()];
-                }
-            }
+        // Only the explicit open/close endpoints are valid; a raw status PUT
+        // is forbidden so unsupported values are rejected outright.
+        $action = match ($statusNormalized) {
+            'dibuka' => 'buka',
+            'ditutup' => 'tutup',
+            default => null,
+        };
 
-            $putRes = $this->http()->timeout(3)->put("{$apiUrl}/voting/{$votingId}", [
-                'status' => $status,
-            ]);
-
-            if ($putRes->successful()) {
-                return ['success' => true, 'status' => $status, 'data' => $putRes->json()];
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Interoperabilitas API Voting updateStatus fallback: ' . $e->getMessage());
+        if ($action === null) {
+            return [
+                'success' => false,
+                'message' => "Status '{$status}' tidak didukung.",
+            ];
         }
 
-        return $this->fallback->updateStatus($votingId, $status);
+        try {
+            $res = $this->http()->timeout(3)->post("{$apiUrl}/voting/{$votingId}/{$action}");
+
+            if ($res->successful()) {
+                return ['success' => true, 'status' => $statusNormalized, 'data' => $res->json()];
+            }
+
+            return [
+                'success' => false,
+                'message' => $res->json('message') ?? 'Gagal mengubah status voting.',
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('API Voting updateStatus tidak dapat menjangkau backend.');
+
+            return ['success' => false, 'message' => 'Backend tidak terjangkau'];
+        }
     }
 
     public function rekap(int $votingId): ?array
@@ -177,25 +330,30 @@ class ApiVotingRepository implements VotingRepositoryInterface
         $anggotaRapats = is_array($rapatRaw['anggota_rapats'] ?? $rapatRaw['anggotaRapats'] ?? null)
             ? ($rapatRaw['anggota_rapats'] ?? $rapatRaw['anggotaRapats'])
             : [];
-        $rapatId = $rapatRaw['id_rapat'] ?? $v['id_rapat'] ?? 1;
+        $rapatId = $rapatRaw['id_rapat'] ?? $v['id_rapat'] ?? null;
         $rapat = array_merge([
             'id_rapat' => $rapatId,
-            'title' => $rapatRaw['nama_agenda'] ?? $rapatRaw['title'] ?? 'Sidang Pleno Senat Akademik',
-            'nama_rapat' => $rapatRaw['nama_agenda'] ?? $rapatRaw['nama_rapat'] ?? 'Sidang Pleno Senat Akademik',
-            'type' => 'Sidang Pleno',
-            'kode' => $rapatRaw['kode_sesi'] ?? $rapatRaw['kode'] ?? ('PLN-' . str_pad((string) $rapatId, 3, '0', STR_PAD_LEFT)),
-            'tanggal' => isset($rapatRaw['tanggal']) ? substr((string) $rapatRaw['tanggal'], 0, 10) : '2026-10-27',
+            'title' => $rapatRaw['nama_agenda'] ?? $rapatRaw['title'] ?? '',
+            'nama_rapat' => $rapatRaw['nama_agenda'] ?? $rapatRaw['nama_rapat'] ?? '',
+            'type' => $rapatRaw['type'] ?? '',
+            'kode' => $rapatRaw['kode_sesi'] ?? $rapatRaw['kode'] ?? '',
+            'tanggal' => isset($rapatRaw['tanggal']) ? substr((string) $rapatRaw['tanggal'], 0, 10) : null,
         ], is_array($rapatRaw) ? $rapatRaw : []);
 
-        $totalInvited = count($anggotaRapats);
-        $totalHadir = collect($anggotaRapats)->filter(
-            fn ($a) => strtolower((string) ($a['status_kehadiran'] ?? '')) === 'hadir' || !empty($a['waktu_presensi'])
-        )->count();
-        $kuorumData = $v['kuorum'] ?? [
-            'hadir' => $totalHadir,
-            'total' => $totalInvited,
-            'terpenuhi' => $totalInvited > 0 && $totalHadir >= (int) ceil(($totalInvited * 2) / 3),
-        ];
+        // Kuorum hanya dari payload backend; tanpa data jangan mengarang angka/angka 2/3 lokal.
+        // Normalisasi kunci kanonik backend (total_invited/present_count/is_kuorum)
+        // ke kontrak view (total/hadir/tercapai).
+        $kuorumData = null;
+        $k = $v['kuorum'] ?? null;
+        if (is_array($k)) {
+            $kuorumData = [
+                'total' => (int) ($k['total_invited'] ?? $k['total_undangan'] ?? $k['total'] ?? 0),
+                'hadir' => (int) ($k['present_count'] ?? $k['total_hadir'] ?? $k['hadir'] ?? 0),
+                'tercapai' => (bool) ($k['is_kuorum'] ?? $k['kuorum_terpenuhi'] ?? $k['tercapai'] ?? false),
+                'persentase' => $k['present_percentage'] ?? $k['persentase_kehadiran'] ?? null,
+                'ambang' => $k['ambang_kuorum'] ?? null,
+            ];
+        }
 
         $suaraVotings = $v['suara_votings'] ?? $v['suaraVotings'] ?? [];
 
@@ -239,13 +397,9 @@ class ApiVotingRepository implements VotingRepositoryInterface
                 }
             }
         } else {
-            $opsiFormatted = [
-                ['id' => 1, 'id_opsi' => 1, 'label' => 'Setuju', 'nama_opsi' => 'Setuju', 'total' => 24, 'jumlah_suara' => 24, 'persentase' => 85.7],
-                ['id' => 2, 'id_opsi' => 2, 'label' => 'Tidak Setuju', 'nama_opsi' => 'Tidak Setuju', 'total' => 2, 'jumlah_suara' => 2, 'persentase' => 7.1],
-                ['id' => 3, 'id_opsi' => 3, 'label' => 'Abstain', 'nama_opsi' => 'Abstain', 'total' => 2, 'jumlah_suara' => 2, 'persentase' => 7.1],
-            ];
-            $totalSuara = 28;
-            $hasilRekap = ['Setuju' => 24, 'Tidak Setuju' => 2, 'Abstain' => 2];
+            // Tanpa opsi dari backend, tampilkan kosong; bukan angka demo.
+            $opsiFormatted = [];
+            $hasilRekap = [];
         }
 
         return [

@@ -11,10 +11,9 @@
      * Konversi React+Tailwind absolut → Blade + Tailwind responsif (flex/grid).
      * Urutan desain: Hero → Agenda Sidang Terdekat → Warta Terbaru → (Fitur Unggulan) → Lima Komisi.
      */
-    $period        = $direktori['period'] ?? '2026–2029';
-    $memberCount   = $direktori['members'] ?? null;
-    $committeeCount = $direktori['committees'] ?? count($committees);
-    $releaseCount  = count($posts);
+    $memberCount = $landingStats['members'] ?? 'Data tidak tersedia';
+    $committeeCount = $landingStats['committees'] ?? 'Data tidak tersedia';
+    $releaseCount = $landingStats['published_news'] ?? 'Data tidak tersedia';
 
     $bulan = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
 @endphp
@@ -66,20 +65,16 @@
         </div>
 
         {{-- Statistik (2013:27) --}}
-        <dl class="mt-[122px] grid grid-cols-2 rounded-[14px] border border-white/12 bg-senat-primary/85 backdrop-blur-sm lg:grid-cols-4">
+        <dl class="mt-12 grid w-full grid-cols-1 rounded-[14px] border border-white/12 bg-senat-primary/85 backdrop-blur-sm sm:grid-cols-3">
             @php
                 $stats = [
                     ['label' => 'ANGGOTA SENAT',   'value' => $memberCount,     'hint' => 'Guru Besar & Pendidik'],
                     ['label' => 'KOMISI & BP',     'value' => $committeeCount,  'hint' => 'Komisi I–V & BP'],
                     ['label' => 'WARTA TERBIT',    'value' => $releaseCount,    'hint' => 'Rilis & keputusan senat'],
-                    ['label' => 'TAHUN PERIODE',   'value' => $period,          'hint' => 'Senat Akademik'],
                 ];
             @endphp
-            @foreach ($stats as $i => $stat)
-                <div class="border-white/12 px-[22px] py-[21px]
-                            {{ $i % 2 === 1 ? 'border-l' : '' }}
-                            {{ $i >= 2 ? 'border-t' : '' }}
-                            lg:border-t-0 lg:border-l lg:first:border-l-0">
+            @foreach ($stats as $stat)
+                <div class="border-t border-white/12 px-[22px] py-[21px] first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
                     <dt class="text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-white/90">{{ $stat['label'] }}</dt>
                     <dd class="mt-[6px] text-[19px] font-bold leading-none text-white tabular-nums sm:text-[22px] lg:text-[27px]">{{ $stat['value'] }}</dd>
                     <dd class="mt-[7px] text-[10px] leading-[1.1] text-white/75">{{ $stat['hint'] }}</dd>
@@ -179,7 +174,7 @@
                 </a>
             @empty
                 <div class="rounded-[14px] border border-dashed border-senat-border bg-white px-6 py-10 text-center sm:col-span-2 lg:col-span-4">
-                    <p class="text-[13px] text-senat-muted">Belum ada warta yang diterbitkan.</p>
+                    <p class="text-[13px] text-senat-muted">{{ $landingNewsAvailable ? 'Belum ada warta yang diterbitkan.' : 'Warta sementara tidak tersedia.' }}</p>
                 </div>
             @endforelse
         </div>

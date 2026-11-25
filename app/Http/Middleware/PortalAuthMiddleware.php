@@ -4,11 +4,15 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\Response;
 
 class PortalAuthMiddleware
 {
     public const REAUTH_MAX_AGE_SECONDS = 259200; // 3 hari (72 jam)
+
+    /** Jeda minimum verifikasi token ke backend (detik). */
+    public const TOKEN_CHECK_TTL_SECONDS = 300;
 
     /**
      * Session keys cleared when portal authentication is invalidated.
@@ -25,6 +29,7 @@ class PortalAuthMiddleware
         'auth_user_email',
         'auth_user_foto',
         'auth_verified_at',
+        'auth_token_checked_at',
     ];
 
     /**
@@ -58,7 +63,55 @@ class PortalAuthMiddleware
                 ->with('info', 'Sesi login Anda telah melewati 3 hari. Silakan masuk kembali untuk verifikasi ulang akun.');
         }
 
+        if (self::isBackendTokenInvalid($request)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Sesi login Anda tidak lagi valid. Silakan login kembali.',
+                ], 401);
+            }
+
+            return redirect()->route('portal.login')
+                ->withErrors(['login' => 'Sesi login Anda tidak lagi valid. Silakan masuk kembali.']);
+        }
+
         return $next($request);
+    }
+
+    /**
+     * Verifikasi berkala token portal ke backend (/me).
+     * 401 = token dicabut/kedaluwarsa -> invalidate sesi.
+     * 5xx/timeout = outage backend -> JANGAN logout pengguna.
+     */
+    private static function isBackendTokenInvalid(Request $request): bool
+    {
+        $checkedAt = (int) session('auth_token_checked_at', 0);
+        if (time() - $checkedAt < self::TOKEN_CHECK_TTL_SECONDS) {
+            return false;
+        }
+
+        $base = rtrim((string) config('services.backend_api.url', 'http://127.0.0.1:8001'), '/');
+        if (!str_ends_with($base, '/api')) {
+            $base .= '/api';
+        }
+        try {
+            $response = Http::timeout(3)->acceptJson()
+                ->withToken((string) session('auth_token'))
+                ->get($base . '/me');
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        if ($response->status() === 401) {
+            self::clearAuthSession($request);
+            return true;
+        }
+
+        if ($response->successful()) {
+            session(['auth_token_checked_at' => time()]);
+        }
+
+        return false;
     }
 
     public static function isSessionVerificationExpired(): bool
