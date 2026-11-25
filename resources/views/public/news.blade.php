@@ -10,23 +10,22 @@
         $newsCategories = collect($posts)->pluck('category')->filter()->unique()->values()->all();
     @endphp
 
-    {{-- ===================== HERO (Figma 2218:224 News Hero) ===================== --}}
-    <section class="relative overflow-hidden bg-senat-primary">
-        <div class="absolute inset-x-0 top-0 h-1 bg-senat-orange" aria-hidden="true"></div>
+    {{-- ===================== HERO (selaras dengan page-hero biru Senat) ===================== --}}
+    <section class="relative overflow-hidden bg-senat-hero">
         <div class="senat-shell py-14 lg:py-[52px]">
-            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-orange">Kabar &amp; Informasi Resmi Senat</p>
+            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-sky">Kabar &amp; Informasi Resmi Senat</p>
             <h1 class="mt-4 max-w-[820px] text-[28px] font-bold leading-tight tracking-tight text-white sm:text-[32px]">
                 Warta &amp; Berita Senat Akademik
             </h1>
-            <p class="mt-5 max-w-[800px] text-[15px] leading-relaxed text-slate-300">
+            <p class="mt-5 max-w-[800px] text-[15px] leading-relaxed text-senat-skySoft">
                 Publikasi siaran pers resmi, liputan sidang pleno, risalah kebijakan akademik, serta kegiatan komisi Senat Politeknik Negeri Semarang.
             </p>
-            <nav class="mt-8 text-[12.5px] font-medium text-slate-400" aria-label="Breadcrumb">
+            <nav class="mt-8 text-[12.5px] font-medium text-senat-skySoft/80" aria-label="Breadcrumb">
                 <a href="{{ route('public.home') }}" class="transition-colors duration-150 hover:text-white">Beranda</a>
                 <span class="mx-2">/</span>
                 <a href="{{ route('public.archives') }}" class="transition-colors duration-150 hover:text-white">Arsip &amp; Publikasi</a>
                 <span class="mx-2">/</span>
-                <span class="text-slate-200">Warta Senat</span>
+                <span class="text-white">Warta Senat</span>
             </nav>
         </div>
     </section>
