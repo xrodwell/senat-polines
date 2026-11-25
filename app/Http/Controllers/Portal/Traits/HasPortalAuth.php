@@ -274,6 +274,7 @@ trait HasPortalAuth
             'auth_user_email'  => $user['email'] ?? '',
             'auth_user_foto'   => $user['foto_profil'] ?? null,
             'auth_verified_at' => now()->timestamp,
+            'auth_token_checked_at' => now()->timestamp,
         ]);
 
         if (($user['role'] ?? '') === 'admin') {

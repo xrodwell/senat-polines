@@ -34,14 +34,75 @@ class PublicController extends Controller
     /** 01 — Beranda */
     public function home(): View
     {
+        $landingNews = $this->landingNews();
+
         return view('public.home', [
             'hero' => \App\Support\HeroApi::publicRead(),
-            'posts' => $this->publishedPosts(),
+            'posts' => $landingNews ?? [],
+            'landingNewsAvailable' => $landingNews !== null,
             'upcomingMeetings' => $this->meetings->getUpcoming(),
             'committees' => $this->committees->all(),
             'features' => $this->features->all(),
-            'direktori' => SenatDirectory::stats(),
+            'landingStats' => $this->landingStats(),
         ]);
+    }
+
+    private function landingNews(): ?array
+    {
+        $base = rtrim((string) config('services.backend_api.url'), '/');
+        if ($base === '') {
+            return null;
+        }
+        $base = preg_replace('~/api$~', '', $base);
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base.'/api/landing-news');
+            $items = $response->json('data');
+            if (! $response->successful() || ! is_array($items) || ! array_is_list($items) || count($items) > 6) {
+                return null;
+            }
+            $posts = [];
+            foreach ($items as $item) {
+                if (! is_array($item) || ! isset($item['id_berita'], $item['judul'], $item['isi'], $item['tanggal_publish']) || ! is_string($item['judul']) || ! is_string($item['isi']) || ! is_string($item['tanggal_publish'])) {
+                    return null;
+                }
+                $posts[] = [
+                    'slug' => \Illuminate\Support\Str::slug($item['judul']),
+                    'title' => $item['judul'],
+                    'category' => 'Warta Senat',
+                    'excerpt' => \Illuminate\Support\Str::limit(strip_tags($item['isi']), 180),
+                    'thumbnail' => is_string($item['gambar'] ?? null) ? $item['gambar'] : null,
+                ];
+            }
+            return $posts;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function landingStats(): ?array
+    {
+        $base = rtrim((string) config('services.backend_api.url'), '/');
+        if ($base === '') {
+            return null;
+        }
+        $base = preg_replace('~/api$~', '', $base);
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base.'/api/landing-stats');
+            $data = $response->json();
+            if (! $response->successful() || ! is_array($data)) {
+                return null;
+            }
+            foreach (['members', 'committees', 'published_news'] as $key) {
+                if (! isset($data[$key]) || ! is_int($data[$key]) || $data[$key] < 0) {
+                    return null;
+                }
+            }
+            return array_intersect_key($data, array_flip(['members', 'committees', 'published_news']));
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /** 02A — Profil · Visi, Misi & Tujuan */
@@ -620,25 +681,36 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
     }
 
     /** 14 — Kanal Berita & Warta */
-    public function news(): View
+    public function news(Request $request): View
     {
+        $result = $this->fetchPublicNews($request);
+
         return view('public.news', [
-            'posts' => $this->publishedPosts(),
+            'posts' => $result['posts'] ?? [],
+            'pagination' => $result['pagination'] ?? [
+                'total' => 0,
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => 12,
+                'from' => 0,
+                'to' => 0,
+            ],
+            'newsAvailable' => $result !== null,
         ]);
     }
 
     /** 14B — Detail Warta */
     public function newsShow(string $slug): View
     {
-        $post = collect($this->posts->all())->firstWhere('slug', $slug);
+        [$post, $isOutage] = $this->fetchPublicNewsDetail($slug);
 
-        abort_if($post === null, 404);
+        if ($isOutage) {
+            abort(503, 'Warta sementara tidak tersedia.');
+        }
 
-        $related = collect($this->posts->all())
-            ->reject(fn ($item) => $item['slug'] === $slug)
-            ->take(3)
-            ->values()
-            ->all();
+        abort_if($post === null, 404, 'Berita tidak ditemukan.');
+
+        $related = $this->fetchRelatedNews($slug);
 
         return view('public.news-show', [
             'post' => $post,
@@ -646,21 +718,200 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
         ]);
     }
 
-    private function publishedPosts(): array
+    private function fetchPublicNews(Request $request): ?array
     {
-        $published = array_values(array_filter(
-            $this->posts->all(),
-            fn ($post) => ($post['status'] ?? 'Terpublikasi') === 'Terpublikasi'
-        ));
+        $base = rtrim((string) config('services.backend_api.url'), '/');
+        if ($base === '') {
+            return null;
+        }
+        $base = preg_replace('~/api$~', '', $base);
 
-        usort($published, function ($a, $b): int {
-            $dateOrder = strcmp(
-                $b['published_at'] ?? $b['date'] ?? '',
-                $a['published_at'] ?? $a['date'] ?? ''
-            );
-            return $dateOrder !== 0 ? $dateOrder : ((int)($b['id'] ?? 0) <=> (int)($a['id'] ?? 0));
-        });
+        $params = [
+            'page' => max(1, $request->integer('page', 1)),
+            'per_page' => max(1, $request->integer('per_page', 12)),
+        ];
 
-        return $published;
+        $q = trim((string) ($request->query('q') ?? $request->query('search') ?? ''));
+        if ($q !== '') {
+            $params['search'] = $q;
+        }
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base . '/api/public-news', $params);
+
+            if ($response->status() === 404) {
+                // If public-news endpoint is missing on backend, fall back to landing-news (database-backed API only, NO mock)
+                $fallbackResp = Http::acceptJson()->timeout(3)->get($base . '/api/landing-news');
+                if (! $fallbackResp->successful()) {
+                    return null;
+                }
+                $rawItems = $fallbackResp->json('data') ?? [];
+                if (! is_array($rawItems)) {
+                    return null;
+                }
+                $posts = array_map(fn ($item) => $this->formatNewsItem($item), $rawItems);
+                return [
+                    'posts' => $posts,
+                    'pagination' => [
+                        'total' => count($posts),
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => count($posts),
+                        'from' => count($posts) > 0 ? 1 : 0,
+                        'to' => count($posts),
+                    ],
+                ];
+            }
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $json = $response->json();
+            if (! is_array($json)) {
+                return null;
+            }
+
+            $rawItems = $json['data'] ?? [];
+            if (! is_array($rawItems)) {
+                return null;
+            }
+
+            $posts = array_map(fn ($item) => $this->formatNewsItem($item), $rawItems);
+
+            return [
+                'posts' => $posts,
+                'pagination' => [
+                    'total' => (int) ($json['total'] ?? count($posts)),
+                    'current_page' => (int) ($json['current_page'] ?? 1),
+                    'last_page' => (int) ($json['last_page'] ?? 1),
+                    'per_page' => (int) ($json['per_page'] ?? count($posts)),
+                    'from' => (int) ($json['from'] ?? (count($posts) > 0 ? 1 : 0)),
+                    'to' => (int) ($json['to'] ?? count($posts)),
+                ],
+            ];
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array{0: ?array, 1: bool} [post, isOutage]
+     */
+    private function fetchPublicNewsDetail(string $slug): array
+    {
+        $base = rtrim((string) config('services.backend_api.url'), '/');
+        if ($base === '') {
+            return [null, true];
+        }
+        $base = preg_replace('~/api$~', '', $base);
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base . '/api/public-news/' . urlencode($slug));
+
+            if ($response->status() === 404) {
+                // Check landing-news in case backend only has landing-news
+                $landingResp = Http::acceptJson()->timeout(3)->get($base . '/api/landing-news');
+                if ($landingResp->successful()) {
+                    $items = $landingResp->json('data') ?? [];
+                    if (is_array($items)) {
+                        foreach ($items as $item) {
+                            if (\Illuminate\Support\Str::slug($item['judul'] ?? '') === $slug) {
+                                return [$this->formatNewsItem($item), false];
+                            }
+                        }
+                    }
+                }
+                return [null, false];
+            }
+
+            if (! $response->successful()) {
+                return [null, true];
+            }
+
+            $raw = $response->json('data') ?? $response->json();
+            if (! is_array($raw) || empty($raw)) {
+                return [null, false];
+            }
+
+            return [$this->formatNewsItem($raw), false];
+        } catch (\Throwable $e) {
+            return [null, true];
+        }
+    }
+
+    private function fetchRelatedNews(string $slug): array
+    {
+        $base = rtrim((string) config('services.backend_api.url'), '/');
+        if ($base === '') {
+            return [];
+        }
+        $base = preg_replace('~/api$~', '', $base);
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base . '/api/public-news', ['per_page' => 4]);
+            $items = $response->json('data');
+            if (! $response->successful() || ! is_array($items)) {
+                $resp2 = Http::acceptJson()->timeout(3)->get($base . '/api/landing-news');
+                $items = $resp2->json('data');
+                if (! $resp2->successful() || ! is_array($items)) {
+                    return [];
+                }
+            }
+
+            $related = [];
+            foreach ($items as $item) {
+                $post = $this->formatNewsItem($item);
+                if ($post['slug'] !== $slug) {
+                    $related[] = $post;
+                }
+                if (count($related) >= 3) {
+                    break;
+                }
+            }
+
+            return $related;
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    private function formatNewsItem(array $item): array
+    {
+        $title = (string) ($item['judul'] ?? $item['title'] ?? '');
+        $slug = (string) ($item['slug'] ?? \Illuminate\Support\Str::slug($title));
+        $dateStr = $item['tanggal_publish'] ?? $item['date'] ?? null;
+        $isPublished = ! empty($dateStr);
+        $dateOnly = $isPublished ? substr((string) $dateStr, 0, 10) : date('Y-m-d');
+        $rawIsi = $item['isi'] ?? $item['body'] ?? '';
+        $body = is_array($rawIsi) ? $rawIsi : explode("\n\n", (string) $rawIsi);
+        $bodyText = is_array($rawIsi) ? implode("\n\n", $rawIsi) : (string) $rawIsi;
+
+        $thumbnail = ! empty($item['gambar']) ? $item['gambar'] : ($item['thumbnail'] ?? null);
+        $gallery = is_array($item['galeri'] ?? null) ? $item['galeri'] : [];
+        $images = array_values(array_unique(array_filter(
+            [$thumbnail, ...$gallery, ...(is_array($item['images'] ?? null) ? $item['images'] : [])],
+            fn ($img) => is_string($img) && $img !== ''
+        )));
+
+        $attachments = is_array($item['lampiran'] ?? null) ? $item['lampiran'] : (is_array($item['attachments'] ?? null) ? $item['attachments'] : []);
+
+        $author = $item['author'] ?? $item['user']['nama'] ?? 'Sekretariat Senat Polines';
+
+        return [
+            'id' => $item['id_berita'] ?? $item['id'] ?? 0,
+            'title' => $title,
+            'slug' => $slug,
+            'category' => $item['kategori'] ?? $item['category'] ?? 'Warta Senat',
+            'date' => $dateOnly,
+            'published_at' => $dateStr,
+            'status' => 'Terpublikasi',
+            'excerpt' => \Illuminate\Support\Str::limit(strip_tags($bodyText), 180),
+            'thumbnail' => $thumbnail,
+            'images' => $images,
+            'attachments' => $attachments,
+            'author' => $author,
+            'body' => $body,
+        ];
     }
 }

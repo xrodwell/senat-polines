@@ -75,23 +75,20 @@
 
         {{-- Hero --}}
         <section class="relative overflow-hidden bg-senat-hero">
-            <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[32%] bg-[#052e59] lg:block" aria-hidden="true"></div>
-            <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[26px] bg-senat-orange lg:block" aria-hidden="true"></div>
-
             <div class="senat-shell relative flex min-h-[288px] flex-col justify-center py-10">
-                <div class="lg:flex lg:items-center lg:gap-10">
-                    <div class="lg:max-w-[730px]">
+                <div class="grid grid-cols-1 items-center gap-8 [overflow-wrap:anywhere] lg:grid-cols-[minmax(0,1fr)_minmax(0,330px)] lg:gap-10">
+                    <div class="min-w-0">
                         <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-sky">Direktori Anggota Senat</p>
                         <h1 class="mt-3 text-[26px] font-bold leading-[1.08] text-white sm:text-[35px]"
-                            x-text="panels[active].title">{{ $panels[0]['label'] ?? 'Direktori Komisi' }}@if (isset($panels[0])) · {{ $panels[0]['short'] }}@endif</h1>
+                            x-text="panels[active]?.title ?? 'Direktori Komisi'">{{ $panels[0]['label'] ?? 'Direktori Komisi' }}@if (isset($panels[0])) · {{ $panels[0]['short'] }}@endif</h1>
                         <p class="mt-4 max-w-[690px] text-[13px] leading-relaxed text-senat-skySoft"
-                            x-text="panels[active].focus">{{ $panels[0]['focus'] ?? $period }}</p>
+                            x-text="panels[active]?.focus ?? $el.textContent">{{ $panels[0]['focus'] ?? $period }}</p>
                     </div>
 
-                    <div class="mt-8 lg:mt-0 lg:ml-auto lg:w-[330px]">
+                    <div class="min-w-0 border-t border-white/20 pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
                         <div class="flex items-center justify-between gap-3">
-                            <span class="inline-flex items-center rounded-full bg-[#e8fcf5] px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#008c66]"
-                                  x-text="panels[active].badge">{{ $panels[0]['total'] ?? 0 }} Anggota Komisi</span>
+                            <span class="inline-flex min-w-0 items-center rounded-full bg-[#e8fcf5] px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#008c66]"
+                                  x-text="panels[active]?.badge ?? '0 Anggota Komisi'">{{ $panels[0]['total'] ?? 0 }} Anggota Komisi</span>
                         </div>
                         <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#94c4f5]">Masa Bakti</p>
                         <p class="mt-1 text-[18px] font-bold text-white">{{ $period }}</p>

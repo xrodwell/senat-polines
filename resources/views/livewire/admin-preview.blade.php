@@ -232,12 +232,16 @@
 
                 {{-- Alert Flash --}}
                 @if ($flashMessage)
-                    <div class="flex items-center justify-between rounded-[10px] bg-[#eaf8f0] px-4 py-3 text-[13px] text-[#116a3c] shadow-xs">
+                    @php
+                        $isUnavailable = preg_match('/\AFitur .+ belum tersedia\. Tidak ada perubahan yang disimpan\.\z/s', $flashMessage) === 1;
+                        $flashColor = $isUnavailable ? 'text-amber-800' : 'text-[#116a3c]';
+                    @endphp
+                    <div class="flex items-center justify-between rounded-[10px] {{ $isUnavailable ? 'bg-amber-50' : 'bg-[#eaf8f0]' }} px-4 py-3 text-[13px] {{ $flashColor }} shadow-xs">
                         <div class="flex items-center gap-2">
-                            <x-senat.icon name="check" class="h-4 w-4 shrink-0 text-[#116a3c]" />
+                            <x-senat.icon :name="$isUnavailable ? 'warning' : 'check'" class="h-4 w-4 shrink-0 {{ $flashColor }}" />
                             <span>{{ $flashMessage }}</span>
                         </div>
-                        <button type="button" wire:click="$set('flashMessage', '')" class="text-base font-bold text-[#116a3c]">×</button>
+                        <button type="button" wire:click="$set('flashMessage', '')" class="text-base font-bold {{ $flashColor }}">×</button>
                     </div>
                 @endif
 

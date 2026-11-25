@@ -4,7 +4,7 @@
   Fitur: Expandable Bubble, Quick Prompt Chips, Typing Indicator, Resilient Error Handling
 --}}
 
-<div x-data="senatChatWidget()" class="fixed bottom-6 right-6 z-50 font-sans" @keydown.escape.window="isOpen = false">
+<div x-data="senatChatWidget()" @public-menu-open.window="isOpen = false" class="fixed bottom-6 right-6 z-50 font-sans" @keydown.escape.window="isOpen = false">
     {{-- Launcher Bubble Button --}}
     <button
         type="button"
@@ -186,6 +186,7 @@ function senatChatWidget() {
         toggleChat() {
             this.isOpen = !this.isOpen;
             if (this.isOpen) {
+                this.$dispatch('public-chat-open');
                 this.$nextTick(() => this.scrollToBottom());
             }
         },

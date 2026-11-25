@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Portal\Traits;
 
-use App\Repositories\Mock\JsonVotingRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,136 +14,95 @@ trait HasVotingAndAttendance
      */
     public function submitPresensi(Request $request): JsonResponse
     {
-        $userId = $request->input('id_user') ?: (auth()->id() ?: session('auth_user_id', 6));
+        // Identitas hanya dari sesi/token terautentikasi; body tidak boleh
+        // menentukan siapa yang presensi (tanpa fallback id hardcoded).
+        $userId = (int) (auth()->id() ?: session('auth_user_id'));
+        if ($userId <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesi Anda tidak valid. Silakan login ulang.',
+            ], 401);
+        }
         $tokenQr = $request->input('token_qr');
         $sessionCode = $request->input('kode_sesi');
         $meetingId = $request->input('id_rapat');
 
-        $result = $this->meetings->submitPresensi((int) $userId, $tokenQr, $sessionCode, $meetingId ? (int) $meetingId : null);
+        $result = $this->meetings->submitPresensi($userId, $tokenQr, $sessionCode, $meetingId ? (int) $meetingId : null);
 
         $status = ($result['success'] ?? false) ? 200 : 422;
         return response()->json($result, $status);
     }
 
     /**
-     * 12D — E-Voting
+     * 12D - E-Voting
      */
     public function voting(): View
     {
-        $userId = (int) (auth()->id() ?: session('auth_user_id', 2));
+        $userId = (int) (auth()->id() ?: session('auth_user_id'));
         $activeVoting = $this->votings->getActive();
         $allVotings = $this->votings->all();
 
-        // Periksa partisipasi anggota pada sesi voting aktif
+        // Partisipasi pada sesi aktif hanya dari endpoint my-ballot milik
+        // user terautentikasi; payload publik tidak lagi memuat ballot.
         if ($activeVoting) {
-            $userVotedActive = false;
-            $userChoiceActive = null;
-            $suaraList = $activeVoting['suara_votings'] ?? $activeVoting['suaraVotings'] ?? [];
-            foreach ($suaraList as $s) {
-                if ((int) ($s['id_user'] ?? 0) === $userId) {
-                    $userVotedActive = true;
-                    $optId = $s['id_opsi'] ?? null;
-                    foreach (($activeVoting['opsi'] ?? []) as $o) {
-                        if (($o['id_opsi'] ?? $o['id'] ?? null) == $optId) {
-                            $userChoiceActive = $o;
-                            break;
-                        }
+            $activeId = (int) ($activeVoting['id_voting'] ?? $activeVoting['id'] ?? 0);
+            $ballot = $activeId > 0 ? $this->votings->myBallot($activeId) : null;
+            $activeVoting['has_voted'] = (bool) ($ballot['has_voted'] ?? false);
+            $myChoice = null;
+            if (!empty($ballot['my_ballot'])) {
+                $optId = $ballot['my_ballot']['id_opsi'] ?? null;
+                foreach (($activeVoting['opsi'] ?? []) as $o) {
+                    if (($o['id_opsi'] ?? $o['id'] ?? null) == $optId) {
+                        $myChoice = $o;
+                        break;
                     }
-                    break;
                 }
+                $myChoice ??= [
+                    'id_opsi' => $optId,
+                    'nama_opsi' => $ballot['my_ballot']['nama_opsi'] ?? 'Suara Sah',
+                ];
             }
-            $activeVoting['has_voted'] = $userVotedActive;
-            $activeVoting['my_choice'] = $userChoiceActive;
+            $activeVoting['my_choice'] = $myChoice;
         }
 
-        // Siapkan riwayat voting (semua voting terdahulu yang sudah ditutup/selesai)
+        // Riwayat hanya sesi ditutup dari backend; tanpa arsip demo palsu.
         $closedVotings = collect($allVotings)
             ->filter(function ($v) {
                 $status = strtolower($v['status'] ?? '');
                 return in_array($status, ['ditutup', 'selesai', 'closed'], true);
             });
 
-        // Jika di database belum ada sesi voting yang berstatus ditutup, ambil arsip riwayat voting senat
-        if ($closedVotings->isEmpty()) {
-            $fallbackRepo = new JsonVotingRepository();
-            $closedVotings = collect($fallbackRepo->defaultVotings())
-                ->filter(fn ($v) => in_array(strtolower($v['status'] ?? ''), ['ditutup', 'selesai', 'closed'], true));
-        }
-
         $historyVotings = $closedVotings
-            ->map(function ($v) use ($userId) {
-                // Periksa partisipasi anggota pada sesi voting ini
-                $userVoted = false;
-                $userPilihanNama = null;
-                $waktuVote = null;
-
-                $suaraList = $v['suara_votings'] ?? $v['suaraVotings'] ?? [];
-                foreach ($suaraList as $s) {
-                    if ((int) ($s['id_user'] ?? 0) === $userId) {
-                        $userVoted = true;
-                        $waktuVote = $s['waktu_vote'] ?? null;
-                        $optId = $s['id_opsi'] ?? null;
-                        foreach (($v['opsi'] ?? []) as $o) {
-                            if (($o['id_opsi'] ?? $o['id'] ?? null) == $optId) {
-                                $userPilihanNama = $o['nama_opsi'] ?? $o['label'] ?? 'Suara Tercatat';
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-
-                // Cek presensi / undangan rapat
-                $rapat = $v['rapat'] ?? [];
-                $anggotaRapats = $rapat['anggota_rapats'] ?? $rapat['anggotaRapats'] ?? [];
-                $isInvited = empty($anggotaRapats);
-                $isPresent = false;
-
-                if (!empty($anggotaRapats)) {
-                    foreach ($anggotaRapats as $ar) {
-                        if ((int) ($ar['id_user'] ?? 0) === $userId) {
-                            $isInvited = true;
-                            $statusHadir = strtolower((string) ($ar['status_kehadiran'] ?? ''));
-                            $isPresent = ($statusHadir === 'hadir' || !empty($ar['waktu_presensi']));
-                            break;
-                        }
-                    }
-                }
-
-                // Tentukan status partisipasi
-                if ($userVoted) {
-                    $statusPartisipasi = 'voted';
-                } elseif ($isPresent) {
-                    $statusPartisipasi = 'present_not_voted';
-                } elseif ($isInvited) {
-                    $statusPartisipasi = 'absent';
-                } else {
-                    $statusPartisipasi = 'not_invited';
-                }
+            ->map(function ($v) {
+                $id = (int) ($v['id_voting'] ?? $v['id'] ?? 0);
+                $ballot = $id > 0 ? $this->votings->myBallot($id) : null;
+                $userVoted = (bool) ($ballot['has_voted'] ?? false);
 
                 $v['user_voted'] = $userVoted;
-                $v['user_pilihan_nama'] = $userPilihanNama;
-                $v['user_waktu_vote'] = $waktuVote;
-                $v['status_partisipasi'] = $statusPartisipasi;
+                $v['user_pilihan_nama'] = $ballot['my_ballot']['nama_opsi'] ?? null;
+                $v['user_waktu_vote'] = $ballot['my_ballot']['waktu_vote'] ?? null;
 
-                // Tentukan status hasil keputusan sidang
-                $opsiList = $v['opsi'] ?? [];
-                $sortedOpsi = collect($opsiList)->sortByDesc(fn ($o) => (int) ($o['total'] ?? $o['jumlah_suara'] ?? 0));
-                $topOpsi = $sortedOpsi->first();
-                $topNama = strtolower($topOpsi['nama_opsi'] ?? $topOpsi['label'] ?? '');
+                $isInvited = (bool) ($ballot['is_invited'] ?? false);
+                $isPresent = (bool) ($ballot['is_present'] ?? false);
+                $v['status_partisipasi'] = $userVoted
+                    ? 'voted'
+                    : ($isPresent ? 'present_not_voted' : ($isInvited ? 'absent' : 'not_invited'));
 
-                $hasilKeputusan = 'Disetujui';
-                $badgeState = 'success';
-                if (str_contains($topNama, 'tidak') || str_contains($topNama, 'tolak')) {
-                    $hasilKeputusan = 'Ditolak';
-                    $badgeState = 'danger';
-                } elseif (str_contains($topNama, 'abstain')) {
-                    $hasilKeputusan = 'Musyawarah Lanjutan';
-                    $badgeState = 'warning';
+                // Keputusan sidang diambil dari rekap backend (kuorum, seri,
+                // pemenang), bukan heuristik nama opsi di frontend.
+                $rekap = $id > 0 ? $this->votings->rekap($id) : null;
+                [$hasil, $badge] = self::mapDecision($rekap);
+                $v['hasil_keputusan'] = $hasil;
+                $v['badge_state'] = $badge;
+                if (is_array($rekap) && isset($rekap['kuorum']) && is_array($rekap['kuorum'])) {
+                    $k = $rekap['kuorum'];
+                    $v['kuorum'] = [
+                        'hadir' => (int) ($k['present_count'] ?? 0),
+                        'total' => (int) ($k['total_invited'] ?? 0),
+                        'tercapai' => (bool) ($k['is_kuorum'] ?? false),
+                        'terpenuhi' => (bool) ($k['is_kuorum'] ?? false),
+                    ];
                 }
-
-                $v['hasil_keputusan'] = $hasilKeputusan;
-                $v['badge_state'] = $badgeState;
 
                 return $v;
             })
@@ -157,7 +115,37 @@ trait HasVotingAndAttendance
             'activeVoting' => $activeVoting,
             'historyVotings' => $historyVotings,
             'userId' => $userId,
+            'votingBackendAvailable' => $this->votings->isAvailable(),
+            'votingBackendError' => $this->votings->lastError(),
         ]);
+    }
+
+    /**
+     * Petakan payload rekap backend ke label putusan + warna badge.
+     * Tanpa data backend yang sah, jangan mengarang "Disetujui".
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function mapDecision(?array $rekap): array
+    {
+        if (!is_array($rekap) || !array_key_exists('keputusan_sidang', $rekap)) {
+            return ['Tidak Tersedia', 'secondary'];
+        }
+        if (!empty($rekap['seri'])) {
+            return ['Seri - Musyawarah Lanjutan', 'warning'];
+        }
+        $winner = $rekap['keputusan_sidang'];
+        if ($winner === null || $winner === '') {
+            return [(string) ($rekap['keputusan_alasan'] ?? 'Belum Ada Keputusan'), 'secondary'];
+        }
+        $nama = strtolower((string) $winner);
+        if (str_contains($nama, 'tidak') || str_contains($nama, 'tolak')) {
+            return ['Ditolak', 'danger'];
+        }
+        if (str_contains($nama, 'abstain')) {
+            return ['Musyawarah Lanjutan', 'warning'];
+        }
+        return ['Disetujui', 'success'];
     }
 
     /**
@@ -195,7 +183,7 @@ trait HasVotingAndAttendance
     }
 
     /**
-     * Presensi cepat (QR) — layar operasional lama, dipertahankan
+     * Presensi cepat (QR) - layar operasional lama, dipertahankan
      */
     public function memberAttendance(): View
     {
@@ -208,7 +196,7 @@ trait HasVotingAndAttendance
     }
 
     /**
-     * Konsol sidang (operator) — layar operasional lama, dipertahankan
+     * Konsol sidang (operator) - layar operasional lama, dipertahankan
      */
     public function adminMeetingSession(): View
     {

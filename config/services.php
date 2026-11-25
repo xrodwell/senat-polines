@@ -30,11 +30,17 @@ return [
     ],
 
     'backend' => [
-        'url' => env('BACKEND_API_URL', 'http://127.0.0.1:8001'),
+        'url' => env('SENAT_BACKEND_API_URL') ?: env('BACKEND_API_URL', 'http://127.0.0.1:8001'),
     ],
 
     'backend_api' => [
-        'url' => rtrim(env('BACKEND_API_URL', 'http://127.0.0.1:8001'), '/'),
+        'url' => rtrim(env('SENAT_BACKEND_API_URL') ?: env('BACKEND_API_URL', 'http://127.0.0.1:8001'), '/'),
+    ],
+
+    'voting' => [
+        // Full API base for voting endpoints (already includes /api when set).
+        // Falls back to backend_api.url / backend.url + /api when null.
+        'url' => env('SENAT_BACKEND_API_URL'),
     ],
 
     'google' => [

@@ -33,22 +33,37 @@ class JsonVotingRepository implements VotingRepositoryInterface
     public function castVote(int $votingId, int $optionId, ?int $userId = null): array
     {
         return [
-            'success' => true,
-            'message' => 'Suara berhasil dikirim (mode offline/mock).',
+            'success' => false,
+            'message' => 'Backend tidak terjangkau',
             'id_voting' => $votingId,
             'id_opsi' => $optionId,
-            'id_user' => $userId ?? 2,
         ];
     }
 
     public function updateStatus(int $votingId, string $status): array
     {
         return [
-            'success' => true,
-            'message' => "Status voting berhasil diubah menjadi {$status} (mode offline/mock).",
+            'success' => false,
+            'message' => 'Backend tidak terjangkau',
             'id_voting' => $votingId,
             'status' => $status,
         ];
+    }
+
+    public function myBallot(int $votingId): ?array
+    {
+        // Mock tidak mengetahui identitas pemilih; jangan mengarang partisipasi.
+        return null;
+    }
+
+    public function isAvailable(): bool
+    {
+        return true;
+    }
+
+    public function lastError(): ?string
+    {
+        return null;
     }
 
     public function rekap(int $votingId): ?array
