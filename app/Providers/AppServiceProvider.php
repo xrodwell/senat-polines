@@ -12,6 +12,7 @@ use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use App\Contracts\RapatWorkspaceRepositoryInterface;
 use App\Contracts\VotingRepositoryInterface;
+use App\Repositories\Api\ApiArchiveRepository;
 use App\Repositories\Api\ApiAspirationRepository;
 use App\Repositories\Api\ApiChatbotRepository;
 use App\Repositories\Api\ApiCommitteeRepository;
@@ -39,7 +40,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CommitteeRepositoryInterface::class, ApiCommitteeRepository::class);
         $this->app->bind(FeatureRepositoryInterface::class, JsonFeatureRepository::class);
         $this->app->bind(AspirationRepositoryInterface::class, ApiAspirationRepository::class);
-        $this->app->bind(ArchiveRepositoryInterface::class, JsonArchiveRepository::class);
+        $this->app->bind(ArchiveRepositoryInterface::class, ApiArchiveRepository::class);
         $this->app->bind(ChatbotRepositoryInterface::class, ApiChatbotRepository::class);
         $this->app->bind(VotingRepositoryInterface::class, ApiVotingRepository::class);
         $this->app->bind(RapatWorkspaceRepositoryInterface::class, ApiRapatWorkspaceRepository::class);

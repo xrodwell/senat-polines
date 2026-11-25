@@ -95,6 +95,9 @@ class AdminPreview extends Component
         'Rancangan Peraturan',
         'Standar & Pedoman',
         'SOP Akademik',
+        'Laporan Tahunan',
+        'LPJ & Akuntabilitas',
+        'Memori Jabatan',
     ];
 
     public const REGULASI_TAHAP = [

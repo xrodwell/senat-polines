@@ -9,6 +9,7 @@ use App\Contracts\FeatureRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Repositories\Api\ApiArchiveRepository;
 use App\Support\PublicNewsApi;
 use App\Support\SenatDirectory;
 use Illuminate\Http\JsonResponse;
@@ -725,10 +726,13 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
     public function archivesReports(): View
     {
         $archives = $this->archives->all();
-        $reports = array_values(array_filter($archives, fn ($item) => str_contains($item['category'] ?? '', 'Laporan')));
+        $reports = array_values(array_filter(
+            $archives,
+            fn ($item) => ApiArchiveRepository::isReportCategory((string) ($item['category'] ?? ''))
+        ));
 
         return view('public.archives-reports', [
-            'archives' => $reports ?: $archives,
+            'archives' => $reports,
         ]);
     }
 
