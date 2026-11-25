@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
@@ -323,13 +324,90 @@ class SenatDirectory
     /** @return array<int, array<string, mixed>> */
     public static function committees(): array
     {
-        $path = storage_path('mock/committees.json');
-
-        if (! is_file($path)) {
-            return [];
+        // Satu sumber data dengan panel admin: ambil dari API backend lebih dulu
+        // agar perubahan admin langsung tampil di halaman publik.
+        if (app()->bound('senat.directory.committees')) {
+            return app('senat.directory.committees');
         }
 
-        return json_decode(file_get_contents($path), true) ?: [];
+        $committees = self::committeesFromApi();
+
+        if ($committees === null) {
+            // Fallback offline: file mock lokal (dipakai bila backend tidak merespons).
+            $path = storage_path('mock/committees.json');
+            $committees = is_file($path)
+                ? (json_decode(file_get_contents($path), true) ?: [])
+                : [];
+        }
+
+        app()->instance('senat.directory.committees', $committees);
+
+        return $committees;
+    }
+
+    /**
+     * Ambil direktori komisi dari API backend dan seragamkan bentuknya
+     * dengan struktur mock lokal.
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private static function committeesFromApi(): ?array
+    {
+        $base = (string) (config('services.backend_api.url') ?? config('services.backend.url') ?? '');
+        if ($base === '') {
+            return null;
+        }
+
+        $base = rtrim($base, '/');
+        if (! str_ends_with($base, '/api')) {
+            $base .= '/api';
+        }
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base . '/committees');
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $data = $response->json('data');
+            if (! is_array($data) || $data === []) {
+                return null;
+            }
+
+            return array_map(static function (array $committee): array {
+                $members = [];
+                foreach ($committee['members'] ?? [] as $member) {
+                    if (! is_array($member)) {
+                        $members[] = ['nama' => (string) $member];
+                        continue;
+                    }
+
+                    $members[] = array_filter([
+                        'id_enrollment' => $member['id_enrollment'] ?? null,
+                        'nama' => $member['nama'] ?? ($member['name'] ?? null),
+                        'nim_nip' => $member['nim_nip'] ?? null,
+                        'jabatan' => $member['jabatan'] ?? null,
+                        'photo' => $member['foto_profil'] ?? null,
+                    ], static fn ($value) => $value !== null && $value !== '');
+                }
+
+                return [
+                    'id' => $committee['id'] ?? null,
+                    'code' => $committee['code'] ?? 'KOM',
+                    'name' => $committee['name'] ?? '',
+                    'lead' => $committee['lead'] ?? 'Belum ditentukan',
+                    'secretary' => $committee['secretary'] ?? 'Belum ditentukan',
+                    'members_count' => $committee['members_count'] ?? count($members),
+                    'members' => $members,
+                    'focus' => $committee['focus'] ?? '',
+                    'tupoksi_items' => $committee['tupoksi_items'] ?? [],
+                    'tupoksi' => $committee['tupoksi'] ?? '',
+                ];
+            }, $data);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     public static function committeeLabel(string $code): string
@@ -438,8 +516,18 @@ class SenatDirectory
                 ]);
             }
             foreach ($committee['members'] ?? [] as $member) {
+                $memberName = is_array($member)
+                    ? ($member['nama'] ?? $member['name'] ?? '—')
+                    : $member;
+
+                // API mengirim ketua & sekretaris juga di daftar members;
+                // lewati agar tidak tampil ganda di direktori publik.
+                if ($memberName === ($committee['lead'] ?? null) || $memberName === ($committee['secretary'] ?? null)) {
+                    continue;
+                }
+
                 $push([
-                    'name' => is_array($member) ? ($member['nama'] ?? $member['name'] ?? '—') : $member,
+                    'name' => $memberName,
                     'nip' => is_array($member) ? ($member['nim_nip'] ?? null) : null,
                     'role' => 'Anggota ' . $label,
                     'organ' => $organName,
