@@ -197,20 +197,6 @@
                                 @endforeach
                                 </div>
 
-                                <div class="flex items-center gap-1.5">
-                                    <button type="button"
-                                            wire:click="exportExcel"
-                                            class="inline-flex items-center justify-center h-8 px-3 rounded-lg text-[11px] font-semibold bg-[#116a3c] text-white hover:bg-[#0d542f] transition-colors shadow-xs"
-                                            title="Unduh Rekap Kehadiran Sidang ke Excel (.xls)">
-                                        <span>Ekspor Excel (.xls)</span>
-                                    </button>
-                                    <button type="button"
-                                            wire:click="exportCsv"
-                                            class="inline-flex items-center justify-center h-8 px-3 rounded-lg text-[11px] font-semibold bg-[#116a3c] text-white hover:bg-[#0d542f] transition-colors shadow-xs"
-                                            title="Unduh format CSV">
-                                        <span>Ekspor CSV</span>
-                                    </button>
-                                </div>
                             </div>
                         </div>
 

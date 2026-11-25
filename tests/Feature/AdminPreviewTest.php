@@ -99,6 +99,38 @@ class AdminPreviewTest extends TestCase
             ->assertSet('active', 'Dashboard Rapat');
     }
 
+    public function test_placeholder_flash_is_warning_without_changing_other_messages(): void
+    {
+        $component = Livewire::test(AdminPreview::class);
+        $banner = function () use ($component): string {
+            $this->assertSame(1, preg_match('/<div class="flex items-center justify-between rounded-\[10px\][\s\S]*?<\/button>\s*<\/div>/', $component->html(), $matches));
+
+            return $matches[0];
+        };
+
+        foreach (['Profil & Tupoksi', 'Upload Arsip', 'Unduh Berkas 1'] as $entity) {
+            $component->call('saveAction', $entity)
+                ->assertSet('flashMessage', "Fitur {$entity} belum tersedia. Tidak ada perubahan yang disimpan.");
+            $html = $banner();
+            $this->assertStringContainsString('bg-amber-50', $html);
+            $this->assertStringContainsString('text-amber-800', $html);
+            $this->assertStringContainsString('M12 4.75l8.25 14.5H3.75z', $html);
+            $this->assertStringNotContainsString('M5 12.75l4.5 4.5L19 7', $html);
+            $this->assertStringNotContainsString('bg-[#eaf8f0]', $html);
+        }
+
+        foreach (['Data pimpinan Senat Akademik berhasil diperbarui.', 'Gagal menyimpan perubahan data pimpinan: belum tersedia'] as $message) {
+            $component->set('flashMessage', $message);
+            $html = $banner();
+            $this->assertStringContainsString('bg-[#eaf8f0]', $html);
+            $this->assertStringContainsString('text-[#116a3c]', $html);
+            $this->assertStringContainsString('M5 12.75l4.5 4.5L19 7', $html);
+            $this->assertStringNotContainsString('bg-amber-50', $html);
+        }
+
+        $component->set('flashMessage', '')->assertDontSee('bg-amber-50', false);
+    }
+
     public function test_public_home_renders_livewire_scripts(): void
     {
         $response = $this->get('/');

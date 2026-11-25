@@ -153,8 +153,8 @@
                 </div>
 
                 {{-- Session Policy Notice & Forgot Password --}}
-                <div class="flex items-center justify-between gap-2 text-xs pt-1">
-                    <span class="text-[11px] text-slate-400">
+                <div class="flex flex-col items-start justify-between gap-2 text-xs pt-1 sm:flex-row sm:items-center">
+                    <span class="text-xs leading-relaxed text-slate-600">
                         Sesi aktif berlaku 3 hari sebelum verifikasi ulang
                     </span>
                     <button
@@ -201,8 +201,8 @@
                     </svg>
                     <span>Masuk dengan Google</span>
                 </a>
-                <p class="mt-2.5 text-center text-[10.5px] text-slate-400">
-                    Terbuka untuk seluruh akun Google berdomain <span class="font-medium text-slate-500">*@polines.ac.id</span>.
+                <p class="mt-2.5 text-center text-xs leading-relaxed text-slate-600">
+                    Terbuka untuk seluruh akun Google berdomain <span class="font-medium text-slate-600">*@polines.ac.id</span>.
                 </p>
             </div>
 
@@ -252,7 +252,7 @@
                 </div>
                 <div>
                     <h3 class="text-sm font-bold text-slate-900">Pemulihan Kata Sandi</h3>
-                    <p class="text-[11px] text-slate-500">Kebijakan Akses Institusional</p>
+                    <p class="text-xs leading-relaxed text-slate-600">Kebijakan Akses Institusional</p>
                 </div>
             </div>
 
@@ -261,8 +261,8 @@
                     Akun Portal Senat Akademik Polines diterbitkan dan dikelola secara terpusat untuk menjaga keamanan
                 </p>
                 <div class="rounded-xl bg-blue-50/70 border border-blue-200/80 p-3 text-slate-800">
-                    <p class="font-semibold text-[11.5px] text-[#003366]">Cara Pemulihan Akun:</p>
-                    <p class="mt-1 text-[11px] text-slate-600 leading-snug">
+                    <p class="font-semibold text-xs text-[#003366]">Cara Pemulihan Akun:</p>
+                    <p class="mt-1 text-xs text-slate-600 leading-relaxed">
                         Silakan hubungi <strong>Admin Sekretariat Senat</strong> atau personel yang memiliki wewenang akses administratif untuk verifikasi dan penerbitan ulang kata sandi.
                     </p>
                 </div>

@@ -52,8 +52,8 @@
     $bottomNav = [
         ['label' => 'Dashboard', 'route' => $navItems[0]['route'], 'icon' => 'dashboard'],
         ['label' => 'Agenda', 'route' => $navItems[1]['route'], 'icon' => 'calendar'],
-        ['label' => 'Voting', 'route' => $navItems[4]['route'], 'icon' => 'vote'],
-        ['label' => 'Aspirasi', 'route' => $navItems[5]['route'], 'icon' => 'aspiration'],
+        ['label' => 'Voting', 'route' => $navItems[$sidebar === 'sekretariat' ? 4 : 2]['route'], 'icon' => 'vote'],
+        ['label' => 'Aspirasi', 'route' => $navItems[$sidebar === 'sekretariat' ? 5 : 4]['route'], 'icon' => 'aspiration'],
         ['label' => 'Profil', 'route' => 'portal.profile', 'icon' => 'user'],
     ];
 @endphp
@@ -70,11 +70,6 @@
             </span>
 
             <div class="ml-auto flex items-center gap-2 lg:gap-4">
-                <a href="{{ route('public.home') }}" class="senat-tap relative flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10" aria-label="Notifikasi">
-                    <x-senat.icon name="bell" class="h-[19px] w-[19px]" />
-                    <span class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-senat-orange"></span>
-                </a>
-
                 {{-- Role switcher (desktop) --}}
                 <div class="relative hidden lg:block" x-data="{ open: false }">
                     <button type="button" @click="open = !open" :aria-expanded="open.toString()"
