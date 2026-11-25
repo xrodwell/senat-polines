@@ -5,23 +5,19 @@ namespace App\Http\Controllers;
 use App\Contracts\ArchiveRepositoryInterface;
 use App\Contracts\AspirationRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
-use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
 use App\Contracts\VotingRepositoryInterface;
 use App\Http\Controllers\Portal\Traits\HasPortalAuth;
-use App\Http\Controllers\Portal\Traits\HasSecretariatPortal;
 use App\Http\Controllers\Portal\Traits\HasVotingAndAttendance;
 use App\Support\PublicNewsApi;
 use App\Support\SenatDirectory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PortalController extends Controller
 {
     use HasPortalAuth;
-    use HasSecretariatPortal;
     use HasVotingAndAttendance;
 
     public function __construct(
@@ -29,7 +25,6 @@ class PortalController extends Controller
         private AspirationRepositoryInterface $aspirations,
         private ArchiveRepositoryInterface $archives,
         private RegulationRepositoryInterface $regulations,
-        private PostRepositoryInterface $posts,
         private VotingRepositoryInterface $votings,
     ) {}
 

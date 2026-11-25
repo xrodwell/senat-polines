@@ -21,12 +21,7 @@ use App\Repositories\Api\ApiPostRepository;
 use App\Repositories\Api\ApiRegulationRepository;
 use App\Repositories\Api\ApiRapatWorkspaceRepository;
 use App\Repositories\Api\ApiVotingRepository;
-use App\Repositories\Mock\JsonArchiveRepository;
-use App\Repositories\Mock\JsonAspirationRepository;
-use App\Repositories\Mock\JsonCommitteeRepository;
 use App\Repositories\Mock\JsonFeatureRepository;
-use App\Repositories\Mock\JsonMeetingRepository;
-use App\Repositories\Mock\JsonPostRepository;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 

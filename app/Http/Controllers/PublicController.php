@@ -235,62 +235,44 @@ class PublicController extends Controller
             'focus' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
         $apiSuccess = false;
+        $apiUrl = $this->committeeMemberApiUrl('committees/members');
 
-        // 1. Kirim ke Backend API jika aktif
-        try {
-            $apiUrl = str_contains($baseUrl, '/api')
-                ? "{$baseUrl}/committees/members"
-                : "{$baseUrl}/api/committees/members";
-
-            $response = Http::timeout(4)->post($apiUrl, [
-                'nama' => $validated['nama'],
-                'nim_nip' => $validated['nim_nip'] ?? '',
-                'email' => $validated['email'] ?? '',
-                'id_komisi' => $validated['committee_code'],
-                'jabatan_komisi' => $validated['role'],
-                'organ' => $validated['organ'] ?? '',
-            ]);
-
-            if ($response->successful()) {
-                $apiSuccess = true;
+        if ($apiUrl !== null) {
+            try {
+                $response = Http::timeout(4)->post($apiUrl, [
+                    'nama' => $validated['nama'],
+                    'nim_nip' => $validated['nim_nip'] ?? '',
+                    'email' => $validated['email'] ?? '',
+                    'id_komisi' => $validated['committee_code'],
+                    'jabatan_komisi' => $validated['role'],
+                    'organ' => $validated['organ'] ?? '',
+                ]);
+                $apiSuccess = $response->successful();
+            } catch (\Throwable $e) {
+                Log::info('Simpan anggota ke Backend API gagal, melanjutkan ke local storage: '.$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::info('Simpan anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
         }
 
-        // 2. Sinkronkan ke mock storage lokal (committees.json)
-        $mockPath = storage_path('mock/committees.json');
-        if (file_exists($mockPath)) {
-            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
+        $this->mutateMockCommittees(function (array &$committees) use ($validated): void {
             foreach ($committees as &$c) {
-                if ($c['code'] === $validated['committee_code']) {
-                    if ($validated['role'] === 'Ketua') {
-                        $c['lead'] = $validated['nama'];
-                    } elseif ($validated['role'] === 'Sekretaris') {
-                        $c['secretary'] = $validated['nama'];
-                    } else {
-                        if (!isset($c['members']) || !is_array($c['members'])) {
-                            $c['members'] = [];
-                        }
-                        if (!in_array($validated['nama'], $c['members'])) {
-                            $c['members'][] = $validated['nama'];
-                        }
-                    }
+                if (($c['code'] ?? '') !== $validated['committee_code']) {
+                    continue;
                 }
-                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
-                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
-                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
+                if ($validated['role'] === 'Ketua') {
+                    $c['lead'] = $validated['nama'];
+                } elseif ($validated['role'] === 'Sekretaris') {
+                    $c['secretary'] = $validated['nama'];
+                } else {
+                    $c['members'] = array_values(array_unique([...($c['members'] ?? []), $validated['nama']]));
+                }
             }
-            unset($c);
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        }
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => 'success',
-                'message' => 'Anggota Senat berhasil ditambahkan ke ' . $validated['committee_code'],
+                'message' => 'Anggota Senat berhasil ditambahkan ke '.$validated['committee_code'],
                 'api_synced' => $apiSuccess,
             ]);
         }
@@ -311,77 +293,49 @@ class PublicController extends Controller
             'organ' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
         $apiSuccess = false;
+        $apiUrl = $this->committeeMemberApiUrl("committees/members/{$id}");
 
-        try {
-            $apiUrl = str_contains($baseUrl, '/api')
-                ? "{$baseUrl}/committees/members/{$id}"
-                : "{$baseUrl}/api/committees/members/{$id}";
-
-            $response = Http::timeout(4)->put($apiUrl, [
-                'nama' => $validated['nama'],
-                'nama_lama' => $validated['nama_lama'] ?? null,
-                'nim_nip' => $validated['nim_nip'] ?? '',
-                'email' => $validated['email'] ?? '',
-                'id_komisi' => $validated['committee_code'],
-                'jabatan_komisi' => $validated['role'],
-            ]);
-
-            if ($response->successful()) {
-                $apiSuccess = true;
+        if ($apiUrl !== null) {
+            try {
+                $response = Http::timeout(4)->put($apiUrl, [
+                    'nama' => $validated['nama'],
+                    'nama_lama' => $validated['nama_lama'] ?? null,
+                    'nim_nip' => $validated['nim_nip'] ?? '',
+                    'email' => $validated['email'] ?? '',
+                    'id_komisi' => $validated['committee_code'],
+                    'jabatan_komisi' => $validated['role'],
+                ]);
+                $apiSuccess = $response->successful();
+            } catch (\Throwable $e) {
+                Log::info('Update anggota ke Backend API gagal, melanjutkan ke local storage: '.$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::info('Update anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
         }
 
-        // Update local mock
-        $mockPath = storage_path('mock/committees.json');
-        if (file_exists($mockPath)) {
-            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
-            $targetOldName = $validated['nama_lama'] ?? $validated['nama'];
-            $newCode = $validated['committee_code'];
-            $newRole = $validated['role'];
-            $newName = $validated['nama'];
-
-            // Hapus nama lama dari posisi sebelumnya di semua komisi agar tidak duplikat
+        $targetOldName = $validated['nama_lama'] ?? $validated['nama'];
+        $this->mutateMockCommittees(function (array &$committees) use ($validated, $targetOldName): void {
             foreach ($committees as &$c) {
-                if ($c['lead'] === $targetOldName) {
+                if (($c['lead'] ?? '') === $targetOldName) {
                     $c['lead'] = 'Belum ditentukan';
                 }
-                if ($c['secretary'] === $targetOldName) {
+                if (($c['secretary'] ?? '') === $targetOldName) {
                     $c['secretary'] = 'Belum ditentukan';
                 }
                 if (isset($c['members']) && is_array($c['members'])) {
-                    $c['members'] = array_values(array_filter($c['members'], fn($m) => $m !== $targetOldName));
+                    $c['members'] = array_values(array_filter($c['members'], fn ($m) => $m !== $targetOldName));
                 }
-            }
-            unset($c);
 
-            // Masukkan data baru ke komisi tujuan sesuai perannya
-            foreach ($committees as &$c) {
-                if ($c['code'] === $newCode) {
-                    if ($newRole === 'Ketua') {
-                        $c['lead'] = $newName;
-                    } elseif ($newRole === 'Sekretaris') {
-                        $c['secretary'] = $newName;
+                if (($c['code'] ?? '') === $validated['committee_code']) {
+                    if ($validated['role'] === 'Ketua') {
+                        $c['lead'] = $validated['nama'];
+                    } elseif ($validated['role'] === 'Sekretaris') {
+                        $c['secretary'] = $validated['nama'];
                     } else {
-                        if (!isset($c['members']) || !is_array($c['members'])) {
-                            $c['members'] = [];
-                        }
-                        if (!in_array($newName, $c['members'])) {
-                            $c['members'][] = $newName;
-                        }
+                        $c['members'] = array_values(array_unique([...($c['members'] ?? []), $validated['nama']]));
                     }
                 }
-                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
-                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
-                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
             }
-            unset($c);
-
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        }
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -400,47 +354,38 @@ class PublicController extends Controller
         $name = $request->input('nama');
         $committeeCode = $request->input('committee_code');
 
-        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
         $apiSuccess = false;
+        $apiUrl = $this->committeeMemberApiUrl("committees/members/{$id}");
 
-        try {
-            $apiUrl = str_contains($baseUrl, '/api')
-                ? "{$baseUrl}/committees/members/{$id}"
-                : "{$baseUrl}/api/committees/members/{$id}";
-
-            $response = Http::timeout(4)->delete($apiUrl, [
-                'nama' => $name,
-                'committee_code' => $committeeCode,
-            ]);
-            if ($response->successful()) {
-                $apiSuccess = true;
+        if ($apiUrl !== null) {
+            try {
+                $response = Http::timeout(4)->delete($apiUrl, [
+                    'nama' => $name,
+                    'committee_code' => $committeeCode,
+                ]);
+                $apiSuccess = $response->successful();
+            } catch (\Throwable $e) {
+                Log::info('Hapus anggota ke Backend API gagal, melanjutkan ke local storage: '.$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::info('Hapus anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
         }
 
-        // Hapus dari mock storage lokal
-        $mockPath = storage_path('mock/committees.json');
-        if (file_exists($mockPath) && $name) {
-            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
-            foreach ($committees as &$c) {
-                if (empty($committeeCode) || $c['code'] === $committeeCode) {
-                    if (isset($c['members']) && is_array($c['members'])) {
-                        $c['members'] = array_values(array_filter($c['members'], fn($m) => $m !== $name));
+        if ($name) {
+            $this->mutateMockCommittees(function (array &$committees) use ($name, $committeeCode): void {
+                foreach ($committees as &$c) {
+                    if (! empty($committeeCode) && ($c['code'] ?? '') !== $committeeCode) {
+                        continue;
                     }
-                    if ($c['lead'] === $name) {
+                    if (isset($c['members']) && is_array($c['members'])) {
+                        $c['members'] = array_values(array_filter($c['members'], fn ($m) => $m !== $name));
+                    }
+                    if (($c['lead'] ?? '') === $name) {
                         $c['lead'] = 'Belum ditentukan';
                     }
-                    if ($c['secretary'] === $name) {
+                    if (($c['secretary'] ?? '') === $name) {
                         $c['secretary'] = 'Belum ditentukan';
                     }
                 }
-                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
-                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
-                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
-            }
-            unset($c);
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            });
         }
 
         if ($request->wantsJson()) {
@@ -452,6 +397,34 @@ class PublicController extends Controller
         }
 
         return redirect()->route('public.directory')->with('success', 'Anggota Senat berhasil dihapus!');
+    }
+
+    private function committeeMemberApiUrl(string $path): ?string
+    {
+        $base = $this->backendBaseUrl();
+
+        return $base !== null ? "{$base}/api/".ltrim($path, '/') : null;
+    }
+
+    /** Terapkan mutasi aman pada cache mock komisi lokal dan hitung ulang total anggota. */
+    private function mutateMockCommittees(callable $mutator): void
+    {
+        $mockPath = storage_path('mock/committees.json');
+        if (! file_exists($mockPath)) {
+            return;
+        }
+
+        $committees = json_decode((string) file_get_contents($mockPath), true) ?: [];
+        $mutator($committees);
+
+        foreach ($committees as &$c) {
+            $leadCount = (! empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
+            $secCount = (! empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
+            $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
+        }
+        unset($c);
+
+        file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
 
     /** 04 — Detail Anggota */
