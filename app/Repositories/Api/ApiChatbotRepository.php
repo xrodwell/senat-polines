@@ -3,6 +3,7 @@
 namespace App\Repositories\Api;
 
 use App\Contracts\ChatbotRepositoryInterface;
+use App\Support\PublicNewsApi;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -12,7 +13,7 @@ class ApiChatbotRepository implements ChatbotRepositoryInterface
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(config('services.backend_api.url', 'http://127.0.0.1:8001'), '/');
+        $this->baseUrl = PublicNewsApi::backendBaseUrl() ?? 'http://127.0.0.1:8001';
     }
 
     public function sendMessage(string $message, array $history = []): array

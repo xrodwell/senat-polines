@@ -463,26 +463,40 @@ class PublicController extends Controller
     /** 05B — Produk Hukum · Keputusan Senat */
     public function decrees(): View
     {
-        $all = $this->regulations->all();
-        $filtered = array_values(array_filter($all, fn ($item) => str_contains($item['category'] ?? '', 'SK')
-            || str_contains($item['category'] ?? '', 'Keputusan')));
-
         return view('public.regulations-decrees', [
-            'regulations' => $filtered ?: $all,
+            'regulations' => $this->filterRegulationsByKeywords(['sk', 'keputusan', 'ketetapan']),
         ]);
     }
 
     /** 05C — Produk Hukum · Standar & Pedoman Akademik */
     public function standards(): View
     {
-        $standards = array_values(array_filter(
-            $this->regulations->all(),
-            fn ($item) => ! str_contains($item['category'] ?? '', 'SK')
-        ));
-
         return view('public.regulations-standards', [
-            'standards' => $standards ?: $this->regulations->all(),
+            'standards' => $this->filterRegulationsByKeywords(['standar', 'pedoman', 'sop', 'manual']),
         ]);
+    }
+
+    /**
+     * Saring daftar regulasi berdasarkan kata kunci kategori secara ketat tanpa fallback ke semua jenis.
+     *
+     * @param  list<string>  $keywords
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterRegulationsByKeywords(array $keywords): array
+    {
+        return array_values(array_filter(
+            $this->regulations->all(),
+            static function (array $item) use ($keywords): bool {
+                $category = mb_strtolower(trim((string) ($item['category'] ?? '')));
+                foreach ($keywords as $keyword) {
+                    if (str_contains($category, $keyword)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        ));
     }
 
     /** 06 — Kanal Aspirasi */
