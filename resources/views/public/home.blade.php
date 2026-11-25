@@ -199,7 +199,7 @@
                     $eyebrowText = $isBp ? 'BADAN PEKERJA' : ('KOMISI ' . $badgeText);
                     $headingText = $isBp ? 'BP (Badan Pekerja)' : \Illuminate\Support\Str::after($committee['name'], 'Komisi ');
                 @endphp
-                <a href="{{ route('public.profile.structure') }}"
+                <a href="{{ route('public.directory', ['komisi' => $committee['code'] ?? '']) }}"
                    class="group flex min-h-[195px] flex-col rounded-[14px] border border-[#e1e7ef] bg-white p-[18px] transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-senat-primary/35 hover:shadow-[0_10px_28px_rgba(24,26,88,0.08)]">
                     <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] {{ $isBp ? 'border border-[#d6c7a6] bg-[#ecdfc3] text-[#302d45]' : 'bg-senat-hero text-white' }} text-[12px] font-bold">
                         {{ $badgeText }}

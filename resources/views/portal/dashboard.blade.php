@@ -34,6 +34,16 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="mb-6 flex items-center justify-between gap-3 rounded-[14px] bg-rose-50 border border-rose-200 px-5 py-3.5 text-rose-800 shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700">!</span>
+                <span class="text-[13px] font-semibold">{{ session('error') }}</span>
+            </div>
+            <button type="button" @click="$el.parentElement.remove()" class="text-rose-600 hover:text-rose-900 text-sm font-bold">✕</button>
+        </div>
+    @endif
+
     {{-- ================= PAGE HEADER ================= --}}
     <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -176,7 +186,9 @@
                     </span>
                 </li>
             @empty
-                <li class="py-4"><p class="text-[13px] text-senat-muted">Belum ada warta yang diterbitkan.</p></li>
+                <li class="py-4">
+                    <p class="text-[13px] text-senat-muted">{{ ($newsAvailable ?? true) ? 'Belum ada warta yang diterbitkan.' : 'Warta sementara tidak tersedia.' }}</p>
+                </li>
             @endforelse
         </ul>
     </section>
@@ -238,7 +250,11 @@
                 </a>
             @empty
                 <div class="md:col-span-2 xl:col-span-4">
-                    <x-senat.empty title="Belum ada warta terpublikasi" message="Warta terbaru Senat akan muncul di area ini setelah dipublikasikan." />
+                    @if ($newsAvailable ?? true)
+                        <x-senat.empty title="Belum ada warta terpublikasi" message="Warta terbaru Senat akan muncul di area ini setelah dipublikasikan." />
+                    @else
+                        <x-senat.empty title="Warta sementara tidak tersedia" message="Tidak dapat mengambil data warta dari backend saat ini." />
+                    @endif
                 </div>
             @endforelse
         </div>

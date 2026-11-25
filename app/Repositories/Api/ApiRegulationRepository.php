@@ -21,6 +21,11 @@ class ApiRegulationRepository implements RegulationRepositoryInterface
                     ? (isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload)
                     : [];
 
+                $items = array_values(array_filter(
+                    $items,
+                    fn ($r) => is_array($r) && ! ApiArchiveRepository::isReportCategory((string) ($r['kategori'] ?? ''))
+                ));
+
                 return array_map(function ($r) use ($apiUrl) {
                     $id = $r['id_peraturan'] ?? 1;
                     $fileDokumen = trim((string) ($r['file_dokumen'] ?? ''));

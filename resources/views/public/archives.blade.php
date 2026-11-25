@@ -65,18 +65,24 @@
                         <h3 class="mt-4 text-[16px] font-bold leading-snug tracking-tight text-senat-ink">{{ $item['title'] }}</h3>
 
                         <p class="mt-2 flex-1 text-[11px] leading-relaxed text-senat-body">
-                            Dokumen resmi yang telah disahkan melalui Sidang Pleno Terbuka Senat Akademik Politeknik Negeri Semarang.
+                            {{ $item['summary'] ?? 'Dokumen resmi yang telah disahkan melalui Sidang Pleno Terbuka Senat Akademik Politeknik Negeri Semarang.' }}
                         </p>
 
                         <div class="mt-5 flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
-                            <span class="text-[10px] font-medium text-senat-body">Ukuran Berkas: {{ $item['file_size'] }}</span>
-                            <a href="{{ $item['download_url'] }}"
-                               class="inline-flex h-[34px] items-center gap-1.5 rounded-[7px] bg-senat-badgeBg px-4 text-[10px] font-bold text-senat-ink transition-colors duration-150 hover:bg-senat-skySoft">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                Unduh Berkas PDF
-                            </a>
+                            <span class="text-[10px] font-medium text-senat-body">Format Berkas: {{ $item['file_size'] }}</span>
+                            @if (($item['download_url'] ?? '#') !== '#')
+                                <a href="{{ $item['download_url'] }}" target="_blank" rel="noopener noreferrer"
+                                   class="inline-flex h-[34px] items-center gap-1.5 rounded-[7px] bg-senat-badgeBg px-4 text-[10px] font-bold text-senat-ink transition-colors duration-150 hover:bg-senat-skySoft">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Unduh Berkas PDF
+                                </a>
+                            @else
+                                <span class="inline-flex h-[34px] items-center rounded-[7px] bg-slate-100 px-4 text-[10px] font-semibold text-slate-500">
+                                    Berkas belum tersedia
+                                </span>
+                            @endif
                         </div>
                     </article>
                 @endforeach

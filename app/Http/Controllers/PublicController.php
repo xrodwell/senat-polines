@@ -9,6 +9,8 @@ use App\Contracts\FeatureRepositoryInterface;
 use App\Contracts\MeetingRepositoryInterface;
 use App\Contracts\PostRepositoryInterface;
 use App\Contracts\RegulationRepositoryInterface;
+use App\Repositories\Api\ApiArchiveRepository;
+use App\Support\PublicNewsApi;
 use App\Support\SenatDirectory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,13 +49,17 @@ class PublicController extends Controller
         ]);
     }
 
+    private function backendBaseUrl(): ?string
+    {
+        return PublicNewsApi::backendBaseUrl();
+    }
+
     private function landingNews(): ?array
     {
-        $base = rtrim((string) config('services.backend_api.url'), '/');
-        if ($base === '') {
+        $base = $this->backendBaseUrl();
+        if ($base === null) {
             return null;
         }
-        $base = preg_replace('~/api$~', '', $base);
 
         try {
             $response = Http::acceptJson()->timeout(3)->get($base.'/api/landing-news');
@@ -82,11 +88,10 @@ class PublicController extends Controller
 
     private function landingStats(): ?array
     {
-        $base = rtrim((string) config('services.backend_api.url'), '/');
-        if ($base === '') {
+        $base = $this->backendBaseUrl();
+        if ($base === null) {
             return null;
         }
-        $base = preg_replace('~/api$~', '', $base);
 
         try {
             $response = Http::acceptJson()->timeout(3)->get($base.'/api/landing-stats');
@@ -105,16 +110,60 @@ class PublicController extends Controller
         }
     }
 
+    /** Ambil nama periode aktif dari Backend API, atau fallback ke konstanta direktori. */
+    private function activePeriodName(): string
+    {
+        $base = $this->backendBaseUrl();
+        if ($base === null) {
+            return SenatDirectory::PERIOD;
+        }
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base.'/api/periode-senat', ['all' => 'true']);
+            $items = $response->json('data');
+            if ($response->successful() && is_array($items)) {
+                $active = collect($items)->first(fn ($item) => is_array($item) && ! empty($item['is_active']));
+                $selected = is_array($active) ? $active : ($items[0] ?? null);
+                if (is_array($selected) && is_string($selected['nama_periode'] ?? null) && trim($selected['nama_periode']) !== '') {
+                    return trim($selected['nama_periode']);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback ke periode default direktori saat backend tidak dapat dihubungi
+        }
+
+        return SenatDirectory::PERIOD;
+    }
+
+    /** @return array<string, mixed> */
+    private function directoryStats(): array
+    {
+        $stats = SenatDirectory::stats();
+        $live = $this->landingStats();
+
+        if ($live !== null) {
+            $stats['members'] = $live['members'];
+            $stats['committees'] = $live['committees'];
+        }
+
+        $stats['period'] = $this->activePeriodName();
+
+        return $stats;
+    }
+
     /** 02A — Profil · Visi, Misi & Tujuan */
     public function profile(): View
     {
-        $baseUrl = config('services.backend_api.url');
+        $baseUrl = $this->backendBaseUrl();
+        $struktur = [];
 
-        try {
-            $response = Http::timeout(3)->get("{$baseUrl}/api/struktur-organisasi");
-            $struktur = $response->json()['data'] ?? [];
-        } catch (\Throwable $e) {
-            $struktur = [];
+        if ($baseUrl !== null) {
+            try {
+                $response = Http::timeout(3)->get("{$baseUrl}/api/struktur-organisasi");
+                $struktur = $response->json()['data'] ?? [];
+            } catch (\Throwable $e) {
+                $struktur = [];
+            }
         }
 
         $ketua = collect($struktur)->firstWhere('jabatan', 'Ketua');
@@ -122,7 +171,7 @@ class PublicController extends Controller
 
         return view('public.profile.vision', [
             'committees' => $this->committees->all(),
-            'direktori' => SenatDirectory::stats(),
+            'direktori' => $this->directoryStats(),
             'struktur'   => $struktur,
             'ketua'      => $ketua,
             'sekretaris' => $sekretaris,
@@ -141,6 +190,8 @@ class PublicController extends Controller
     /** 02C — Profil · Struktur Organisasi */
     public function structure(): View
     {
+        $direktori = $this->directoryStats();
+
         return view('public.profile.structure', [
             'committees' => $this->committees->all(),
             'leadership' => [
@@ -148,14 +199,16 @@ class PublicController extends Controller
                 'secretary' => SenatDirectory::secretary(),
                 'bph' => SenatDirectory::bph(),
             ],
-            'period' => SenatDirectory::PERIOD,
-            'direktori' => SenatDirectory::stats(),
+            'period' => $direktori['period'],
+            'direktori' => $direktori,
         ]);
     }
 
     /** 03 — Direktori Komisi & Anggota */
     public function directory(): View
     {
+        $direktori = $this->directoryStats();
+
         return view('public.directory', [
             'committees' => $this->committees->all(),
             'members' => SenatDirectory::members(),
@@ -164,8 +217,8 @@ class PublicController extends Controller
                 'secretary' => SenatDirectory::secretary(),
                 'bph' => SenatDirectory::bph(),
             ],
-            'period' => SenatDirectory::PERIOD,
-            'direktori' => SenatDirectory::stats(),
+            'period' => $direktori['period'],
+            'direktori' => $direktori,
         ]);
     }
 
@@ -182,62 +235,44 @@ class PublicController extends Controller
             'focus' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
         $apiSuccess = false;
+        $apiUrl = $this->committeeMemberApiUrl('committees/members');
 
-        // 1. Kirim ke Backend API jika aktif
-        try {
-            $apiUrl = str_contains($baseUrl, '/api')
-                ? "{$baseUrl}/committees/members"
-                : "{$baseUrl}/api/committees/members";
-
-            $response = Http::timeout(4)->post($apiUrl, [
-                'nama' => $validated['nama'],
-                'nim_nip' => $validated['nim_nip'] ?? '',
-                'email' => $validated['email'] ?? '',
-                'id_komisi' => $validated['committee_code'],
-                'jabatan_komisi' => $validated['role'],
-                'organ' => $validated['organ'] ?? '',
-            ]);
-
-            if ($response->successful()) {
-                $apiSuccess = true;
+        if ($apiUrl !== null) {
+            try {
+                $response = Http::timeout(4)->post($apiUrl, [
+                    'nama' => $validated['nama'],
+                    'nim_nip' => $validated['nim_nip'] ?? '',
+                    'email' => $validated['email'] ?? '',
+                    'id_komisi' => $validated['committee_code'],
+                    'jabatan_komisi' => $validated['role'],
+                    'organ' => $validated['organ'] ?? '',
+                ]);
+                $apiSuccess = $response->successful();
+            } catch (\Throwable $e) {
+                Log::info('Simpan anggota ke Backend API gagal, melanjutkan ke local storage: '.$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::info('Simpan anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
         }
 
-        // 2. Sinkronkan ke mock storage lokal (committees.json)
-        $mockPath = storage_path('mock/committees.json');
-        if (file_exists($mockPath)) {
-            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
+        $this->mutateMockCommittees(function (array &$committees) use ($validated): void {
             foreach ($committees as &$c) {
-                if ($c['code'] === $validated['committee_code']) {
-                    if ($validated['role'] === 'Ketua') {
-                        $c['lead'] = $validated['nama'];
-                    } elseif ($validated['role'] === 'Sekretaris') {
-                        $c['secretary'] = $validated['nama'];
-                    } else {
-                        if (!isset($c['members']) || !is_array($c['members'])) {
-                            $c['members'] = [];
-                        }
-                        if (!in_array($validated['nama'], $c['members'])) {
-                            $c['members'][] = $validated['nama'];
-                        }
-                    }
+                if (($c['code'] ?? '') !== $validated['committee_code']) {
+                    continue;
                 }
-                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
-                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
-                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
+                if ($validated['role'] === 'Ketua') {
+                    $c['lead'] = $validated['nama'];
+                } elseif ($validated['role'] === 'Sekretaris') {
+                    $c['secretary'] = $validated['nama'];
+                } else {
+                    $c['members'] = array_values(array_unique([...($c['members'] ?? []), $validated['nama']]));
+                }
             }
-            unset($c);
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        }
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => 'success',
-                'message' => 'Anggota Senat berhasil ditambahkan ke ' . $validated['committee_code'],
+                'message' => 'Anggota Senat berhasil ditambahkan ke '.$validated['committee_code'],
                 'api_synced' => $apiSuccess,
             ]);
         }
@@ -258,77 +293,49 @@ class PublicController extends Controller
             'organ' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
         $apiSuccess = false;
+        $apiUrl = $this->committeeMemberApiUrl("committees/members/{$id}");
 
-        try {
-            $apiUrl = str_contains($baseUrl, '/api')
-                ? "{$baseUrl}/committees/members/{$id}"
-                : "{$baseUrl}/api/committees/members/{$id}";
-
-            $response = Http::timeout(4)->put($apiUrl, [
-                'nama' => $validated['nama'],
-                'nama_lama' => $validated['nama_lama'] ?? null,
-                'nim_nip' => $validated['nim_nip'] ?? '',
-                'email' => $validated['email'] ?? '',
-                'id_komisi' => $validated['committee_code'],
-                'jabatan_komisi' => $validated['role'],
-            ]);
-
-            if ($response->successful()) {
-                $apiSuccess = true;
+        if ($apiUrl !== null) {
+            try {
+                $response = Http::timeout(4)->put($apiUrl, [
+                    'nama' => $validated['nama'],
+                    'nama_lama' => $validated['nama_lama'] ?? null,
+                    'nim_nip' => $validated['nim_nip'] ?? '',
+                    'email' => $validated['email'] ?? '',
+                    'id_komisi' => $validated['committee_code'],
+                    'jabatan_komisi' => $validated['role'],
+                ]);
+                $apiSuccess = $response->successful();
+            } catch (\Throwable $e) {
+                Log::info('Update anggota ke Backend API gagal, melanjutkan ke local storage: '.$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::info('Update anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
         }
 
-        // Update local mock
-        $mockPath = storage_path('mock/committees.json');
-        if (file_exists($mockPath)) {
-            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
-            $targetOldName = $validated['nama_lama'] ?? $validated['nama'];
-            $newCode = $validated['committee_code'];
-            $newRole = $validated['role'];
-            $newName = $validated['nama'];
-
-            // Hapus nama lama dari posisi sebelumnya di semua komisi agar tidak duplikat
+        $targetOldName = $validated['nama_lama'] ?? $validated['nama'];
+        $this->mutateMockCommittees(function (array &$committees) use ($validated, $targetOldName): void {
             foreach ($committees as &$c) {
-                if ($c['lead'] === $targetOldName) {
+                if (($c['lead'] ?? '') === $targetOldName) {
                     $c['lead'] = 'Belum ditentukan';
                 }
-                if ($c['secretary'] === $targetOldName) {
+                if (($c['secretary'] ?? '') === $targetOldName) {
                     $c['secretary'] = 'Belum ditentukan';
                 }
                 if (isset($c['members']) && is_array($c['members'])) {
-                    $c['members'] = array_values(array_filter($c['members'], fn($m) => $m !== $targetOldName));
+                    $c['members'] = array_values(array_filter($c['members'], fn ($m) => $m !== $targetOldName));
                 }
-            }
-            unset($c);
 
-            // Masukkan data baru ke komisi tujuan sesuai perannya
-            foreach ($committees as &$c) {
-                if ($c['code'] === $newCode) {
-                    if ($newRole === 'Ketua') {
-                        $c['lead'] = $newName;
-                    } elseif ($newRole === 'Sekretaris') {
-                        $c['secretary'] = $newName;
+                if (($c['code'] ?? '') === $validated['committee_code']) {
+                    if ($validated['role'] === 'Ketua') {
+                        $c['lead'] = $validated['nama'];
+                    } elseif ($validated['role'] === 'Sekretaris') {
+                        $c['secretary'] = $validated['nama'];
                     } else {
-                        if (!isset($c['members']) || !is_array($c['members'])) {
-                            $c['members'] = [];
-                        }
-                        if (!in_array($newName, $c['members'])) {
-                            $c['members'][] = $newName;
-                        }
+                        $c['members'] = array_values(array_unique([...($c['members'] ?? []), $validated['nama']]));
                     }
                 }
-                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
-                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
-                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
             }
-            unset($c);
-
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        }
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -347,47 +354,38 @@ class PublicController extends Controller
         $name = $request->input('nama');
         $committeeCode = $request->input('committee_code');
 
-        $baseUrl = rtrim((string)(config('services.backend_api.url') ?? env('BACKEND_API_URL', 'http://127.0.0.1:8001')), '/');
         $apiSuccess = false;
+        $apiUrl = $this->committeeMemberApiUrl("committees/members/{$id}");
 
-        try {
-            $apiUrl = str_contains($baseUrl, '/api')
-                ? "{$baseUrl}/committees/members/{$id}"
-                : "{$baseUrl}/api/committees/members/{$id}";
-
-            $response = Http::timeout(4)->delete($apiUrl, [
-                'nama' => $name,
-                'committee_code' => $committeeCode,
-            ]);
-            if ($response->successful()) {
-                $apiSuccess = true;
+        if ($apiUrl !== null) {
+            try {
+                $response = Http::timeout(4)->delete($apiUrl, [
+                    'nama' => $name,
+                    'committee_code' => $committeeCode,
+                ]);
+                $apiSuccess = $response->successful();
+            } catch (\Throwable $e) {
+                Log::info('Hapus anggota ke Backend API gagal, melanjutkan ke local storage: '.$e->getMessage());
             }
-        } catch (\Throwable $e) {
-            Log::info('Hapus anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
         }
 
-        // Hapus dari mock storage lokal
-        $mockPath = storage_path('mock/committees.json');
-        if (file_exists($mockPath) && $name) {
-            $committees = json_decode(file_get_contents($mockPath), true) ?: [];
-            foreach ($committees as &$c) {
-                if (empty($committeeCode) || $c['code'] === $committeeCode) {
-                    if (isset($c['members']) && is_array($c['members'])) {
-                        $c['members'] = array_values(array_filter($c['members'], fn($m) => $m !== $name));
+        if ($name) {
+            $this->mutateMockCommittees(function (array &$committees) use ($name, $committeeCode): void {
+                foreach ($committees as &$c) {
+                    if (! empty($committeeCode) && ($c['code'] ?? '') !== $committeeCode) {
+                        continue;
                     }
-                    if ($c['lead'] === $name) {
+                    if (isset($c['members']) && is_array($c['members'])) {
+                        $c['members'] = array_values(array_filter($c['members'], fn ($m) => $m !== $name));
+                    }
+                    if (($c['lead'] ?? '') === $name) {
                         $c['lead'] = 'Belum ditentukan';
                     }
-                    if ($c['secretary'] === $name) {
+                    if (($c['secretary'] ?? '') === $name) {
                         $c['secretary'] = 'Belum ditentukan';
                     }
                 }
-                $leadCount = (!empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
-                $secCount = (!empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
-                $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
-            }
-            unset($c);
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            });
         }
 
         if ($request->wantsJson()) {
@@ -399,6 +397,34 @@ class PublicController extends Controller
         }
 
         return redirect()->route('public.directory')->with('success', 'Anggota Senat berhasil dihapus!');
+    }
+
+    private function committeeMemberApiUrl(string $path): ?string
+    {
+        $base = $this->backendBaseUrl();
+
+        return $base !== null ? "{$base}/api/".ltrim($path, '/') : null;
+    }
+
+    /** Terapkan mutasi aman pada cache mock komisi lokal dan hitung ulang total anggota. */
+    private function mutateMockCommittees(callable $mutator): void
+    {
+        $mockPath = storage_path('mock/committees.json');
+        if (! file_exists($mockPath)) {
+            return;
+        }
+
+        $committees = json_decode((string) file_get_contents($mockPath), true) ?: [];
+        $mutator($committees);
+
+        foreach ($committees as &$c) {
+            $leadCount = (! empty($c['lead']) && $c['lead'] !== 'Belum ditentukan') ? 1 : 0;
+            $secCount = (! empty($c['secretary']) && $c['secretary'] !== 'Belum ditentukan') ? 1 : 0;
+            $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
+        }
+        unset($c);
+
+        file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
 
     /** 04 — Detail Anggota */
@@ -422,7 +448,7 @@ class PublicController extends Controller
             'member' => $member,
             'committee' => $committee,
             'peers' => $peers,
-            'period' => SenatDirectory::PERIOD,
+            'period' => $this->activePeriodName(),
         ]);
     }
 
@@ -673,17 +699,24 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
     public function archivesReports(): View
     {
         $archives = $this->archives->all();
-        $reports = array_values(array_filter($archives, fn ($item) => str_contains($item['category'] ?? '', 'Laporan')));
+        $reports = array_values(array_filter(
+            $archives,
+            fn ($item) => ApiArchiveRepository::isReportCategory((string) ($item['category'] ?? ''))
+        ));
 
         return view('public.archives-reports', [
-            'archives' => $reports ?: $archives,
+            'archives' => $reports,
         ]);
     }
 
     /** 14 — Kanal Berita & Warta */
     public function news(Request $request): View
     {
-        $result = $this->fetchPublicNews($request);
+        $result = PublicNewsApi::fetchPage(
+            page: max(1, $request->integer('page', 1)),
+            perPage: max(1, $request->integer('per_page', 12)),
+            search: (string) ($request->query('q') ?? $request->query('search') ?? ''),
+        );
 
         return view('public.news', [
             'posts' => $result['posts'] ?? [],
@@ -702,7 +735,7 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
     /** 14B — Detail Warta */
     public function newsShow(string $slug): View
     {
-        [$post, $isOutage] = $this->fetchPublicNewsDetail($slug);
+        [$post, $isOutage] = PublicNewsApi::fetchDetail($slug);
 
         if ($isOutage) {
             abort(503, 'Warta sementara tidak tersedia.');
@@ -710,208 +743,9 @@ Pengirim: {$validated['name']} ({$validated['email']}) - Jurusan: " . ($validate
 
         abort_if($post === null, 404, 'Berita tidak ditemukan.');
 
-        $related = $this->fetchRelatedNews($slug);
-
         return view('public.news-show', [
             'post' => $post,
-            'related' => $related,
+            'related' => PublicNewsApi::fetchRelated($slug),
         ]);
-    }
-
-    private function fetchPublicNews(Request $request): ?array
-    {
-        $base = rtrim((string) config('services.backend_api.url'), '/');
-        if ($base === '') {
-            return null;
-        }
-        $base = preg_replace('~/api$~', '', $base);
-
-        $params = [
-            'page' => max(1, $request->integer('page', 1)),
-            'per_page' => max(1, $request->integer('per_page', 12)),
-        ];
-
-        $q = trim((string) ($request->query('q') ?? $request->query('search') ?? ''));
-        if ($q !== '') {
-            $params['search'] = $q;
-        }
-
-        try {
-            $response = Http::acceptJson()->timeout(3)->get($base . '/api/public-news', $params);
-
-            if ($response->status() === 404) {
-                // If public-news endpoint is missing on backend, fall back to landing-news (database-backed API only, NO mock)
-                $fallbackResp = Http::acceptJson()->timeout(3)->get($base . '/api/landing-news');
-                if (! $fallbackResp->successful()) {
-                    return null;
-                }
-                $rawItems = $fallbackResp->json('data') ?? [];
-                if (! is_array($rawItems)) {
-                    return null;
-                }
-                $posts = array_map(fn ($item) => $this->formatNewsItem($item), $rawItems);
-                return [
-                    'posts' => $posts,
-                    'pagination' => [
-                        'total' => count($posts),
-                        'current_page' => 1,
-                        'last_page' => 1,
-                        'per_page' => count($posts),
-                        'from' => count($posts) > 0 ? 1 : 0,
-                        'to' => count($posts),
-                    ],
-                ];
-            }
-
-            if (! $response->successful()) {
-                return null;
-            }
-
-            $json = $response->json();
-            if (! is_array($json)) {
-                return null;
-            }
-
-            $rawItems = $json['data'] ?? [];
-            if (! is_array($rawItems)) {
-                return null;
-            }
-
-            $posts = array_map(fn ($item) => $this->formatNewsItem($item), $rawItems);
-
-            return [
-                'posts' => $posts,
-                'pagination' => [
-                    'total' => (int) ($json['total'] ?? count($posts)),
-                    'current_page' => (int) ($json['current_page'] ?? 1),
-                    'last_page' => (int) ($json['last_page'] ?? 1),
-                    'per_page' => (int) ($json['per_page'] ?? count($posts)),
-                    'from' => (int) ($json['from'] ?? (count($posts) > 0 ? 1 : 0)),
-                    'to' => (int) ($json['to'] ?? count($posts)),
-                ],
-            ];
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-
-    /**
-     * @return array{0: ?array, 1: bool} [post, isOutage]
-     */
-    private function fetchPublicNewsDetail(string $slug): array
-    {
-        $base = rtrim((string) config('services.backend_api.url'), '/');
-        if ($base === '') {
-            return [null, true];
-        }
-        $base = preg_replace('~/api$~', '', $base);
-
-        try {
-            $response = Http::acceptJson()->timeout(3)->get($base . '/api/public-news/' . urlencode($slug));
-
-            if ($response->status() === 404) {
-                // Check landing-news in case backend only has landing-news
-                $landingResp = Http::acceptJson()->timeout(3)->get($base . '/api/landing-news');
-                if ($landingResp->successful()) {
-                    $items = $landingResp->json('data') ?? [];
-                    if (is_array($items)) {
-                        foreach ($items as $item) {
-                            if (\Illuminate\Support\Str::slug($item['judul'] ?? '') === $slug) {
-                                return [$this->formatNewsItem($item), false];
-                            }
-                        }
-                    }
-                }
-                return [null, false];
-            }
-
-            if (! $response->successful()) {
-                return [null, true];
-            }
-
-            $raw = $response->json('data') ?? $response->json();
-            if (! is_array($raw) || empty($raw)) {
-                return [null, false];
-            }
-
-            return [$this->formatNewsItem($raw), false];
-        } catch (\Throwable $e) {
-            return [null, true];
-        }
-    }
-
-    private function fetchRelatedNews(string $slug): array
-    {
-        $base = rtrim((string) config('services.backend_api.url'), '/');
-        if ($base === '') {
-            return [];
-        }
-        $base = preg_replace('~/api$~', '', $base);
-
-        try {
-            $response = Http::acceptJson()->timeout(3)->get($base . '/api/public-news', ['per_page' => 4]);
-            $items = $response->json('data');
-            if (! $response->successful() || ! is_array($items)) {
-                $resp2 = Http::acceptJson()->timeout(3)->get($base . '/api/landing-news');
-                $items = $resp2->json('data');
-                if (! $resp2->successful() || ! is_array($items)) {
-                    return [];
-                }
-            }
-
-            $related = [];
-            foreach ($items as $item) {
-                $post = $this->formatNewsItem($item);
-                if ($post['slug'] !== $slug) {
-                    $related[] = $post;
-                }
-                if (count($related) >= 3) {
-                    break;
-                }
-            }
-
-            return $related;
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    private function formatNewsItem(array $item): array
-    {
-        $title = (string) ($item['judul'] ?? $item['title'] ?? '');
-        $slug = (string) ($item['slug'] ?? \Illuminate\Support\Str::slug($title));
-        $dateStr = $item['tanggal_publish'] ?? $item['date'] ?? null;
-        $isPublished = ! empty($dateStr);
-        $dateOnly = $isPublished ? substr((string) $dateStr, 0, 10) : date('Y-m-d');
-        $rawIsi = $item['isi'] ?? $item['body'] ?? '';
-        $body = is_array($rawIsi) ? $rawIsi : explode("\n\n", (string) $rawIsi);
-        $bodyText = is_array($rawIsi) ? implode("\n\n", $rawIsi) : (string) $rawIsi;
-
-        $thumbnail = ! empty($item['gambar']) ? $item['gambar'] : ($item['thumbnail'] ?? null);
-        $gallery = is_array($item['galeri'] ?? null) ? $item['galeri'] : [];
-        $images = array_values(array_unique(array_filter(
-            [$thumbnail, ...$gallery, ...(is_array($item['images'] ?? null) ? $item['images'] : [])],
-            fn ($img) => is_string($img) && $img !== ''
-        )));
-
-        $attachments = is_array($item['lampiran'] ?? null) ? $item['lampiran'] : (is_array($item['attachments'] ?? null) ? $item['attachments'] : []);
-
-        $author = $item['author'] ?? $item['user']['nama'] ?? 'Sekretariat Senat Polines';
-
-        return [
-            'id' => $item['id_berita'] ?? $item['id'] ?? 0,
-            'title' => $title,
-            'slug' => $slug,
-            'category' => $item['kategori'] ?? $item['category'] ?? 'Warta Senat',
-            'date' => $dateOnly,
-            'published_at' => $dateStr,
-            'status' => 'Terpublikasi',
-            'excerpt' => \Illuminate\Support\Str::limit(strip_tags($bodyText), 180),
-            'thumbnail' => $thumbnail,
-            'images' => $images,
-            'attachments' => $attachments,
-            'author' => $author,
-            'body' => $body,
-        ];
     }
 }

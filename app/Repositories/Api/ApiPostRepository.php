@@ -16,14 +16,14 @@ class ApiPostRepository implements PostRepositoryInterface
 
     public function resolveBackendUrl(): string
     {
-        $apiUrl = env('SENAT_BACKEND_API_URL') ?: env('BACKEND_API_URL');
+        $apiUrl = (string) (config('services.backend_api.url')
+            ?: env('SENAT_BACKEND_API_URL')
+            ?: env('BACKEND_API_URL')
+            ?: 'http://127.0.0.1:8001/api');
 
-        // Jika kosong atau masih mengarah ke port 3000 yang tidak aktif, arahkan ke URL XAMPP/Apache
-        if (empty($apiUrl) || !str_starts_with((string)$apiUrl, 'http') || str_contains((string)$apiUrl, ':3000')) {
-            $apiUrl = 'http://localhost/pbl%20senat/Backend-Senat-Polines/public/api';
-        }
+        $apiUrl = rtrim($apiUrl, '/');
 
-        return rtrim((string)$apiUrl, '/');
+        return str_ends_with($apiUrl, '/api') ? $apiUrl : $apiUrl.'/api';
     }
 
     public function all(): array
@@ -96,14 +96,6 @@ class ApiPostRepository implements PostRepositoryInterface
                         }
                     }
                     unset($backendPost);
-
-                    // Pertahankan konten lokal yang belum tersedia di backend.
-                    $backendSlugs = array_filter(array_column($backendPosts, 'slug'));
-                    foreach ($fallbackPosts as $fallbackPost) {
-                        if (! in_array($fallbackPost['slug'] ?? '', $backendSlugs, true)) {
-                            $backendPosts[] = $fallbackPost;
-                        }
-                    }
 
                     // Urutkan berita: tanggal terbaru di posisi paling atas
                     usort($backendPosts, function ($a, $b) {
