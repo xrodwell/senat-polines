@@ -207,9 +207,11 @@
                     <p class="mt-3 text-[10px] font-bold uppercase leading-[1.1] tracking-[0.04em] text-senat-body">
                         {{ $eyebrowText }}
                     </p>
+                    @if ($isBp || strcasecmp(trim($headingText), trim($badgeText)) !== 0)
                     <h3 class="mt-[6px] text-[14px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary">
                         {{ $headingText }}
                     </h3>
+                    @endif
                     <p class="mt-[14px] text-[11px] leading-[1.3] text-senat-body line-clamp-4">
                         {{ $committee['focus'] }}
                     </p>

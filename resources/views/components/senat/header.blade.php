@@ -37,7 +37,7 @@
     ];
 @endphp
 
-<header x-data="{ open: false }" @keydown.escape.window="open = false" class="sticky top-0 z-40 border-b border-senat-line bg-white">
+<header x-data="{ open: false }" @public-chat-open.window="open = false" @keydown.escape.window="open = false" class="sticky top-0 z-40 border-b border-senat-line bg-white">
     <div class="senat-shell flex h-[60px] items-center lg:h-16">
         <a href="{{ route('public.home') }}" class="senat-tap flex shrink-0 items-center gap-3">
             <img src="{{ asset('images/logo-polines.png') }}" alt="Logo Politeknik Negeri Semarang"
@@ -90,7 +90,7 @@
                 Sampaikan Aspirasi
             </a>
 
-            <button type="button" @click="open = true" :aria-expanded="open.toString()"
+            <button type="button" @click="open = true; $dispatch('public-menu-open')" :aria-expanded="open.toString()"
                     aria-controls="senat-public-drawer" aria-label="Buka menu navigasi"
                     class="senat-tap -mr-2 flex h-11 w-11 items-center justify-center rounded-md text-senat-primary lg:hidden">
                 <x-senat.icon name="menu" class="h-[22px] w-[22px]" />

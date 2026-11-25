@@ -52,7 +52,6 @@
             <input id="dokumen-cari" type="search" x-model="q"
                    placeholder="Cari ketetapan, SK, AD/ART, risalah, atau kata kunci..."
                    class="h-10 min-w-0 flex-1 border-0 bg-transparent p-0 text-[14px] text-senat-ink placeholder:text-senat-muted focus:outline-none focus:ring-0">
-            <x-senat.button size="sm" type="button">Cari</x-senat.button>
         </div>
     </div>
 

@@ -17,7 +17,7 @@ trait HasPimpinanAndStruktur
 
     public function saveAction(string $entity): void
     {
-        $this->flashMessage = "Data {$entity} berhasil disimpan.";
+        $this->flashMessage = "Fitur {$entity} belum tersedia. Tidak ada perubahan yang disimpan.";
     }
 
     public function updatePimpinan(): void

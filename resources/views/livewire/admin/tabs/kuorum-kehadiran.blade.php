@@ -93,20 +93,8 @@
 
                         <div class="flex items-center gap-2">
                             <x-senat.button variant="secondary" size="sm" type="button" wire:click="saveAction('Sahkan Berita Acara Kuorum')">
-                                Sahkan Berita Acara Kuorum
+                                Sahkan Berita Acara Kuorum (Belum tersedia)
                             </x-senat.button>
-                            <button type="button"
-                                    wire:click="exportExcel"
-                                    class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-3.5 text-[11.5px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm"
-                                    title="Unduh Rekap Kehadiran dan Status Kuorum ke Excel (.xls)">
-                                <span>Ekspor Excel (.xls)</span>
-                            </button>
-                            <button type="button"
-                                    wire:click="exportCsv"
-                                    class="senat-tap inline-flex h-9 items-center justify-center rounded-md bg-[#116a3c] px-3.5 text-[11.5px] font-semibold text-white transition hover:bg-[#0d542f] shadow-sm"
-                                    title="Unduh format CSV">
-                                <span>Ekspor CSV</span>
-                            </button>
                         </div>
                     </div>
                 </section>

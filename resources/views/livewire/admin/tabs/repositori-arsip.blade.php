@@ -4,7 +4,7 @@
                             <h2 class="text-[18px] font-bold text-senat-ink">Repositori Dokumen & Laporan Tahunan</h2>
                             <p class="text-[12px] text-senat-body">Berkas LPJ, OTK, dan arsip kelembagaan Senat Polines</p>
                         </div>
-                        <x-senat.button variant="primary" size="sm" type="button" wire:click="saveAction('Upload Arsip')">+ Unggah Berkas</x-senat.button>
+                        <x-senat.button variant="primary" size="sm" type="button" wire:click="saveAction('Upload Arsip')">+ Unggah Berkas (Belum tersedia)</x-senat.button>
                     </div>
                     <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         @foreach ($archives as $arc)
@@ -15,7 +15,7 @@
                                     <p class="mt-1 text-[11.5px] text-senat-muted">{{ $arc['year'] }} · {{ $arc['file_size'] }}</p>
                                 </div>
                                 <div class="mt-4 flex items-center justify-end border-t border-senat-sidebarLine pt-3">
-                                    <x-senat.button variant="secondary" size="sm" type="button" wire:click="saveAction('Unduh Berkas {{ $arc['id'] }}')">Unduh Berkas</x-senat.button>
+                                    <x-senat.button variant="secondary" size="sm" type="button" wire:click="saveAction('Unduh Berkas {{ $arc['id'] }}')">Unduh Berkas (Belum tersedia)</x-senat.button>
                                 </div>
                             </div>
                         @endforeach

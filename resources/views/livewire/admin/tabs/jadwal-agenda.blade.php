@@ -249,7 +249,7 @@
                                     <button type="button"
                                             wire:click="saveAction('Draf Sidang Disimpan')"
                                             class="senat-tap inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
-                                        <span>Simpan sebagai Draf</span>
+                                        <span>Simpan sebagai Draf (Belum tersedia)</span>
                                     </button>
                                 </div>
                             </form>

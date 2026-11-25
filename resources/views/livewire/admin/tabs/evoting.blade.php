@@ -69,7 +69,7 @@
                             </li>
                         </ul>
 
-                        <x-senat.button variant="secondary" size="sm" class="mt-5" type="button" wire:click="saveAction('Cetak Berita Acara Voting')">Cetak Berita Acara</x-senat.button>
+                        <x-senat.button variant="secondary" size="sm" class="mt-5" type="button" wire:click="saveAction('Cetak Berita Acara Voting')">Cetak Berita Acara (Belum tersedia)</x-senat.button>
                     </section>
 
                     {{-- Riwayat & Daftar Sesi E-Voting Persidangan --}}

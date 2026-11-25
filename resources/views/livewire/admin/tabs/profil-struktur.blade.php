@@ -15,7 +15,7 @@
                             </div>
                             <button type="button" wire:click="saveAction('Profil & Tupoksi')"
                                     class="rounded-lg bg-senat-primary px-4 py-2 text-[12px] font-semibold text-white hover:bg-senat-primaryHover">
-                                Simpan Perubahan Profil
+                                Simpan Perubahan Profil (Belum tersedia)
                             </button>
                         </div>
                     </div>
