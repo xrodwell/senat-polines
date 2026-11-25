@@ -47,13 +47,22 @@ class PublicController extends Controller
         ]);
     }
 
-    private function landingNews(): ?array
+    private function backendBaseUrl(): ?string
     {
         $base = rtrim((string) config('services.backend_api.url'), '/');
         if ($base === '') {
             return null;
         }
-        $base = preg_replace('~/api$~', '', $base);
+
+        return preg_replace('~/api$~', '', $base) ?: null;
+    }
+
+    private function landingNews(): ?array
+    {
+        $base = $this->backendBaseUrl();
+        if ($base === null) {
+            return null;
+        }
 
         try {
             $response = Http::acceptJson()->timeout(3)->get($base.'/api/landing-news');
@@ -82,11 +91,10 @@ class PublicController extends Controller
 
     private function landingStats(): ?array
     {
-        $base = rtrim((string) config('services.backend_api.url'), '/');
-        if ($base === '') {
+        $base = $this->backendBaseUrl();
+        if ($base === null) {
             return null;
         }
-        $base = preg_replace('~/api$~', '', $base);
 
         try {
             $response = Http::acceptJson()->timeout(3)->get($base.'/api/landing-stats');
@@ -105,16 +113,60 @@ class PublicController extends Controller
         }
     }
 
+    /** Ambil nama periode aktif dari Backend API, atau fallback ke konstanta direktori. */
+    private function activePeriodName(): string
+    {
+        $base = $this->backendBaseUrl();
+        if ($base === null) {
+            return SenatDirectory::PERIOD;
+        }
+
+        try {
+            $response = Http::acceptJson()->timeout(3)->get($base.'/api/periode-senat', ['all' => 'true']);
+            $items = $response->json('data');
+            if ($response->successful() && is_array($items)) {
+                $active = collect($items)->first(fn ($item) => is_array($item) && ! empty($item['is_active']));
+                $selected = is_array($active) ? $active : ($items[0] ?? null);
+                if (is_array($selected) && is_string($selected['nama_periode'] ?? null) && trim($selected['nama_periode']) !== '') {
+                    return trim($selected['nama_periode']);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback ke periode default direktori saat backend tidak dapat dihubungi
+        }
+
+        return SenatDirectory::PERIOD;
+    }
+
+    /** @return array<string, mixed> */
+    private function directoryStats(): array
+    {
+        $stats = SenatDirectory::stats();
+        $live = $this->landingStats();
+
+        if ($live !== null) {
+            $stats['members'] = $live['members'];
+            $stats['committees'] = $live['committees'];
+        }
+
+        $stats['period'] = $this->activePeriodName();
+
+        return $stats;
+    }
+
     /** 02A — Profil · Visi, Misi & Tujuan */
     public function profile(): View
     {
-        $baseUrl = config('services.backend_api.url');
+        $baseUrl = $this->backendBaseUrl();
+        $struktur = [];
 
-        try {
-            $response = Http::timeout(3)->get("{$baseUrl}/api/struktur-organisasi");
-            $struktur = $response->json()['data'] ?? [];
-        } catch (\Throwable $e) {
-            $struktur = [];
+        if ($baseUrl !== null) {
+            try {
+                $response = Http::timeout(3)->get("{$baseUrl}/api/struktur-organisasi");
+                $struktur = $response->json()['data'] ?? [];
+            } catch (\Throwable $e) {
+                $struktur = [];
+            }
         }
 
         $ketua = collect($struktur)->firstWhere('jabatan', 'Ketua');
@@ -122,7 +174,7 @@ class PublicController extends Controller
 
         return view('public.profile.vision', [
             'committees' => $this->committees->all(),
-            'direktori' => SenatDirectory::stats(),
+            'direktori' => $this->directoryStats(),
             'struktur'   => $struktur,
             'ketua'      => $ketua,
             'sekretaris' => $sekretaris,
@@ -141,6 +193,8 @@ class PublicController extends Controller
     /** 02C — Profil · Struktur Organisasi */
     public function structure(): View
     {
+        $direktori = $this->directoryStats();
+
         return view('public.profile.structure', [
             'committees' => $this->committees->all(),
             'leadership' => [
@@ -148,14 +202,16 @@ class PublicController extends Controller
                 'secretary' => SenatDirectory::secretary(),
                 'bph' => SenatDirectory::bph(),
             ],
-            'period' => SenatDirectory::PERIOD,
-            'direktori' => SenatDirectory::stats(),
+            'period' => $direktori['period'],
+            'direktori' => $direktori,
         ]);
     }
 
     /** 03 — Direktori Komisi & Anggota */
     public function directory(): View
     {
+        $direktori = $this->directoryStats();
+
         return view('public.directory', [
             'committees' => $this->committees->all(),
             'members' => SenatDirectory::members(),
@@ -164,8 +220,8 @@ class PublicController extends Controller
                 'secretary' => SenatDirectory::secretary(),
                 'bph' => SenatDirectory::bph(),
             ],
-            'period' => SenatDirectory::PERIOD,
-            'direktori' => SenatDirectory::stats(),
+            'period' => $direktori['period'],
+            'direktori' => $direktori,
         ]);
     }
 
@@ -422,7 +478,7 @@ class PublicController extends Controller
             'member' => $member,
             'committee' => $committee,
             'peers' => $peers,
-            'period' => SenatDirectory::PERIOD,
+            'period' => $this->activePeriodName(),
         ]);
     }
 
