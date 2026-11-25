@@ -80,15 +80,15 @@
                     <div class="min-w-0">
                         <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-senat-sky">Direktori Anggota Senat</p>
                         <h1 class="mt-3 text-[26px] font-bold leading-[1.08] text-white sm:text-[35px]"
-                            x-text="panels[active]?.title ?? 'Direktori Komisi'">{{ $panels[0]['label'] ?? 'Direktori Komisi' }}@if (isset($panels[0])) · {{ $panels[0]['short'] }}@endif</h1>
+                            x-text="panels[active]?.title ?? 'Direktori Komisi'">{{ $panels[$initialActive]['label'] ?? 'Direktori Komisi' }}@if (isset($panels[$initialActive])) · {{ $panels[$initialActive]['short'] }}@endif</h1>
                         <p class="mt-4 max-w-[690px] text-[13px] leading-relaxed text-senat-skySoft"
-                            x-text="panels[active]?.focus ?? $el.textContent">{{ $panels[0]['focus'] ?? $period }}</p>
+                            x-text="panels[active]?.focus ?? $el.textContent">{{ $panels[$initialActive]['focus'] ?? $period }}</p>
                     </div>
 
                     <div class="min-w-0 border-t border-white/20 pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
                         <div class="flex items-center justify-between gap-3">
                             <span class="inline-flex min-w-0 items-center rounded-full bg-[#e8fcf5] px-3.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-[#008c66]"
-                                  x-text="panels[active]?.badge ?? '0 Anggota Komisi'">{{ $panels[0]['total'] ?? 0 }} Anggota Komisi</span>
+                                  x-text="panels[active]?.badge ?? '0 Anggota Komisi'">{{ $panels[$initialActive]['total'] ?? 0 }} Anggota Komisi</span>
                         </div>
                         <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#94c4f5]">Masa Bakti</p>
                         <p class="mt-1 text-[18px] font-bold text-white">{{ $period }}</p>
@@ -128,7 +128,7 @@
 
             {{-- Panel per komisi --}}
             @foreach ($panels as $i => $panel)
-                <div @if ($i > 0) x-cloak @endif x-show="active === {{ $i }}" class="mt-12 space-y-8">
+                <div @if ($i !== $initialActive) x-cloak @endif x-show="active === {{ $i }}" class="mt-12 space-y-8">
 
                     {{-- Susunan keanggotaan --}}
                     <section>
