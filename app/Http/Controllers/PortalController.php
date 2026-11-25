@@ -11,6 +11,7 @@ use App\Contracts\VotingRepositoryInterface;
 use App\Http\Controllers\Portal\Traits\HasPortalAuth;
 use App\Http\Controllers\Portal\Traits\HasSecretariatPortal;
 use App\Http\Controllers\Portal\Traits\HasVotingAndAttendance;
+use App\Support\PublicNewsApi;
 use App\Support\SenatDirectory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,15 +59,16 @@ class PortalController extends Controller
      */
     public function dashboard(): View
     {
-        $allPosts = $this->posts->all();
-        $published = array_values(array_filter($allPosts, fn($p) => ($p['status'] ?? 'Terpublikasi') === 'Terpublikasi'));
+        $newsResult = PublicNewsApi::fetchPage(perPage: 12);
+        $published = $newsResult['posts'] ?? [];
 
         return view('portal.dashboard', [
             'stats' => $this->meetingStats(),
             'meetings' => $this->meetings->all(),
             'aspirations' => $this->aspirations->all(),
             'announcements' => $published,
-            'allPosts' => $allPosts,
+            'allPosts' => $published,
+            'newsAvailable' => $newsResult !== null,
         ]);
     }
 
@@ -89,24 +91,21 @@ class PortalController extends Controller
         ]);
 
         $status = $validated['status'] ?? 'Terpublikasi';
-        $excerpt = Str::limit(strip_tags($validated['body']), 180);
-        $thumbnail = !empty($validated['thumbnail'])
-            ? $validated['thumbnail']
-            : 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80';
+        $thumbnail = ! empty($validated['thumbnail']) ? $validated['thumbnail'] : null;
 
-        $payload = [
-            'title' => $validated['title'],
-            'category' => $validated['category'],
-            'date' => date('Y-m-d'),
-            'status' => $status,
-            'excerpt' => $excerpt,
-            'body_text' => $validated['body'],
-            'body' => explode("\n\n", $validated['body']),
-            'thumbnail' => $thumbnail,
-            'author' => 'Sekretariat Senat Polines',
-        ];
+        $result = PublicNewsApi::createNews((string) session('auth_token', ''), [
+            'id_user' => (int) (auth()->id() ?: session('auth_user_id', 1)),
+            'judul' => $validated['title'],
+            'isi' => $validated['body'],
+            'gambar' => $thumbnail,
+            'galeri' => $thumbnail !== null ? [$thumbnail] : [],
+            'lampiran' => [],
+            'tanggal_publish' => $status === 'Terpublikasi' ? now()->format('Y-m-d H:i:s') : null,
+        ]);
 
-        $this->posts->create($payload);
+        if (! $result['ok']) {
+            return redirect()->route('portal.dashboard')->with('error', $result['message']);
+        }
 
         $msg = $status === 'Terpublikasi'
             ? "Berita \"{$validated['title']}\" sukses dipublikasikan dan langsung tampil di dashboard!"
