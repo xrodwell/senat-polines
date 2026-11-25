@@ -48,4 +48,29 @@ class PublicStructureStatsTest extends TestCase
                     && ! empty($direktori['period']);
             });
     }
+
+    public function test_vision_committee_cards_link_card_to_structure_and_selengkapnya_to_directory(): void
+    {
+        config(['services.backend_api.url' => 'http://example.test/api']);
+        Http::fake([
+            '*committees*' => Http::response([
+                'data' => [[
+                    'id' => 1,
+                    'code' => 'KOM-I',
+                    'name' => 'Komisi Pendidikan dan Pengajaran',
+                    'lead' => 'Ketua Contoh',
+                    'secretary' => 'Sekretaris Contoh',
+                    'focus' => 'Fokus pendidikan.',
+                    'members_count' => 7,
+                    'members' => [],
+                ]],
+            ]),
+            '*' => Http::response(['data' => []]),
+        ]);
+
+        $this->get('/profil')
+            ->assertOk()
+            ->assertSee(route('public.profile.structure').'#tupoksi-KOM-I', false)
+            ->assertSee(route('public.directory', ['komisi' => 'KOM-I']), false);
+    }
 }

@@ -121,19 +121,24 @@
 
             <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($committees as $committee)
-                    <a href="{{ route('public.profile.structure') }}#tupoksi-{{ $committee['code'] }}"
-                       class="group flex flex-col rounded-[12px] border border-senat-line bg-white p-5 transition-colors hover:border-senat-badgeLine">
+                    <div class="group relative flex flex-col rounded-[12px] border border-senat-line bg-white p-5 transition-colors hover:border-senat-badgeLine">
                         <span class="inline-flex w-fit items-center rounded-full border {{ ($committee['code'] ?? '') === 'BP' ? 'border-senat-orange/40 bg-orange-50 text-senat-orange' : 'border-senat-badgeLine bg-senat-badgeBg text-senat-link' }} px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.06em]">
                             {{ \App\Support\SenatDirectory::committeeLabel($committee['code']) }}
                         </span>
-                        <h3 class="mt-3 text-[13px] font-bold leading-snug text-senat-ink">{{ $committee['name'] }}</h3>
+                        <h3 class="mt-3 text-[13px] font-bold leading-snug text-senat-ink group-hover:text-senat-primary">
+                            <a href="{{ route('public.profile.structure') }}#tupoksi-{{ $committee['code'] }}"
+                               class="after:absolute after:inset-0 focus:outline-none">
+                                {{ $committee['name'] }}
+                            </a>
+                        </h3>
                         <p class="mt-2 text-[11px] font-medium text-senat-body">Ketua: {{ $committee['lead'] }}</p>
                         <p class="mt-1 flex-1 text-[11px] leading-relaxed text-senat-muted">{{ $committee['focus'] }}</p>
-                        <span class="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-senat-link">
+                        <a href="{{ route('public.directory', ['komisi' => $committee['code'] ?? '']) }}"
+                           class="relative z-10 mt-3 inline-flex w-fit items-center gap-1 text-[11px] font-bold text-senat-link transition-colors hover:text-senat-primary hover:underline">
                             Selengkapnya
                             <span aria-hidden="true">›</span>
-                        </span>
-                    </a>
+                        </a>
+                    </div>
                 @empty
                     <div class="sm:col-span-2 lg:col-span-3">
                         <x-senat.empty title="Data komisi belum dimuat"
