@@ -177,8 +177,6 @@
                     $secPhoto = null;
                     $leadNip = null;
                     $secNip = null;
-                    $leadId = null;
-                    $secId = null;
                     foreach (($c['members'] ?? []) as $memberRow) {
                         if (! is_array($memberRow)) {
                             continue;
@@ -186,12 +184,10 @@
                         if (($memberRow['nama'] ?? '') === $leadName) {
                             $leadPhoto = $memberRow['foto_profil'] ?? null;
                             $leadNip = $memberRow['nim_nip'] ?? null;
-                            $leadId = $memberRow['id_enrollment'] ?? null;
                         }
                         if (($memberRow['nama'] ?? '') === $secName) {
                             $secPhoto = $memberRow['foto_profil'] ?? null;
                             $secNip = $memberRow['nim_nip'] ?? null;
-                            $secId = $memberRow['id_enrollment'] ?? null;
                         }
                     }
                     $membersList = array_values(array_filter($c['members'] ?? [], function ($m) use ($leadName, $secName) {
@@ -235,7 +231,7 @@
                             @if (!empty($leadName) && $leadName !== 'Belum ditentukan')
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['id' => $leadId, 'name' => $leadName, 'role' => 'Ketua', 'committee_code' => $c['code'], 'photo' => $leadPhoto]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $leadName, 'role' => 'Ketua', 'committee_code' => $c['code'], 'photo' => $leadPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -259,7 +255,7 @@
                             @if (!empty($secName) && $secName !== 'Belum ditentukan')
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['id' => $secId, 'name' => $secName, 'role' => 'Sekretaris', 'committee_code' => $c['code'], 'photo' => $secPhoto]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $secName, 'role' => 'Sekretaris', 'committee_code' => $c['code'], 'photo' => $secPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
@@ -274,7 +270,6 @@
                                 $mNip = is_array($m) ? ($m['nim_nip'] ?? '') : '';
                                 $mJab = is_array($m) ? ($m['jabatan'] ?? 'Anggota') : 'Anggota';
                                 $mPhoto = is_array($m) ? ($m['foto_profil'] ?? null) : null;
-                                $mId = is_array($m) ? ($m['id_enrollment'] ?? null) : null;
                             @endphp
                             <div class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 transition">
                                 <div class="flex items-center gap-3 min-w-0">
@@ -295,12 +290,12 @@
                                 </div>
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <button type="button"
-                                            wire:click="openEditMemberModal(@js(['id' => $mId, 'name' => $mName, 'nip' => $mNip, 'role' => 'Anggota', 'committee_code' => $c['code'], 'photo' => $mPhoto]), '{{ $c['code'] }}')"
+                                            wire:click="openEditMemberModal(@js(['name' => $mName, 'nip' => $mNip, 'role' => 'Anggota', 'committee_code' => $c['code'], 'photo' => $mPhoto]), '{{ $c['code'] }}')"
                                             class="rounded border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
                                         Edit
                                     </button>
                                     <button type="button"
-                                            wire:click="confirmDeleteMember(@js(['id' => $mId, 'name' => $mName, 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
+                                            wire:click="confirmDeleteMember(@js(['name' => $mName, 'committee_code' => $c['code']]), '{{ $c['code'] }}')"
                                             class="rounded border border-red-200 px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 transition cursor-pointer">
                                         Hapus
                                     </button>

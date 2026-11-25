@@ -233,13 +233,12 @@
                 {{-- Alert Flash --}}
                 @if ($flashMessage)
                     @php
-                        $isWarning = str_starts_with($flashMessage, 'Perhatian:')
-                            || preg_match('/\AFitur .+ belum tersedia\. Tidak ada perubahan yang disimpan\.\z/s', $flashMessage) === 1;
-                        $flashColor = $isWarning ? 'text-amber-800' : 'text-[#116a3c]';
+                        $isUnavailable = preg_match('/\AFitur .+ belum tersedia\. Tidak ada perubahan yang disimpan\.\z/s', $flashMessage) === 1;
+                        $flashColor = $isUnavailable ? 'text-amber-800' : 'text-[#116a3c]';
                     @endphp
-                    <div class="flex items-center justify-between rounded-[10px] {{ $isWarning ? 'bg-amber-50' : 'bg-[#eaf8f0]' }} px-4 py-3 text-[13px] {{ $flashColor }} shadow-xs">
+                    <div class="flex items-center justify-between rounded-[10px] {{ $isUnavailable ? 'bg-amber-50' : 'bg-[#eaf8f0]' }} px-4 py-3 text-[13px] {{ $flashColor }} shadow-xs">
                         <div class="flex items-center gap-2">
-                            <x-senat.icon :name="$isWarning ? 'warning' : 'check'" class="h-4 w-4 shrink-0 {{ $flashColor }}" />
+                            <x-senat.icon :name="$isUnavailable ? 'warning' : 'check'" class="h-4 w-4 shrink-0 {{ $flashColor }}" />
                             <span>{{ $flashMessage }}</span>
                         </div>
                         <button type="button" wire:click="$set('flashMessage', '')" class="text-base font-bold {{ $flashColor }}">×</button>

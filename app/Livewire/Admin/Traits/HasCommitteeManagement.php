@@ -329,9 +329,7 @@ trait HasCommitteeManagement
             $this->memberPhoto = null;
         }
 
-        // 1. Simpan ke Backend API (sumber data panel admin & halaman publik)
-        $apiSaved = false;
-        $apiError = null;
+        // 1. Simpan ke Backend API jika tersedia
         try {
             $url = $isEdit
                 ? "{$baseUrl}/committees/members/{$this->memberEditId}"
@@ -350,23 +348,15 @@ trait HasCommitteeManagement
 
             if ($isEdit) {
                 $payload['nama_lama'] = $this->memberNamaLama ?: $this->memberNama;
-                $response = $this->committeeBackendClient()->put($url, $payload);
+                $this->committeeBackendClient()->put($url, $payload);
             } else {
-                $response = $this->committeeBackendClient()->post($url, $payload);
-            }
-
-            $apiSaved = $response->successful();
-            if (! $apiSaved) {
-                $apiError = $response->json('message')
-                    ?: 'Backend menolak data (HTTP ' . $response->status() . ').';
-                Log::warning('Gagal menyimpan anggota komisi ke API: ' . $apiError);
+                $this->committeeBackendClient()->post($url, $payload);
             }
         } catch (\Throwable $e) {
-            $apiError = 'Backend tidak merespons: ' . $e->getMessage();
             Log::info('Sync anggota ke Backend API gagal, melanjutkan ke local storage: ' . $e->getMessage());
         }
 
-        // 2. Sinkronkan ke mock storage lokal (fallback bila backend offline)
+        // 2. Sinkronkan ke mock storage lokal (committees.json)
         $this->syncMemberToLocalMock(
             $isEdit,
             $this->memberNama,
@@ -377,11 +367,9 @@ trait HasCommitteeManagement
             $photoPath
         );
 
-        $this->flashMessage = $apiSaved
-            ? ($isEdit
-                ? "Data anggota {$this->memberNama} berhasil diperbarui dan langsung tampil di direktori publik."
-                : "Anggota baru {$this->memberNama} berhasil ditambahkan ke {$this->memberCommitteeCode} dan langsung tampil di direktori publik.")
-            : "Perhatian: data {$this->memberNama} tersimpan lokal, tetapi gagal dikirim ke backend. {$apiError}";
+        $this->flashMessage = $isEdit
+            ? "Data anggota {$this->memberNama} berhasil diperbarui."
+            : "Anggota baru {$this->memberNama} berhasil ditambahkan ke {$this->memberCommitteeCode}.";
 
         $this->closeMemberModal();
     }
@@ -412,23 +400,13 @@ trait HasCommitteeManagement
         $baseUrl = $this->getBackendUrl();
 
         // 1. Hapus dari Backend API
-        $apiDeleted = false;
-        $apiError = null;
         try {
             $targetId = $this->deleteMemberId ?: urlencode($this->deleteMemberName);
-            $response = $this->committeeBackendClient()->delete("{$baseUrl}/committees/members/{$targetId}", [
+            Http::timeout(4)->delete("{$baseUrl}/committees/members/{$targetId}", [
                 'nama' => $this->deleteMemberName,
                 'committee_code' => $this->deleteMemberCommitteeCode,
             ]);
-
-            $apiDeleted = $response->successful();
-            if (! $apiDeleted) {
-                $apiError = $response->json('message')
-                    ?: 'Backend menolak penghapusan (HTTP ' . $response->status() . ').';
-                Log::warning('Gagal menghapus anggota komisi di API: ' . $apiError);
-            }
         } catch (\Throwable $e) {
-            $apiError = 'Backend tidak merespons: ' . $e->getMessage();
             Log::info('Hapus anggota di Backend API gagal: ' . $e->getMessage());
         }
 
@@ -453,13 +431,10 @@ trait HasCommitteeManagement
                 $c['members_count'] = count($c['members'] ?? []) + $leadCount + $secCount;
             }
             unset($c);
-            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+            file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
 
-        $this->flashMessage = $apiDeleted
-            ? "Anggota {$this->deleteMemberName} berhasil dihapus dan langsung hilang dari direktori publik."
-            : "Perhatian: {$this->deleteMemberName} dihapus dari cadangan lokal, tetapi backend gagal memproses. {$apiError}";
-
+        $this->flashMessage = "Anggota {$this->deleteMemberName} berhasil dihapus dari direktori.";
         $this->closeDeleteMemberModal();
     }
 
@@ -527,6 +502,6 @@ trait HasCommitteeManagement
         }
         unset($c);
 
-        file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+        file_put_contents($mockPath, json_encode($committees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }
