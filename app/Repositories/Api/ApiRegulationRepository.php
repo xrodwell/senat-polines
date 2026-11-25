@@ -3,6 +3,7 @@
 namespace App\Repositories\Api;
 
 use App\Contracts\RegulationRepositoryInterface;
+use App\Support\PublicNewsApi;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -10,7 +11,10 @@ class ApiRegulationRepository implements RegulationRepositoryInterface
 {
     public function all(): array
     {
-        $apiUrl = config('services.backend_api.url', env('SENAT_BACKEND_API_URL', 'http://127.0.0.1:8001/api'));
+        $base = PublicNewsApi::backendBaseUrl();
+        $apiUrl = $base !== null
+            ? $base.'/api'
+            : rtrim((string) config('services.backend_api.url', 'http://127.0.0.1:8001/api'), '/');
 
         try {
             $response = Http::timeout(3)->get("{$apiUrl}/peraturan", ['all' => 1]);
